@@ -34,7 +34,7 @@ namespace wdd
 		arma::Mat<double> DD_FREQS_COSSAMPLES;
 		arma::Mat<double> DD_FREQS_SINSAMPLES;
 
-		// new defined positions of used DotDetectors: as map from id -> point2d
+		// new defined positions of used DotDetectors: as map from dd_id -> Point2i
 		std::map<std::size_t,cv::Point2i> DD_POS_ID2POINT_MAP;
 		// saves number n of DotDetectors in DD_POS_ID2POINT_MAP
 		std::size_t DD_POSITIONS_NUMBER;
@@ -70,22 +70,22 @@ namespace wdd
 		std::size_t WDD_FBUFFER_POS;
 
 		// saves total detection signal, either 0 or 1
-		bool 	WDD_SIGNAL;
+		bool WDD_SIGNAL;
 		// saves number of detection signals
-		int 	WDD_SIGNAL_NUMBER;
-		// saves positions of detection signals as n-by-2 matrix
-		arma::Mat<double> WDD_SIGNAL_POSITIONS;
+		int WDD_SIGNAL_NUMBER;
+		// saves positions of detection signals as map from dd_id -> Point2d
+		std::map<std::size_t,cv::Point2d> WDD_SIGNAL_ID2POINT_MAP;
 		// saves unique #frame
 		unsigned long long WDD_SIGNAL_FRAME_NR;
 
 		// defines the maximum distance between two neighbor DD signals
 		// TODO: calculate from bee size & DPI
-		double 	WDD_SIGNAL_DD_MAXDISTANCE;
+		double WDD_SIGNAL_DD_MAXDISTANCE;
 		// minimum number of positive DotDetector to start detection and
 		// minimum size of clusters for positive detection and
-		int 	WDD_SIGNAL_DD_MIN_CLUSTER_SIZE;
+		std::size_t WDD_SIGNAL_DD_MIN_CLUSTER_SIZE;
 		// defines the absolute score value a DD needs for signal
-		double 	WDD_SIGNAL_DD_MIN_SCORE;
+		double WDD_SIGNAL_DD_MIN_POTENTIAL;
 
 		// defines if verbose execution mode
 		//TODO: check for remove as not used anymore
@@ -137,9 +137,11 @@ namespace wdd
 		void printPositionConfig();
 	private:
 		void createFreqSamples();
-		void execDetectionDDScores();
+		void execDetectionGetDDPotentials();
+		void execDetectionGetWDDSignals();
 		void initDDSignalValues();
 		void initWDDSignalValues();
+		arma::Col<arma::uword> getNeighbours(arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs);
 		void setFBufferConfig(int wdd_fbuffer_size);
 		void setFrameConfig(std::vector<double> dd_frame_config);
 		void setFreqConfig(std::vector<double> dd_freq_config);

@@ -100,7 +100,8 @@ int main()
 	std::vector<double> wdd_signal_dd_config;
 	wdd_signal_dd_config.push_back(2.3);
 	wdd_signal_dd_config.push_back(4);
-	wdd_signal_dd_config.push_back(17000);
+//	wdd_signal_dd_config.push_back(17000);
+		wdd_signal_dd_config.push_back(1700);
 
 	WaggleDanceDetector wdd(
 		dd_freq_config,
@@ -112,7 +113,7 @@ int main()
 
 
 
-	unsigned long long frame_counter = 0;
+	unsigned __int64 frame_counter = 0;
 
 	while(capture.read(frame_input))
 	{
@@ -131,7 +132,6 @@ int main()
 		}
 
 		// feed WDD with tar_frame
-
 		wdd.addFrame(frame_target, frame_counter, true);
 
 		// output visually if enabled
@@ -142,8 +142,11 @@ int main()
 
 		}
 		// finally increase frame_input counter
-		std::cout<<"Done frame#: "<<frame_counter++<<std::endl;
+		std::cout<<"Done frame#: "<<frame_counter<<std::endl;
+		frame_counter++;
 
+		if(167 == frame_counter)
+			exit(18);
 		/* debug break*/
 		//break;
 	}

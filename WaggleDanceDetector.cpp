@@ -85,7 +85,7 @@ namespace wdd
 	{
 		WDD_SIGNAL = false;
 		WDD_SIGNAL_NUMBER = 0;
-		WDD_SIGNAL_POSITIONS = arma::Mat<double>(0,2);
+
 	}
 	/*
 	* Dependencies: WDD_VERBOSE
@@ -220,14 +220,14 @@ namespace wdd
 		/* copy values from dd_frame_config*/
 		double wdd_signal_dd_maxdistance = wdd_signal_dd_config[0];
 		int wdd_signal_dd_min_cluster_size = (int) wdd_signal_dd_config[1];
-		double wdd_signal_dd_min_score =  wdd_signal_dd_config[2];
+		double wdd_signal_dd_min_potential =  wdd_signal_dd_config[2];
 
 		/* TODO: do some sanity checks */
 
 		/* assign passed values */
 		WDD_SIGNAL_DD_MAXDISTANCE = wdd_signal_dd_maxdistance;
 		WDD_SIGNAL_DD_MIN_CLUSTER_SIZE = wdd_signal_dd_min_cluster_size;
-		WDD_SIGNAL_DD_MIN_SCORE = wdd_signal_dd_min_score;
+		WDD_SIGNAL_DD_MIN_POTENTIAL = wdd_signal_dd_min_potential;
 
 		/* finally present output if verbose mode is on*/
 		if(WDD_VERBOSE)
@@ -268,24 +268,19 @@ namespace wdd
 	void WaggleDanceDetector::addFrame(cv::Mat frame, unsigned long long frame_nr,
 		bool imidiateDetect)
 	{	
-		//		std::cout<<"value: "<< frame <<std::endl<< "adress: " << &frame << std::endl;
 		// either fill frame buffer
 		if(WDD_FBUFFER_POS < WDD_FBUFFER_SIZE)
 		{
 			WDD_FBUFFER.push_back(cv::Mat(frame.clone()));
 			WDD_FBUFFER_POS++;
-			if(WDD_VERBOSE)
-				std::cout<<"Fill frame buffer."<<std::endl;
-
 		}
 		// or replace oldest frame trough shift
 		else
 		{
 			WDD_FBUFFER.pop_front();
 			WDD_FBUFFER.push_back(cv::Mat(frame.clone()));
-			if(WDD_VERBOSE)
-				std::cout<<"Swap frame buffer."<<std::endl;
 		}
+
 		// pass frame number
 		WDD_SIGNAL_FRAME_NR = frame_nr;
 
@@ -300,21 +295,38 @@ namespace wdd
 		if(WDD_FBUFFER_POS < WDD_FBUFFER_SIZE)
 			return;
 
-		// reset detection relevant fields
-		DD_SIGNAL_BOOL.fill(0);
-		DD_SIGNAL_POTENTIALS.fill(0);
-		DD_SIGNAL_SCORES.fill(0);
-
 		// run detection on DotDetector layer
-		execDetectionDDScores();
+		execDetectionGetDDPotentials();
+
+		// run detection on WaggleDanceDetector layer
+		execDetectionGetWDDSignals();
+
+
+		if(WDD_SIGNAL && WDD_VERBOSE)
+		{
+			for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
+			{
+				//std::cout << "Frame# %d: WDD Signal at: "<<it->second.x << ", " << it->second.y << std::endl;
+
+				//double x = static_cast<double>();
+				//double y = static_cast<double>();
+
+				printf("Frame# %I64u: WDD Signal at: %.1f, %.1f\n",WDD_SIGNAL_FRAME_NR,it->second.x,it->second.y);
+			}
+		}
 	}
 	/*
 	* for each defined DotDetector in DD_POS_ID2POINT_MAP retrieve the raw signal (typicaly uint8)
 	* from framebuffer, normalize it to -1:1, get the frequency scores 
 	*/
-	void WaggleDanceDetector::execDetectionDDScores()
+	void WaggleDanceDetector::execDetectionGetDDPotentials()
 	{
 		// TODO: use some memory inplace freaky stuff
+
+		// reset GetDDPotentials relevant fields
+		DD_SIGNAL_SCORES.fill(0);
+		DD_SIGNAL_POTENTIALS.fill(0);
+		DD_SIGNAL_BOOL.fill(0);
 
 		// container to hold raw uint8 frame values
 		unsigned char * dd_signal_uin8 = new unsigned char[WDD_FBUFFER_SIZE];
@@ -338,9 +350,10 @@ namespace wdd
 			}
 			unsigned char minV_uin8 = *std::min_element(dd_signal_uin8,dd_signal_uin8+WDD_FBUFFER_SIZE);
 			unsigned char maxV_uin8 = *std::max_element(dd_signal_uin8,dd_signal_uin8+WDD_FBUFFER_SIZE);
+			unsigned char AMPLITUDE = maxV_uin8 - minV_uin8;
 
 			// check for flat DotDetector signal
-			if(minV_uin8 == maxV_uin8)
+			if(!AMPLITUDE)
 			{
 				fsCount++;
 				dd_signal_score.fill(0);
@@ -387,16 +400,228 @@ namespace wdd
 				//std::cout<<"["<<i<<"]: "<<dd_signal_score.at(i)<<std::endl;
 			}
 
-			//if(WDD_VERBOSE)
-			//std::cout<<"linearSum: "<< linearSum <<" - pos: "<<j<<std::endl;
+			DD_SIGNAL_POTENTIALS.at(j) = AMPLITUDE * linearSum;
 
-
+			if(DD_SIGNAL_POTENTIALS.at(j) > WDD_SIGNAL_DD_MIN_POTENTIAL)
+			{
+				DD_SIGNAL_BOOL.at(j) = 1;
+				//DEBUG
+				//std::cout << "POSITIVE DD " <<std::endl;
+			}
 		}
 
-		std::cout<<"# of possible fast skipps: "<< fsCount<< std::endl;
+		//std::cout<<"# of possible fast skipps: "<< fsCount<< std::endl;
 		delete[] dd_signal_uin8;
 	}
 
+	void WaggleDanceDetector::execDetectionGetWDDSignals()
+	{
+		// reset GetWDDSignals relevant fields
+		WDD_SIGNAL = 0;
+		WDD_SIGNAL_NUMBER = 0;
+		WDD_SIGNAL_ID2POINT_MAP.clear();
+
+		// test for minimum number of potent DotDetectors
+		if(arma::sum(DD_SIGNAL_BOOL) < WDD_SIGNAL_DD_MIN_CLUSTER_SIZE)
+			return;
+
+
+		// get ids (=index in vector) of positive DDs
+		// WARNING! Heavly rely on fact that :
+		// - DD_ids are [0; DD_POSITIONS_NUMBER-1]
+		// - length(DD_SIGNAL_BOOL) == DD_POSITIONS_NUMBER
+		arma::Col<arma::uword> pos_DD_IDs = arma::find(DD_SIGNAL_BOOL);
+
+		// init cluster ids for the positive DDs
+		arma::Col<arma::sword> pos_DD_CIDs(pos_DD_IDs.size());
+		pos_DD_CIDs.fill(-1);
+
+		// init working copy of positive DD ids
+		//std::vector<arma::uword> pos_DD_IDs_wset (pos_DD_IDs.begin(), pos_DD_IDs.end());
+
+		// init unique cluster ID 
+		unsigned int clusterID = 0;
+
+		// foreach positive DD
+		for(std::size_t i=0; i < pos_DD_IDs.size(); i++)
+		{
+			// check if DD is missing a cluster ID
+			if(pos_DD_CIDs.at(i) >= 0)
+				continue;
+
+			// assign unique cluster id
+			pos_DD_CIDs.at(i) = clusterID++;
+
+			// assign source id (root id)
+			arma::Col<arma::uword> root_DD_id(std::vector<arma::uword>(1,pos_DD_IDs.at(i)));
+			
+			// select only unclustered DD as working set
+			arma::Col<arma::uword> pos_DD_unclustered_idx = arma::find(pos_DD_CIDs == -1);
+
+			// make a local copy of positive ids from working set
+			arma::Col<arma::uword> loc_pos_DD_IDs = pos_DD_IDs.rows(pos_DD_unclustered_idx);
+
+			// init loop
+			arma::Col<arma::uword> neighbour_DD_ids = 
+				getNeighbours(root_DD_id, arma::Col<arma::uword>(), loc_pos_DD_IDs);
+
+			arma::Col<arma::uword> Lneighbour_DD_ids;
+
+			// loop until no new neighbours are added
+			while(Lneighbour_DD_ids.size() != neighbour_DD_ids.size())
+			{
+				// get new discovered elements as
+				// {D} = {N_i} \ {N_i-1}
+				arma::Col<arma::uword> D = neighbour_DD_ids;
+				for(std::size_t j=0; j<Lneighbour_DD_ids.size(); j++)
+				{
+					//MATLAB:  D(D==m) = [];
+					arma::uvec q1 = arma::find(D == Lneighbour_DD_ids.at(j), 1);
+					if(q1.size() == 1)
+						D.shed_row(q1.at(0));
+				}
+
+				// save last neighbours id list
+				Lneighbour_DD_ids = neighbour_DD_ids;
+
+				// remove discovered elements from search
+				for(std::size_t j=0; j<neighbour_DD_ids.size(); j++)
+				{
+					//MATLAB: loc_pos_DD_IDs(loc_pos_DD_IDs==m) = [];
+					arma::uvec q1 = arma::find(loc_pos_DD_IDs == neighbour_DD_ids.at(j), 1);
+					if(q1.size() == 1)
+						loc_pos_DD_IDs.shed_row(q1.at(0));
+				}
+
+				neighbour_DD_ids = getNeighbours(D, neighbour_DD_ids, loc_pos_DD_IDs);
+			}
+
+			// set CIDs of all neighbours
+			for(std::size_t j=0; j<neighbour_DD_ids.size(); j++)
+			{
+				arma::uvec q1 = arma::find(pos_DD_IDs == neighbour_DD_ids.at(j), 1);
+
+				if(q1.size() == 1)
+					pos_DD_CIDs.at(q1.at(0)) = pos_DD_CIDs.at(i);
+				else
+				{
+					printf("ERROR! ::execDetectionGetWDDSignals: Unexpected assertion failure!\n");
+					exit(19);
+				}
+			}
+		}
+
+		// assertion test
+		arma::uvec q1 = arma::find(pos_DD_CIDs == -1);
+		if(q1.size() > 0)
+		{
+			printf("ERROR! ::execDetectionGetWDDSignals: Unclassified DD signals!\n");
+			exit(19);
+		}
+
+		// analyze cluster sizes
+		unsigned int unqClusterIDs = clusterID;
+		arma::uvec count_unqClusterIDs(unqClusterIDs);
+		count_unqClusterIDs.fill(0);
+
+		// get size of each cluster
+		for(std::size_t i=0; i<pos_DD_CIDs.size(); i++)
+		{
+			count_unqClusterIDs.at(pos_DD_CIDs.at(i))++;
+		}
+
+		arma::uvec f_unqClusterIDs;
+		for(std::size_t i=0; i<count_unqClusterIDs.size(); i++)
+		{
+			if(count_unqClusterIDs.at(i) >= WDD_SIGNAL_DD_MIN_CLUSTER_SIZE)
+			{
+				f_unqClusterIDs.insert_rows(f_unqClusterIDs.size(),1);
+				f_unqClusterIDs.at(f_unqClusterIDs.size()-1,i);
+			}
+		}
+
+		// decide if there is at least one WDD Signal
+		if(f_unqClusterIDs.is_empty())
+			return;
+
+		WDD_SIGNAL = true;
+
+		// foreach remaining cluster calculate center position
+		for(std::size_t i=0; i<f_unqClusterIDs.size(); i++)
+		{
+			// find vecotr positions in pos_DD_CIDS <=> pos_DD_IDs 
+			// associated with cluster id
+			arma::uvec idx = arma::find(pos_DD_CIDs == f_unqClusterIDs.at(i));
+
+			cv::Point2d center(0,0);
+			for(std::size_t j=0; j<idx.size(); j++)
+			{
+				center += static_cast<cv::Point_<double>>(DD_POS_ID2POINT_MAP.find(pos_DD_IDs.at(idx.at(j)))->second);
+			}
+
+			center *= 1/static_cast<double>(idx.size());
+
+			WDD_SIGNAL_ID2POINT_MAP[WDD_SIGNAL_NUMBER++] = center;
+		}
+	}
+
+	arma::Col<arma::uword> WaggleDanceDetector::getNeighbours(
+		arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs)
+	{
+		// anchor case
+		if(sourceIDs.size() == 1)
+		{
+			cv::Point2i DD_pos = DD_POS_ID2POINT_MAP.find(sourceIDs.at(0))->second;
+
+			for(std::size_t i=0; i< set_DD_IDs.size(); i++)
+			{
+				cv::Point2i DD_pos_other = DD_POS_ID2POINT_MAP.find(set_DD_IDs.at(i))->second;
+
+				// if others DotDetectors distance is in bound, add its ID
+				if(std::sqrt(cv::norm(DD_pos-DD_pos_other)) < WDD_SIGNAL_DD_MAXDISTANCE)
+				{
+					N.insert_rows(N.size(), 1);
+					N.at(N.size()-1) = set_DD_IDs.at(i);
+				}
+			}
+		}
+		// first recursive level call
+		else if(sourceIDs.size() > 1)
+		{
+			for(std::size_t i=0; i< sourceIDs.size(); i++)
+			{
+				// remove discoverd neighbours from set
+				for(std::size_t j=0; j< N.size(); j++)
+				{
+					arma::uvec q1 = arma::find(set_DD_IDs == N.at(j), 1);
+					if(q1.size() == 1)
+						set_DD_IDs.shed_row(q1.at(0));
+					else if(q1.size() > 1)
+					{
+						printf("ERROR! ::getNeighbours: Unexpected number of DD Ids found!:\n");
+						exit(19);
+					}
+				}
+
+				// check if some ids are left
+				if(set_DD_IDs.is_empty())
+					break;
+
+				arma::Col<arma::uword> _sourceIDs;
+				_sourceIDs.insert_rows(0,1);
+				_sourceIDs.at(0) = sourceIDs.at(i);
+
+				N = getNeighbours(_sourceIDs, N, set_DD_IDs);
+			}
+		}
+		else
+		{
+			printf("ERROR! ::getNeighbours: Unexpected assertion failure!\n");
+			exit(19);
+		}
+
+		return N;
+	}
 	void WaggleDanceDetector::printFBufferConfig()
 	{
 		printf("Printing frame buffer configuration:\n");
@@ -437,7 +662,7 @@ namespace wdd
 		printf("[WDD_SIGNAL_DD_MAXDISTANCE] %.1f\n",WDD_SIGNAL_DD_MAXDISTANCE);
 		printf("[WDD_SIGNAL_DD_MIN_CLUSTER_SIZE] %d\n",
 			WDD_SIGNAL_DD_MIN_CLUSTER_SIZE);
-		printf("[WDD_SIGNAL_DD_MIN_SCORE] %.1f\n",WDD_SIGNAL_DD_MIN_SCORE);
+		printf("[WDD_SIGNAL_DD_MIN_POTENTIAL] %.1f\n",WDD_SIGNAL_DD_MIN_POTENTIAL);
 	}
 	void WaggleDanceDetector::printPositionConfig()
 	{

@@ -100,7 +100,7 @@ int main()
 	std::vector<double> wdd_signal_dd_config;
 	wdd_signal_dd_config.push_back(2.3);
 	wdd_signal_dd_config.push_back(4);
-//	wdd_signal_dd_config.push_back(17000);
+	//wdd_signal_dd_config.push_back(17000);
 		wdd_signal_dd_config.push_back(1700);
 
 	WaggleDanceDetector wdd(
@@ -144,11 +144,6 @@ int main()
 		// finally increase frame_input counter
 		std::cout<<"Done frame#: "<<frame_counter<<std::endl;
 		frame_counter++;
-
-		if(167 == frame_counter)
-			exit(18);
-		/* debug break*/
-		//break;
 	}
 
 }

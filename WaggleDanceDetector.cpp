@@ -9,6 +9,8 @@
 
 namespace wdd
 {
+	std::string signalFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\signal.txt";
+	FILE * sigFile;
 
 	WaggleDanceDetector::WaggleDanceDetector(
 		std::vector<double> 	dd_freq_config,
@@ -32,11 +34,13 @@ namespace wdd
 		setPositions(dd_pos_id2point_map);
 
 		initWDDSignalValues();
+
+		fopen_s (&sigFile, signalFile.c_str() , "a+" );
 	}
 
 	WaggleDanceDetector::~WaggleDanceDetector()
 	{
-		// TODO Auto-generated destructor stub
+		fclose (sigFile);
 	}
 	/*
 	* Dependencies: WDD_FBUFFER_SIZE, FRAME_RATE, DD_FREQS_NUMBER, DD_FREQS
@@ -289,6 +293,7 @@ namespace wdd
 			execDetection();
 		}
 	}
+		
 	void WaggleDanceDetector::execDetection()
 	{
 		// check buffer is completly filled
@@ -301,9 +306,10 @@ namespace wdd
 		// run detection on WaggleDanceDetector layer
 		execDetectionGetWDDSignals();
 
-
-		if(WDD_SIGNAL && WDD_VERBOSE)
+		// toggel signal file creation
+		if(WDD_SIGNAL && true)
 		{
+			fprintf(sigFile, "%I64u", WDD_SIGNAL_FRAME_NR);
 			for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
 			{
 				//std::cout << "Frame# %d: WDD Signal at: "<<it->second.x << ", " << it->second.y << std::endl;
@@ -311,8 +317,10 @@ namespace wdd
 				//double x = static_cast<double>();
 				//double y = static_cast<double>();
 
-				printf("Frame# %I64u: WDD Signal at: %.1f, %.1f\n",WDD_SIGNAL_FRAME_NR,it->second.x,it->second.y);
+				fprintf(sigFile, " %.5f %.5f", 
+					it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
 			}
+			fprintf(sigFile, "\n");
 		}
 	}
 	/*

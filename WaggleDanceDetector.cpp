@@ -520,8 +520,7 @@ namespace wdd
 		}
 
 		// analyze cluster sizes
-		unsigned int unqClusterIDs = clusterID;
-		arma::uvec count_unqClusterIDs(unqClusterIDs);
+		arma::uvec count_unqClusterIDs(clusterID);
 		count_unqClusterIDs.fill(0);
 
 		// get size of each cluster
@@ -536,7 +535,7 @@ namespace wdd
 			if(count_unqClusterIDs.at(i) >= WDD_SIGNAL_DD_MIN_CLUSTER_SIZE)
 			{
 				f_unqClusterIDs.insert_rows(f_unqClusterIDs.size(),1);
-				f_unqClusterIDs.at(f_unqClusterIDs.size()-1,i);
+				f_unqClusterIDs.at(f_unqClusterIDs.size()-1) = i;
 			}
 		}
 

@@ -87,6 +87,8 @@ namespace wdd
 		// defines the absolute score value a DD needs for signal
 		double WDD_SIGNAL_DD_MIN_POTENTIAL;
 
+		// if set to true, appends wdd signal to output file
+		bool WDD_WRITE_SIGNAL_FILE;
 		// defines if verbose execution mode
 		//TODO: check for remove as not used anymore
 		bool 	WDD_VERBOSE;
@@ -124,6 +126,7 @@ namespace wdd
 			std::vector<double> frame_config,
 			int wdd_fbuffer_size,
 			std::vector<double> wdd_signal_dd_config,
+			bool wdd_write_signal_file,
 			bool wdd_verbose
 			);
 		~WaggleDanceDetector();
@@ -142,6 +145,7 @@ namespace wdd
 		void createFreqSamples();
 		void execDetectionGetDDPotentials();
 		void execDetectionGetWDDSignals();
+		void execDetectionWriteSignalFileLine();
 		void initDDSignalValues();
 		void initWDDSignalValues();
 		arma::Col<arma::uword> getNeighbours(arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs);

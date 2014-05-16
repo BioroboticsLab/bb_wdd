@@ -18,10 +18,12 @@ namespace wdd
 		std::vector<double> 	frame_config,
 		int 			wdd_fbuffer_size,
 		std::vector<double> 	wdd_signal_dd_config,
+		bool wdd_write_signal_file,
 		bool 			wdd_verbose
 		)
 	{
 		WDD_VERBOSE = wdd_verbose;
+		WDD_WRITE_SIGNAL_FILE = wdd_write_signal_file;
 
 		setSignalConfig(wdd_signal_dd_config);
 
@@ -293,7 +295,6 @@ namespace wdd
 			execDetection();
 		}
 	}
-		
 	void WaggleDanceDetector::execDetection()
 	{
 		// check buffer is completly filled
@@ -307,21 +308,25 @@ namespace wdd
 		execDetectionGetWDDSignals();
 
 		// toggel signal file creation
-		if(WDD_SIGNAL && true)
+		if(WDD_SIGNAL && WDD_WRITE_SIGNAL_FILE)
 		{
-			fprintf(sigFile, "%I64u", WDD_SIGNAL_FRAME_NR);
-			for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
-			{
-				//std::cout << "Frame# %d: WDD Signal at: "<<it->second.x << ", " << it->second.y << std::endl;
-
-				//double x = static_cast<double>();
-				//double y = static_cast<double>();
-
-				fprintf(sigFile, " %.5f %.5f", 
-					it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
-			}
-			fprintf(sigFile, "\n");
+			execDetectionWriteSignalFileLine();
 		}
+	}
+	void WaggleDanceDetector::execDetectionWriteSignalFileLine()
+	{
+		fprintf(sigFile, "%I64u", WDD_SIGNAL_FRAME_NR);
+		for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
+		{
+			//std::cout << "Frame# %d: WDD Signal at: "<<it->second.x << ", " << it->second.y << std::endl;
+
+			//double x = static_cast<double>();
+			//double y = static_cast<double>();
+
+			fprintf(sigFile, " %.5f %.5f",
+				it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
+		}
+		fprintf(sigFile, "\n");
 	}
 	/*
 	* for each defined DotDetector in DD_POS_ID2POINT_MAP retrieve the raw signal (typicaly uint8)
@@ -462,7 +467,7 @@ namespace wdd
 
 			// assign source id (root id)
 			arma::Col<arma::uword> root_DD_id(std::vector<arma::uword>(1,pos_DD_IDs.at(i)));
-			
+
 			// select only unclustered DD as working set
 			arma::Col<arma::uword> pos_DD_unclustered_idx = arma::find(pos_DD_CIDs == -1);
 

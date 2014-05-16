@@ -20,7 +20,7 @@ int main()
 	bool verbose = false;
 	bool visual = true;
 	bool wdd_verbose = true;
-
+	bool wdd_write_signal_file = false;
 	/*
 	* prepare OpenCV VideoCapture
 	*/
@@ -110,6 +110,7 @@ int main()
 		frame_config,
 		wdd_fbuffer_size,
 		wdd_signal_dd_config,
+		wdd_write_signal_file,
 		wdd_verbose);
 
 	unsigned __int64 frame_counter = 0;
@@ -159,5 +160,4 @@ int main()
 		//std::cout<<"Done frame#: "<<frame_counter<<std::endl;
 		frame_counter++;
 	}
-
 }

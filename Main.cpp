@@ -10,7 +10,12 @@ bool fileExists (const std::string& name)
 
 int main()
 {
+	int FRAME_RATE = 100;
 	int FRAME_RED_FAC = 4;
+	int wdd_fbuffer_size = 32;
+	double wdd_signal_dd_maxdistance = 2.3;
+	int wdd_signal_dd_min_cluster_size = 6;
+	double wdd_signal_dd_min_score = 16444;
 
 	bool verbose = false;
 	bool visual = false;
@@ -28,7 +33,7 @@ int main()
 		cv::namedWindow("Video");
 
 
-	std::string videoFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\data\\test.avi";
+	std::string videoFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\data\\22_08_2008-1229-SINGLE.raw.avi";
 
 	if(!fileExists(videoFile))
 	{
@@ -74,7 +79,7 @@ int main()
 
 	/* TODO: conversion from int to double to int ?! */
 	std::vector<double> frame_config;
-	frame_config.push_back(vp.getFrameRate());
+	frame_config.push_back((double)FRAME_RATE);
 	frame_config.push_back((double)FRAME_RED_FAC);
 	frame_config.push_back((double)frame_target_width);
 	frame_config.push_back((double)frame_target_height);
@@ -94,14 +99,10 @@ int main()
 		}
 	}
 
-
-	int wdd_fbuffer_size = 32;
-
 	std::vector<double> wdd_signal_dd_config;
-	wdd_signal_dd_config.push_back(2.3);
-	wdd_signal_dd_config.push_back(4);
-	//wdd_signal_dd_config.push_back(17000);
-		wdd_signal_dd_config.push_back(1700);
+	wdd_signal_dd_config.push_back(wdd_signal_dd_maxdistance);
+	wdd_signal_dd_config.push_back(wdd_signal_dd_min_cluster_size);
+	wdd_signal_dd_config.push_back(wdd_signal_dd_min_score);
 
 	WaggleDanceDetector wdd(
 		dd_freq_config,
@@ -110,8 +111,6 @@ int main()
 		wdd_fbuffer_size,
 		wdd_signal_dd_config,
 		wdd_verbose);
-
-
 
 	unsigned __int64 frame_counter = 0;
 
@@ -122,7 +121,7 @@ int main()
 
 		// subsample
 		cv::resize(frame_input_monochrome, frame_target, frame_target.size(),
-			0, 0, cv::INTER_LINEAR);
+			0, 0, cv::INTER_AREA);
 
 		if(verbose)
 		{

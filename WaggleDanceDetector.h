@@ -72,7 +72,7 @@ namespace wdd
 		// saves total detection signal, either 0 or 1
 		bool WDD_SIGNAL;
 		// saves number of detection signals
-		int WDD_SIGNAL_NUMBER;
+		std::size_t WDD_SIGNAL_NUMBER;
 		// saves positions of detection signals as map from dd_id -> Point2d
 		std::map<std::size_t,cv::Point2d> WDD_SIGNAL_ID2POINT_MAP;
 		// saves unique #frame
@@ -135,6 +135,9 @@ namespace wdd
 		void printFrameConfig();
 		void printSignalConfig();
 		void printPositionConfig();
+		bool isWDDSignal();
+		std::size_t getWDDSignalNumber();
+		const std::map<std::size_t,cv::Point2d> * getWDDSignalId2PointMap();
 	private:
 		void createFreqSamples();
 		void execDetectionGetDDPotentials();

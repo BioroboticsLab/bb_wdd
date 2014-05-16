@@ -67,7 +67,7 @@ namespace wdd
 	}
 	std::string InputVideoParameters::getFrameFormatOf(cv::VideoCapture * vc)
 	{
-		return TypeToString::typeToString(vc->get(CV_CAP_PROP_FORMAT));
+		return TypeToString::typeToString(static_cast<int>(vc->get(CV_CAP_PROP_FORMAT)));
 	}
 	// print function(s)
 	void InputVideoParameters::printPropertiesOf(cv::VideoCapture * vc)

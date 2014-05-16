@@ -18,7 +18,7 @@ int main()
 	double wdd_signal_dd_min_score = 16444;
 
 	bool verbose = false;
-	bool visual = false;
+	bool visual = true;
 	bool wdd_verbose = true;
 
 	/*
@@ -114,6 +114,12 @@ int main()
 
 	unsigned __int64 frame_counter = 0;
 
+	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
+	int Cir_radius = 11;
+	cv::Scalar Cir_color = cv::Scalar(124,255,0);
+	//make the circle filled with value < 0
+	int Cir_thikness = -1;
+
 	while(capture.read(frame_input))
 	{
 		//convert BGR -> Gray
@@ -136,12 +142,21 @@ int main()
 		// output visually if enabled
 		if(visual)
 		{
-			cv::imshow("Video", frame_input_monochrome);
+			//check for WDD Signal
+			if(wdd.isWDDSignal())
+			{
+				for(std::size_t i=0; i< wdd.getWDDSignalNumber(); i++)
+				{
+					cv::circle(frame_input, (*WDDSignalId2PointMap).find(i)->second*std::pow(2,FRAME_RED_FAC),
+						Cir_radius, Cir_color, Cir_thikness);
+				}
+			}
+			cv::imshow("Video", frame_input);
 			cv::waitKey(10);
 
 		}
 		// finally increase frame_input counter
-		std::cout<<"Done frame#: "<<frame_counter<<std::endl;
+		//std::cout<<"Done frame#: "<<frame_counter<<std::endl;
 		frame_counter++;
 	}
 

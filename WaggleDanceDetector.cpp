@@ -629,6 +629,18 @@ namespace wdd
 
 		return N;
 	}
+	bool WaggleDanceDetector::isWDDSignal()
+	{
+		return WDD_SIGNAL;
+	}
+	std::size_t WaggleDanceDetector::getWDDSignalNumber()
+	{
+		return WDD_SIGNAL_NUMBER;
+	}
+	const std::map<std::size_t,cv::Point2d> * WaggleDanceDetector::getWDDSignalId2PointMap()
+	{
+		return &WDD_SIGNAL_ID2POINT_MAP;
+	}
 	void WaggleDanceDetector::printFBufferConfig()
 	{
 		printf("Printing frame buffer configuration:\n");

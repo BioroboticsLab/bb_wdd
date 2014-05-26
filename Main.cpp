@@ -10,6 +10,18 @@ bool fileExists (const std::string& name)
 
 int main()
 {
+	//std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x165_y237.png";
+	std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x192_y205.png";
+	
+	std::vector<cv::Mat> seq = WaggleDanceOrientator::loadImagesFromFolder(videoSeq);
+	std::cout<<"Loaded "<<seq.size()<<" frames"<<std::endl;
+
+	WaggleDanceOrientator::extractOrientationFromImageSequence(seq,0);
+
+	
+
+	return 0;
+
 	int FRAME_RATE = 100;
 	int FRAME_RED_FAC = 4;
 	int wdd_fbuffer_size = 32;

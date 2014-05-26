@@ -85,13 +85,17 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cvblob.h" />
     <ClInclude Include="InputVideoParameters.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TypeToString.h" />
     <ClInclude Include="WaggleDanceDetector.h" />
+    <ClInclude Include="WaggleDanceOrientator.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cvblob.cpp" />
+    <ClCompile Include="cvlabel.cpp" />
     <ClCompile Include="InputVideoParameters.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -100,6 +104,7 @@
     </ClCompile>
     <ClCompile Include="TypeToString.cpp" />
     <ClCompile Include="WaggleDanceDetector.cpp" />
+    <ClCompile Include="WaggleDanceOrientator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

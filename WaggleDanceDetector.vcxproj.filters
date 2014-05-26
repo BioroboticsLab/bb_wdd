@@ -33,6 +33,12 @@
     <ClInclude Include="TypeToString.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WaggleDanceOrientator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cvblob.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +54,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TypeToString.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WaggleDanceOrientator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cvblob.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="cvlabel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -318,11 +318,6 @@ namespace wdd
 		fprintf(sigFile, "%I64u", WDD_SIGNAL_FRAME_NR);
 		for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
 		{
-			//std::cout << "Frame# %d: WDD Signal at: "<<it->second.x << ", " << it->second.y << std::endl;
-
-			//double x = static_cast<double>();
-			//double y = static_cast<double>();
-
 			fprintf(sigFile, " %.5f %.5f",
 				it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
 		}

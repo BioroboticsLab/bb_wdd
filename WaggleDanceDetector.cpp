@@ -9,8 +9,10 @@
 
 namespace wdd
 {
-	std::string signalFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\signal.txt";
-	FILE * sigFile;
+	std::string danceFile_path = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\dance.txt";
+	FILE * danceFile_ptr;
+	std::string signalFile_path = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\signal.txt";
+	FILE * signalFile_ptr;
 
 	WaggleDanceDetector::WaggleDanceDetector(
 		std::vector<double> 	dd_freq_config,
@@ -37,12 +39,16 @@ namespace wdd
 
 		initWDDSignalValues();
 
-		fopen_s (&sigFile, signalFile.c_str() , "a+" );
+		initWDDDanceValues();
+
+		fopen_s (&danceFile_ptr, danceFile_path.c_str() , "a+" );
+		fopen_s (&signalFile_ptr, signalFile_path.c_str() , "a+" );		
 	}
 
 	WaggleDanceDetector::~WaggleDanceDetector()
 	{
-		fclose (sigFile);
+		fclose (danceFile_ptr);
+		fclose (signalFile_ptr);
 	}
 	/*
 	* Dependencies: WDD_FBUFFER_SIZE, FRAME_RATE, DD_FREQS_NUMBER, DD_FREQS
@@ -91,7 +97,16 @@ namespace wdd
 	{
 		WDD_SIGNAL = false;
 		WDD_SIGNAL_NUMBER = 0;
-
+	}
+	/*
+	* Dependencies: NULL
+	*/
+	void WaggleDanceDetector::initWDDDanceValues()
+	{
+		WDD_DANCE_MAX_POS_DIST = sqrt(2);
+		WDD_DANCE_MAX_FRAME_GAP = 3;
+		WDD_DANCE_MIN_CONSFRAMES = 20;
+		WDD_DANCE_ID = 0;
 	}
 	/*
 	* Dependencies: WDD_VERBOSE
@@ -307,21 +322,118 @@ namespace wdd
 		// run detection on WaggleDanceDetector layer
 		execDetectionGetWDDSignals();
 
-		// toggel signal file creation
-		if(WDD_SIGNAL && WDD_WRITE_SIGNAL_FILE)
+		// run top level detection, concat over time
+		if(WDD_SIGNAL)
+			execDetectionConcatWDDSignals();
+	}
+	void WaggleDanceDetector::execDetectionConcatWDDSignals()
+	{
+		// preallocate 
+		double dist;
+		DANCE d;		
+
+		bool danceFound;
+		DANCE * d_ptr = NULL;
+		bool newPosition;
+
+		std::vector<cv::Point2d> * pos_vec_ptr;
+		// foreach WDD_SIGNAL
+		for(std::size_t i=0; i < WDD_SIGNAL_ID2POINT_MAP.size(); i++)
 		{
-			execDetectionWriteSignalFileLine();
+			danceFound = false; newPosition=false;
+			// check distance against known Dances
+			for (auto it_dances=WDD_UNIQ_DANCES.begin();it_dances!=WDD_UNIQ_DANCES.end(); ++it_dances)
+			{
+				pos_vec_ptr = &(*it_dances).positions;
+
+				// ..and their associated points
+				for(auto it_pt=(*pos_vec_ptr).begin(); it_pt!=(*pos_vec_ptr).end(); ++it_pt)
+				{
+					dist = cv::norm(WDD_SIGNAL_ID2POINT_MAP[i] - *it_pt);
+
+					// wdd signal belongs to known dance
+					if( dist < WDD_DANCE_MAX_POS_DIST)
+					{
+						danceFound = true;
+						d_ptr = &(*it_dances);
+
+						// update dance
+						// check if it is a new dance position - continue to calc distance for all positions, get MIN(dist)
+						for(auto it_pt2=it_pt+1; it_pt2!=(*pos_vec_ptr).end(); ++it_pt2)
+							dist = MIN(dist, cv::norm(WDD_SIGNAL_ID2POINT_MAP[i] - *it_pt2));
+
+						if(dist > 0)
+							newPosition = true;
+
+						(*it_dances).DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
+
+						// jump to WDD_SIGNAL loop
+						break;break;
+					}
+				}
+			}
+
+			if(!danceFound)
+			{
+				// if reached here, new DANCE encountered!
+				d.DANCE_UNIQE_ID = WDD_DANCE_ID++;
+				d.DANCE_FRAME_START = WDD_SIGNAL_FRAME_NR;
+				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
+				d.positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
+				WDD_UNIQ_DANCES.push_back(d);
+			}
+			else if(newPosition)
+			{
+				d_ptr->positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
+			}
+		}
+
+		//house keeping of Dance Signals
+		for (auto it_dances=WDD_UNIQ_DANCES.begin();it_dances!=WDD_UNIQ_DANCES.end(); )
+		{
+			// if Dance did not recieve new signal for over WDD_UNIQ_SIGID_MAX_GAP frames
+			if(WDD_SIGNAL_FRAME_NR - (*it_dances).DANCE_FRAME_END > WDD_DANCE_MAX_FRAME_GAP)
+			{
+				// check for minimum number of consecutiv frames for a positive dance
+				if(((*it_dances).DANCE_FRAME_END - (*it_dances).DANCE_FRAME_START +1 ) >= WDD_DANCE_MIN_CONSFRAMES)
+				{
+					execDetectionFinalizeDance(*it_dances);
+				}
+				it_dances = WDD_UNIQ_DANCES.erase(it_dances);
+			}
+			else
+			{
+				++it_dances;
+			}
 		}
 	}
+	void WaggleDanceDetector::execDetectionFinalizeDance(DANCE d)
+	{
+		//TODO start Orient Extrac
+
+		execDetectionWriteDanceFileLine(d);
+	}
+
+	void WaggleDanceDetector::execDetectionWriteDanceFileLine(DANCE d)
+	{
+		fprintf(danceFile_ptr, "%I64u %I64u %I64u", d.DANCE_FRAME_START, d.DANCE_FRAME_END, d.DANCE_UNIQE_ID);
+		for (auto it=d.positions.begin(); it!=d.positions.end(); ++it)
+		{
+			fprintf(danceFile_ptr, " %.5f %.5f %.5f",
+				(*it).x*pow(2, FRAME_REDFAC), (*it).y*pow(2, FRAME_REDFAC), 0);
+		}
+		fprintf(danceFile_ptr, "\n");
+	}
+
 	void WaggleDanceDetector::execDetectionWriteSignalFileLine()
 	{
-		fprintf(sigFile, "%I64u", WDD_SIGNAL_FRAME_NR);
+		fprintf(signalFile_ptr, "%I64u", WDD_SIGNAL_FRAME_NR);
 		for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
 		{
-			fprintf(sigFile, " %.5f %.5f",
+			fprintf(signalFile_ptr, " %.5f %.5f",
 				it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
 		}
-		fprintf(sigFile, "\n");
+		fprintf(signalFile_ptr, "\n");
 	}
 	/*
 	* for each defined DotDetector in DD_POS_ID2POINT_MAP retrieve the raw signal (typicaly uint8)
@@ -569,6 +681,12 @@ namespace wdd
 			center *= 1/static_cast<double>(idx.size());
 
 			WDD_SIGNAL_ID2POINT_MAP[WDD_SIGNAL_NUMBER++] = center;
+		}
+
+		// toggel signal file creation
+		if(WDD_WRITE_SIGNAL_FILE)
+		{
+			execDetectionWriteSignalFileLine();
 		}
 	}
 

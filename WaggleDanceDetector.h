@@ -11,6 +11,14 @@
 
 namespace wdd
 {
+	struct DANCE{
+		unsigned long long DANCE_UNIQE_ID;
+
+		unsigned long long DANCE_FRAME_START;
+		unsigned long long DANCE_FRAME_END;
+
+		std::vector<cv::Point2d> positions;
+	};
 
 	class WaggleDanceDetector
 	{
@@ -93,31 +101,28 @@ namespace wdd
 		//TODO: check for remove as not used anymore
 		bool 	WDD_VERBOSE;
 
-		/* post signal processing */
+		/* 
+			post signal processing 
+		*/
 		// TODO: move post processing (dance image extraction & orientation
 		// determination) in own class
-
+		
 		// defines the maximum distance between two positions of same signal
 		// TODO: calculate from bee size & DPI
-		double 	WDD_UNIQ_SIGID_MAX_DIST;
-		// unique signal id counter
-		unsigned long long WDD_UNIQ_SIGID_NEXT;
-
-		// table to show final WD signal
-		double 	WDD_UNIQ_SIGID_POS[1];
-
-		/* Each positive DD per frame will transform to one entry in the table.
-		Two types of entries: root/non-root.
-		[SIGNALID, isRoot, XPosition, YPosition, isFirstSignal]
-		TODO: isRoot and isFirstSignal redundant?
-		TODO: need #frame to determine gaps and when to remove
-		TODO: need orientation attribute which is assigned to a detection*/
-
-		double 	WDD_UNIQ_SIGID_POS_TABLE[1][5];
+		double 	WDD_DANCE_MAX_POS_DIST;
 		// defines maximum gap of frames for a signal to connect
-		int 	WDD_UNIQ_SIGID_MAX_GAP;
+		int 	WDD_DANCE_MAX_FRAME_GAP;
 		// defines minimum number of consecutive frames to form a final WD signal
-		int 	WDD_UNIQ_SIGID_MIN_FRAMES;
+		int 	WDD_DANCE_MIN_CONSFRAMES;
+		// unique dance id counter
+		unsigned long long WDD_DANCE_ID;
+
+		// maps to show top level WDD signals (=dances)
+		std::vector<DANCE> WDD_UNIQ_DANCES;
+	//	std::map<unsigned long long, std::pair<unsigned long long,unsigned long long>>
+		//	WDD_UNIQ_SIGID2FRAMEWINDOW_MAP;
+		//std::map<unsigned long long, std::vector<cv::Point2d>>
+//			WDD_UNIQ_SIGID2POSITIONS_MAP;		
 
 	public:
 		WaggleDanceDetector(
@@ -145,9 +150,13 @@ namespace wdd
 		void createFreqSamples();
 		void execDetectionGetDDPotentials();
 		void execDetectionGetWDDSignals();
+		void execDetectionConcatWDDSignals();
+		void execDetectionFinalizeDance(DANCE d);
+		void execDetectionWriteDanceFileLine(DANCE d);
 		void execDetectionWriteSignalFileLine();
 		void initDDSignalValues();
 		void initWDDSignalValues();
+		void initWDDDanceValues();
 		arma::Col<arma::uword> getNeighbours(arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs);
 		void setFBufferConfig(int wdd_fbuffer_size);
 		void setFrameConfig(std::vector<double> dd_frame_config);

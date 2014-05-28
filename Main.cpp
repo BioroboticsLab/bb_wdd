@@ -10,6 +10,7 @@ bool fileExists (const std::string& name)
 
 int main()
 {
+	/*
 	//std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x165_y237.png";
 	std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x192_y205.png";
 	
@@ -17,10 +18,11 @@ int main()
 	std::cout<<"Loaded "<<seq.size()<<" frames"<<std::endl;
 
 	WaggleDanceOrientator::extractOrientationFromImageSequence(seq,0);
-
+	*/
 	
 
-	return 0;
+	// naive frame buffer - save all :p -- too naive :-(
+	//std::unordered_map<unsigned __int64, cv::Mat> frameBuffer;
 
 	int FRAME_RATE = 100;
 	int FRAME_RED_FAC = 4;
@@ -30,9 +32,9 @@ int main()
 	double wdd_signal_dd_min_score = 16444;
 
 	bool verbose = false;
-	bool visual = true;
+	bool visual = false;
 	bool wdd_verbose = true;
-	bool wdd_write_signal_file = false;
+	bool wdd_write_signal_file = true;
 	/*
 	* prepare OpenCV VideoCapture
 	*/
@@ -133,6 +135,8 @@ int main()
 	//make the circle filled with value < 0
 	int Cir_thikness = -1;
 
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
 	while(capture.read(frame_input))
 	{
 		//convert BGR -> Gray
@@ -141,13 +145,6 @@ int main()
 		// subsample
 		cv::resize(frame_input_monochrome, frame_target, frame_target.size(),
 			0, 0, cv::INTER_AREA);
-
-		if(verbose)
-		{
-			TypeToString::printType(frame_input);
-			TypeToString::printType(frame_input_monochrome);
-			TypeToString::printType(frame_target);
-		}
 
 		// feed WDD with tar_frame
 		wdd.addFrame(frame_target, frame_counter, true);
@@ -168,8 +165,18 @@ int main()
 			cv::waitKey(10);
 
 		}
-		// finally increase frame_input counter
-		//std::cout<<"Done frame#: "<<frame_counter<<std::endl;
+
+		// finally increase frame_input counter	
 		frame_counter++;
+	
+		// benchmark output
+		if((frame_counter % 100) == 0)
+		{
+			std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
+
+			std::cout<<"fps: "<< 100/sec.count() <<"("<< cvRound(sec.count()*1000)<<"ms)"<<std::endl;
+			
+			start = std::chrono::steady_clock::now();
+		}
 	}
 }

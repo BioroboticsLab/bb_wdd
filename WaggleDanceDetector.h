@@ -12,7 +12,7 @@
 namespace wdd
 {
 	struct DANCE{
-		unsigned long long DANCE_UNIQE_ID;
+		std::size_t DANCE_UNIQE_ID;
 
 		unsigned long long DANCE_FRAME_START;
 		unsigned long long DANCE_FRAME_END;
@@ -106,7 +106,8 @@ namespace wdd
 		*/
 		// TODO: move post processing (dance image extraction & orientation
 		// determination) in own class
-		
+		// indicates that a dance is completed
+		bool WDD_DANCE;
 		// defines the maximum distance between two positions of same signal
 		// TODO: calculate from bee size & DPI
 		double 	WDD_DANCE_MAX_POS_DIST;
@@ -115,14 +116,14 @@ namespace wdd
 		// defines minimum number of consecutive frames to form a final WD signal
 		int 	WDD_DANCE_MIN_CONSFRAMES;
 		// unique dance id counter
-		unsigned long long WDD_DANCE_ID;
+		std::size_t WDD_DANCE_ID;
 
 		// maps to show top level WDD signals (=dances)
 		std::vector<DANCE> WDD_UNIQ_DANCES;
-	//	std::map<unsigned long long, std::pair<unsigned long long,unsigned long long>>
-		//	WDD_UNIQ_SIGID2FRAMEWINDOW_MAP;
-		//std::map<unsigned long long, std::vector<cv::Point2d>>
-//			WDD_UNIQ_SIGID2POSITIONS_MAP;		
+		// map to save ALL dances 
+		std::vector<DANCE> WDD_UNIQ_FINISH_DANCES;
+		// pointer to videoFrameBuffer (accessing history frames)
+		VideoFrameBuffer * WDD_VideoFrameBuffer_ptr;
 
 	public:
 		WaggleDanceDetector(
@@ -132,7 +133,8 @@ namespace wdd
 			int wdd_fbuffer_size,
 			std::vector<double> wdd_signal_dd_config,
 			bool wdd_write_signal_file,
-			bool wdd_verbose
+			bool wdd_verbose,
+			VideoFrameBuffer * videoFrameBuffer_ptr
 			);
 		~WaggleDanceDetector();
 		void addFrame(cv::Mat f, unsigned long long fid, bool imidiateDetect);
@@ -144,6 +146,7 @@ namespace wdd
 		void printSignalConfig();
 		void printPositionConfig();
 		bool isWDDSignal();
+		bool isWDDDance();
 		std::size_t getWDDSignalNumber();
 		const std::map<std::size_t,cv::Point2d> * getWDDSignalId2PointMap();
 	private:
@@ -151,6 +154,7 @@ namespace wdd
 		void execDetectionGetDDPotentials();
 		void execDetectionGetWDDSignals();
 		void execDetectionConcatWDDSignals();
+		void execDetectionHousekeepWDDSignals();
 		void execDetectionFinalizeDance(DANCE d);
 		void execDetectionWriteDanceFileLine(DANCE d);
 		void execDetectionWriteSignalFileLine();

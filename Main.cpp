@@ -2,28 +2,61 @@
 
 using namespace wdd;
 
-bool fileExists (const std::string& name)
+bool fileExists (const std::string& file_name)
 {
 	struct stat buffer;
-	return (stat (name.c_str(), &buffer) == 0);
+	return (stat (file_name.c_str(), &buffer) == 0);
+}
+
+bool dirExists(const std::string& dirName_in)
+{
+	DWORD ftyp = GetFileAttributesA(dirName_in.c_str());
+	if (ftyp == INVALID_FILE_ATTRIBUTES)
+		return false;  //something is wrong with your path!
+
+	if (ftyp & FILE_ATTRIBUTE_DIRECTORY)
+		return true;   // this is a directory!
+
+	return false;    // this is not a directory!
+}
+
+std::vector<cv::Mat> loadFrameSequenc(unsigned long long sFrame, unsigned long long eFrame, cv::Point2i center, cv::VideoCapture * capture_ptr )
+{
+	cv::Mat frame;
+	cv::Mat subframe_monochrome;
+	unsigned long long save_currentFrameNumber = static_cast<unsigned long long>(capture_ptr->get(CV_CAP_PROP_POS_FRAMES));
+
+	std::vector<cv::Mat> out;
+
+	cv::Size size(100,100);
+
+	cv::Rect roi_rec((center*pow(2, 4)) - cv::Point(50,50), size);
+
+	//init loop
+	capture_ptr->set(CV_CAP_PROP_POS_FRAMES , static_cast<double>(sFrame-15));
+
+	while(capture_ptr->get(CV_CAP_PROP_POS_FRAMES) <=  eFrame-15)
+	{
+		if(capture_ptr->read(frame))
+		{
+			cv::Mat roi(frame, roi_rec);
+			cv::cvtColor(roi,subframe_monochrome, CV_BGR2GRAY);
+			out.push_back(subframe_monochrome.clone());
+
+			//WaggleDanceOrientator::showImage(&out[out.size()-1]);
+		}
+		else
+			std::cerr << "Error loading frame# "<< capture_ptr->get(CV_CAP_PROP_POS_FRAMES) << std::endl;
+	}
+
+	capture_ptr->set(CV_CAP_PROP_POS_FRAMES , static_cast<double>(save_currentFrameNumber));
+
+	return out;
 }
 
 int main()
 {
-	/*
-	//std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x165_y237.png";
-	std::string videoSeq = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\test_in\\22_08_2008-1229-SINGLE_f%03d_x192_y205.png";
-	
-	std::vector<cv::Mat> seq = WaggleDanceOrientator::loadImagesFromFolder(videoSeq);
-	std::cout<<"Loaded "<<seq.size()<<" frames"<<std::endl;
-
-	WaggleDanceOrientator::extractOrientationFromImageSequence(seq,0);
-	*/
-	
-
-	// naive frame buffer - save all :p -- too naive :-(
-	//std::unordered_map<unsigned __int64, cv::Mat> frameBuffer;
-
+	/* default WDD parameter values */
 	int FRAME_RATE = 100;
 	int FRAME_RED_FAC = 4;
 	int wdd_fbuffer_size = 32;
@@ -33,36 +66,42 @@ int main()
 
 	bool verbose = false;
 	bool visual = false;
-	bool wdd_verbose = true;
+	bool wdd_verbose = false;
 	bool wdd_write_signal_file = true;
-	/*
-	* prepare OpenCV VideoCapture
-	*/
+
+
 	cv::Mat frame_input;
 	cv::Mat frame_input_monochrome;
 	cv::Mat frame_target;
-	cv::VideoCapture capture;
+
+	/*
+	* prepare OpenCV VideoCapture
+	*/
+	cv::VideoCapture capture(0);
+	if(!capture.isOpened())
+	{
+		std::cerr<<"Warning! No webcam detected, using file system as input!"<<std::endl;
+
+		std::string videoFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\data\\22_08_2008-1244-SINGLE.raw.avi";
+
+		if(!fileExists(videoFile))
+		{
+			std::cout << "video path not ok! " << std::endl;
+
+			exit(-201);
+		}
+
+		if(!capture.open(videoFile))
+		{
+			std::cout << "video not ok - check openCV install "
+				"(https://help.ubuntu.com/community/OpenCV)" << std::endl;
+
+			exit(-202);
+		}
+	}
 
 	if(visual)
 		cv::namedWindow("Video");
-
-
-	std::string videoFile = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\data\\22_08_2008-1229-SINGLE.raw.avi";
-
-	if(!fileExists(videoFile))
-	{
-		std::cout << "video path not ok! " << std::endl;
-
-		exit(-200);
-	}
-
-	if(!capture.open(videoFile))
-	{
-		std::cout << "video not ok - check openCV install "
-			"(https://help.ubuntu.com/community/OpenCV)" << std::endl;
-
-		exit(-200);
-	}
 
 	/*
 	* fetch video parameters
@@ -72,6 +111,12 @@ int main()
 	{
 		vp.printProperties();
 	}
+
+	/* prepare frame_counter */
+	unsigned long long frame_counter = 0;
+
+	/* prepare videoFrameBuffer */
+	VideoFrameBuffer videoFrameBuffer(frame_counter, cv::Size(vp.getFrameHeight(), vp.getFrameWidth()));
 
 	/* prepare buffer to hold mono chromized input frame */
 	frame_input_monochrome =
@@ -98,7 +143,7 @@ int main()
 	frame_config.push_back((double)frame_target_width);
 	frame_config.push_back((double)frame_target_height);
 
-	/* TODO: calculate positions from reduced frame size, full grid */
+
 	std::map<std::size_t,cv::Point2i> dd_pos_id2point_map;
 	std::size_t dd_uniq_id = 0;
 
@@ -125,9 +170,10 @@ int main()
 		wdd_fbuffer_size,
 		wdd_signal_dd_config,
 		wdd_write_signal_file,
-		wdd_verbose);
+		wdd_verbose,
+		&videoFrameBuffer);
 
-	unsigned __int64 frame_counter = 0;
+
 
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
 	int Cir_radius = 11;
@@ -141,6 +187,9 @@ int main()
 	{
 		//convert BGR -> Gray
 		cv::cvtColor(frame_input,frame_input_monochrome, CV_BGR2GRAY);
+
+		// save to global Frame Buffer
+		videoFrameBuffer.addFrame(&frame_input_monochrome);
 
 		// subsample
 		cv::resize(frame_input_monochrome, frame_target, frame_target.size(),
@@ -168,14 +217,14 @@ int main()
 
 		// finally increase frame_input counter	
 		frame_counter++;
-	
+
 		// benchmark output
 		if((frame_counter % 100) == 0)
 		{
 			std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
 
 			std::cout<<"fps: "<< 100/sec.count() <<"("<< cvRound(sec.count()*1000)<<"ms)"<<std::endl;
-			
+
 			start = std::chrono::steady_clock::now();
 		}
 	}

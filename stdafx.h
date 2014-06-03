@@ -28,6 +28,7 @@
 
 #include "TypeToString.h"
 #include "InputVideoParameters.h"
+#include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 #include "WaggleDanceOrientator.h"
 

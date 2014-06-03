@@ -21,9 +21,11 @@ namespace wdd
 		int 			wdd_fbuffer_size,
 		std::vector<double> 	wdd_signal_dd_config,
 		bool wdd_write_signal_file,
-		bool 			wdd_verbose
+		bool 			wdd_verbose,
+		VideoFrameBuffer * videoFrameBuffer_ptr
 		)
 	{
+		WDD_VideoFrameBuffer_ptr = videoFrameBuffer_ptr;
 		WDD_VERBOSE = wdd_verbose;
 		WDD_WRITE_SIGNAL_FILE = wdd_write_signal_file;
 
@@ -103,6 +105,7 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::initWDDDanceValues()
 	{
+		WDD_DANCE = false;
 		WDD_DANCE_MAX_POS_DIST = sqrt(2);
 		WDD_DANCE_MAX_FRAME_GAP = 3;
 		WDD_DANCE_MIN_CONSFRAMES = 20;
@@ -325,6 +328,8 @@ namespace wdd
 		// run top level detection, concat over time
 		if(WDD_SIGNAL)
 			execDetectionConcatWDDSignals();
+
+		execDetectionHousekeepWDDSignals();
 	}
 	void WaggleDanceDetector::execDetectionConcatWDDSignals()
 	{
@@ -366,7 +371,9 @@ namespace wdd
 							newPosition = true;
 
 						(*it_dances).DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
-
+						
+						if(WDD_VERBOSE)
+							std::cout<<WDD_SIGNAL_FRAME_NR<<" - UPD: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
 						// jump to WDD_SIGNAL loop
 						break;break;
 					}
@@ -388,6 +395,10 @@ namespace wdd
 			}
 		}
 
+		
+	}
+	void WaggleDanceDetector::execDetectionHousekeepWDDSignals()
+	{
 		//house keeping of Dance Signals
 		for (auto it_dances=WDD_UNIQ_DANCES.begin();it_dances!=WDD_UNIQ_DANCES.end(); )
 		{
@@ -399,6 +410,9 @@ namespace wdd
 				{
 					execDetectionFinalizeDance(*it_dances);
 				}
+				if(WDD_VERBOSE)
+					std::cout<<WDD_SIGNAL_FRAME_NR<<" - DEL: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
+
 				it_dances = WDD_UNIQ_DANCES.erase(it_dances);
 			}
 			else
@@ -409,9 +423,15 @@ namespace wdd
 	}
 	void WaggleDanceDetector::execDetectionFinalizeDance(DANCE d)
 	{
-		//TODO start Orient Extrac
-
+		WDD_DANCE = true;
+		WDD_UNIQ_FINISH_DANCES.push_back(d);
+		
 		execDetectionWriteDanceFileLine(d);
+
+		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(d.DANCE_FRAME_START,d.DANCE_FRAME_END, cv::Point_<int>(d.positions[0]));
+
+		WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
+
 	}
 
 	void WaggleDanceDetector::execDetectionWriteDanceFileLine(DANCE d)
@@ -750,6 +770,10 @@ namespace wdd
 	bool WaggleDanceDetector::isWDDSignal()
 	{
 		return WDD_SIGNAL;
+	}
+	bool WaggleDanceDetector::isWDDDance()
+	{
+		return WDD_DANCE;
 	}
 	std::size_t WaggleDanceDetector::getWDDSignalNumber()
 	{

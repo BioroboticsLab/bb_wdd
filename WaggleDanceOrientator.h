@@ -12,7 +12,8 @@ public:
 	static cv::Vec2d getMeanOrientationFromUnityOrientations(std::vector<cv::Vec2d> * unityOrientations_ptr);
 	static void getMeanUnityOrientation(cv::Vec2d *class_mean_ptr, std::vector<cv::Vec2d *> *class_ptr_list_ptr);
 	static void saveDetectedOrientationImages(const std::vector<cv::Mat> *seq_in_ptr, const cv::Point2d *orient_ptr);
-	static void saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Mat * labels_ptr, std::vector<double> * majMinAxisLenghts);
+	static void saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Mat * labels_ptr, std::vector<double> * majMinAxisLenghts_ptr);
+	static void writeBlobsDetailLine(double angle, std::vector<double> * majMinAxisLenghts_ptr);
 	static void stretch(cv::Mat * in_ptr, cv::Mat * out_ptr);
 	static void showImagesFromFolder(const std::string dirInNameFormat);
 	static void showImage(const cv::Mat * img_ptr);
@@ -32,5 +33,7 @@ public:
 	static std::string path_out_root;
 	static std::string path_out_dyn;
 	static std::string extend_path_out_blob;
+	static std::string file_blobs_detail;
+	static FILE * file_blobs_detail_ptr;
 };
 

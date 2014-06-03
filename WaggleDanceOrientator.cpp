@@ -19,6 +19,8 @@ cv::Mat WaggleDanceOrientator::gaussKernel =
 std::string WaggleDanceOrientator::path_out_root = "../verbose/wdo/";
 std::string WaggleDanceOrientator::path_out_dyn = "";
 std::string WaggleDanceOrientator::extend_path_out_blob = "blobs/";
+std::string WaggleDanceOrientator::file_blobs_detail = "blobs_detail.txt";
+FILE * WaggleDanceOrientator::file_blobs_detail_ptr;
 
 WaggleDanceOrientator::WaggleDanceOrientator(void)
 {
@@ -36,36 +38,48 @@ std::vector<cv::Mat> WaggleDanceOrientator::extractOrientationFromImageSequence(
 {
 	if(WDO_VERBOSE)
 	{
-		std::wstring stemp = std::wstring(path_out_root.begin(), path_out_root.end());
-		LPCWSTR path_out_root_WINDOOF = stemp.c_str();
+		extern bool dirExists(const std::string& dirName_in);
+
+		std::wstring stemp;
 
 		// check for path_out_root folder
-		if(!CreateDirectory(path_out_root_WINDOOF, NULL))
-			printf("\nCouldn't create %S directory.\n", path_out_root_WINDOOF);
+		if(!dirExists(path_out_root))
+		{
+			stemp = std::wstring(path_out_root.begin(), path_out_root.end());
+			LPCWSTR path_out_root_WINDOOF = stemp.c_str();
+
+			if(!CreateDirectory(path_out_root_WINDOOF, NULL))
+				printf("\nCouldn't create %S directory.\n", path_out_root_WINDOOF);
+		}
 
 		// create dynamic path_out string
 		std::stringstream ss;
 		ss << path_out_root << unique_id << "/";
 		path_out_dyn = ss.str();
 
-		stemp = std::wstring(path_out_dyn.begin(), path_out_dyn.end());
-		LPCWSTR path_out_dyn_WINDOOF = stemp.c_str();
+		if(!dirExists(path_out_dyn))
+		{
+			stemp = std::wstring(path_out_dyn.begin(), path_out_dyn.end());
+			LPCWSTR path_out_dyn_WINDOOF = stemp.c_str();
 
-		// Create a new dynamic directory
-		if(!CreateDirectory(path_out_dyn_WINDOOF, NULL))
-			printf("\nCouldn't create %S directory.\n", path_out_dyn_WINDOOF);
+			// Create a new dynamic directory
+			if(!CreateDirectory(path_out_dyn_WINDOOF, NULL))
+				printf("\nCouldn't create %S directory.\n", path_out_dyn_WINDOOF);
+		}
 
-		// create dynamic path_out string
+		// create dynamic path_out_blob string
 		ss << extend_path_out_blob;
 		std::string path_out_dyn_blobs = ss.str();
 
-		stemp = std::wstring(path_out_dyn_blobs.begin(), path_out_dyn_blobs.end());
-		path_out_dyn_WINDOOF = stemp.c_str();
+		if(!dirExists(path_out_dyn_blobs))
+		{
+			stemp = std::wstring(path_out_dyn_blobs.begin(), path_out_dyn_blobs.end());
+			LPCWSTR path_out_dyn_WINDOOF = stemp.c_str();
 
-		// Create a new dynamic directory
-		if(!CreateDirectory(path_out_dyn_WINDOOF, NULL))
-			printf("\nCouldn't create %S directory.\n", path_out_dyn_WINDOOF);
-
+			// Create a new dynamic directory
+			if(!CreateDirectory(path_out_dyn_WINDOOF, NULL))
+				printf("\nCouldn't create %S directory.\n", path_out_dyn_WINDOOF);
+		}
 	}
 	std::vector<cv::Vec2d> unityOrientations;
 
@@ -205,8 +219,6 @@ cv::Vec2d WaggleDanceOrientator::getMeanOrientationFromUnityOrientations(std::ve
 	// finally, recalculate head class
 	WaggleDanceOrientator::getMeanUnityOrientation(&class_head_mean, &class_head_ptr_list);
 
-	std::cout<<class_head_mean<<std::endl;
-
 	return class_head_mean;
 }
 void WaggleDanceOrientator::getMeanUnityOrientation(cv::Vec2d *class_mean_ptr, std::vector<cv::Vec2d *> *class_ptr_list_ptr)
@@ -297,7 +309,7 @@ void WaggleDanceOrientator::extractUnityOrientationsFromBinaryImage(cv::Mat * td
 		cv::eigen(majMinAxisMoments, majMinAxisLenghts);
 
 		// check that blob has: height > 3x width
-		if( (majMinAxisLenghts[1] > 0) & ((majMinAxisLenghts[0]/majMinAxisLenghts[1]) > 3))
+		if( (majMinAxisLenghts[1] > 0) & ((majMinAxisLenghts[0]/majMinAxisLenghts[1]) >= 10))
 		{
 			// add angle of that blob (SI in radian)
 			angle = cvAngle((*it).second);
@@ -343,7 +355,7 @@ void WaggleDanceOrientator::saveDetectedOrientationImages(const std::vector<cv::
 
 		// set image file name
 		ss.str(std::string());
-		ss<<path_out_dyn<<"image_"<<i<<".png";
+		ss<<path_out_dyn<<"image_"<<picID+i<<".png";
 
 		// write image to disk
 		WaggleDanceOrientator::saveImage(&image_out, ss.str());
@@ -381,9 +393,9 @@ void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Ma
 	cv::Point2d CENT(blob_ptr->centroid.x, blob_ptr->centroid.y);
 
 	// define Minor axis, + 90° to Major, relative line length according to axis lengths
-	angle +=  0.5 * CV_PI;
+	double angle_minor = angle + 0.5 * CV_PI;
 	lengthLine *= (*majMinAxisLenghts_ptr)[1] / (*majMinAxisLenghts_ptr)[0];
-	cv::Point2d BOTT(blob_ptr->centroid.x+lengthLine*cos(angle), blob_ptr->centroid.y+lengthLine*sin(angle));
+	cv::Point2d BOTT(blob_ptr->centroid.x+lengthLine*cos(angle_minor), blob_ptr->centroid.y+lengthLine*sin(angle_minor));
 
 	// call cv line funcs
 	cv::line(blob_visual, CENT*_zoomFactor, HEAD*_zoomFactor, CV_RGB(0.,255.,0.),1,CV_AA);
@@ -392,7 +404,23 @@ void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Ma
 	ss.str(std::string());
 	ss <<path_out_dyn<<"blobs/"<<"image_"<<picID<<"_blob_"<<blobID<<".png";
 	WaggleDanceOrientator::saveImage(&blob_visual, ss.str());
+	WaggleDanceOrientator::writeBlobsDetailLine(angle, majMinAxisLenghts_ptr);
 }
+void WaggleDanceOrientator::writeBlobsDetailLine(double angle, std::vector<double> * majMinAxisLenghts_ptr)
+{
+	std::stringstream ss;
+
+	ss <<path_out_dyn<<file_blobs_detail;
+
+	fopen_s (&file_blobs_detail_ptr, ss.str().c_str() , "a+" );
+
+	fprintf(file_blobs_detail_ptr, "%d\t %d\t %.2f\t %.1f\t %.1f\t %.1f\n", picID, blobID, angle, 
+		(*majMinAxisLenghts_ptr)[0],(*majMinAxisLenghts_ptr)[1], 
+		(*majMinAxisLenghts_ptr)[0]/(*majMinAxisLenghts_ptr)[1]);
+
+	fclose(file_blobs_detail_ptr);
+}
+
 /* stretches the values of a td image to be inbetween [0;1] 
 TODO: check if conversion really is neccessary for algorithm, too?
 */
@@ -451,18 +479,18 @@ void WaggleDanceOrientator::statisticalSmoothingFilter(cv::Mat *img_ptr)
 				{
 					if (positive <= 2)
 						_0_list.push_back(cv::Point2i(row,col));
-						//img_filtered.at<unsigned char>(row,col) = 255;
+					//img_filtered.at<unsigned char>(row,col) = 255;
 					//else
-						
-						//img_filtered.at<unsigned char>(row,col) = 0;
+
+					//img_filtered.at<unsigned char>(row,col) = 0;
 				}   
 				else
 				{
 					if (positive > 5)
 						_1_list.push_back(cv::Point2i(row,col));
-						//img_filtered.at<unsigned char>(row,col) = 255;
+					//img_filtered.at<unsigned char>(row,col) = 255;
 					//else
-						//img_filtered.at<unsigned char>(row,col) = 0;
+					//img_filtered.at<unsigned char>(row,col) = 0;
 				}
 
 				// move one position to the right

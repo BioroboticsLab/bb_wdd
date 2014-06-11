@@ -16,7 +16,7 @@ namespace wdd
 		~VideoFrameBuffer(void);
 		void addFrame(cv:: Mat * frame_ptr);
 		cv::Mat * getFrameByNumber(unsigned long long frame_nr);
-		std::vector<cv::Mat> loadFrameSequenc(unsigned long long sFrame, unsigned long long eFrame, cv::Point2i center);
+		std::vector<cv::Mat> loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
 	};
 }
 

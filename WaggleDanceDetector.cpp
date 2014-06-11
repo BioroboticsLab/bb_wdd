@@ -9,9 +9,9 @@
 
 namespace wdd
 {
-	std::string danceFile_path = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\dance.txt";
+	TCHAR * danceFile_path = _T("\\dance.txt");
 	FILE * danceFile_ptr;
-	std::string signalFile_path = "C:\\Users\\Alexander Rau\\WaggleDanceDetector\\signal.txt";
+	TCHAR * signalFile_path = _T("\\signal.txt");
 	FILE * signalFile_ptr;
 
 	WaggleDanceDetector::WaggleDanceDetector(
@@ -43,8 +43,7 @@ namespace wdd
 
 		initWDDDanceValues();
 
-		fopen_s (&danceFile_ptr, danceFile_path.c_str() , "a+" );
-		fopen_s (&signalFile_ptr, signalFile_path.c_str() , "a+" );		
+		initOutPutFiles();
 	}
 
 	WaggleDanceDetector::~WaggleDanceDetector()
@@ -157,6 +156,12 @@ namespace wdd
 		int frame_width = (int) dd_frame_config[3];
 
 		/* TODO: do some sanity checks */
+		if( (frame_rate < 0) | _isnan(frame_rate) | (frame_rate > 200))
+		{
+			std::cerr<<"Error! invalid frame rate: "<<frame_rate<<std::endl;
+			exit(-19);
+		}
+
 
 		/* assign passed values */
 		FRAME_RATE = frame_rate;
@@ -327,7 +332,9 @@ namespace wdd
 
 		// run top level detection, concat over time
 		if(WDD_SIGNAL)
+		{
 			execDetectionConcatWDDSignals();
+		}
 
 		execDetectionHousekeepWDDSignals();
 	}
@@ -371,7 +378,7 @@ namespace wdd
 							newPosition = true;
 
 						(*it_dances).DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
-						
+
 						if(WDD_VERBOSE)
 							std::cout<<WDD_SIGNAL_FRAME_NR<<" - UPD: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
 						// jump to WDD_SIGNAL loop
@@ -395,7 +402,7 @@ namespace wdd
 			}
 		}
 
-		
+
 	}
 	void WaggleDanceDetector::execDetectionHousekeepWDDSignals()
 	{
@@ -424,36 +431,19 @@ namespace wdd
 	void WaggleDanceDetector::execDetectionFinalizeDance(DANCE d)
 	{
 		WDD_DANCE = true;
-		WDD_UNIQ_FINISH_DANCES.push_back(d);
 		
+		// restore needed original frames
+		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(d.DANCE_FRAME_START,d.DANCE_FRAME_END, cv::Point_<int>(d.positions[0]), FRAME_REDFAC);
+
+		cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
+
+		d.orient_uvec = _orient_uvec;
+		//d.orient_uvec = cv::Point2d(0,0);;
+
+		WDD_UNIQ_FINISH_DANCES.push_back(d);
+
 		execDetectionWriteDanceFileLine(d);
 
-		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(d.DANCE_FRAME_START,d.DANCE_FRAME_END, cv::Point_<int>(d.positions[0]));
-
-		WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
-
-	}
-
-	void WaggleDanceDetector::execDetectionWriteDanceFileLine(DANCE d)
-	{
-		fprintf(danceFile_ptr, "%I64u %I64u %I64u", d.DANCE_FRAME_START, d.DANCE_FRAME_END, d.DANCE_UNIQE_ID);
-		for (auto it=d.positions.begin(); it!=d.positions.end(); ++it)
-		{
-			fprintf(danceFile_ptr, " %.5f %.5f %.5f",
-				(*it).x*pow(2, FRAME_REDFAC), (*it).y*pow(2, FRAME_REDFAC), 0);
-		}
-		fprintf(danceFile_ptr, "\n");
-	}
-
-	void WaggleDanceDetector::execDetectionWriteSignalFileLine()
-	{
-		fprintf(signalFile_ptr, "%I64u", WDD_SIGNAL_FRAME_NR);
-		for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
-		{
-			fprintf(signalFile_ptr, " %.5f %.5f",
-				it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
-		}
-		fprintf(signalFile_ptr, "\n");
 	}
 	/*
 	* for each defined DotDetector in DD_POS_ID2POINT_MAP retrieve the raw signal (typicaly uint8)
@@ -561,10 +551,11 @@ namespace wdd
 		WDD_SIGNAL_NUMBER = 0;
 		WDD_SIGNAL_ID2POINT_MAP.clear();
 
+		// also reset DANCE FLAG
+		WDD_DANCE = false;
 		// test for minimum number of potent DotDetectors
 		if(arma::sum(DD_SIGNAL_BOOL) < WDD_SIGNAL_DD_MIN_CLUSTER_SIZE)
 			return;
-
 
 		// get ids (=index in vector) of positive DDs
 		// WARNING! Heavly rely on fact that :
@@ -575,13 +566,11 @@ namespace wdd
 		// init cluster ids for the positive DDs
 		arma::Col<arma::sword> pos_DD_CIDs(pos_DD_IDs.size());
 		pos_DD_CIDs.fill(-1);
-
 		// init working copy of positive DD ids
 		//std::vector<arma::uword> pos_DD_IDs_wset (pos_DD_IDs.begin(), pos_DD_IDs.end());
 
 		// init unique cluster ID 
 		unsigned int clusterID = 0;
-
 		// foreach positive DD
 		for(std::size_t i=0; i < pos_DD_IDs.size(); i++)
 		{
@@ -650,7 +639,6 @@ namespace wdd
 				}
 			}
 		}
-
 		// assertion test
 		arma::uvec q1 = arma::find(pos_DD_CIDs == -1);
 		if(q1.size() > 0)
@@ -678,7 +666,6 @@ namespace wdd
 				f_unqClusterIDs.at(f_unqClusterIDs.size()-1) = i;
 			}
 		}
-
 		// decide if there is at least one WDD Signal
 		if(f_unqClusterIDs.is_empty())
 			return;
@@ -702,7 +689,6 @@ namespace wdd
 
 			WDD_SIGNAL_ID2POINT_MAP[WDD_SIGNAL_NUMBER++] = center;
 		}
-
 		// toggel signal file creation
 		if(WDD_WRITE_SIGNAL_FILE)
 		{
@@ -767,6 +753,50 @@ namespace wdd
 
 		return N;
 	}
+	void WaggleDanceDetector::initOutPutFiles()
+	{
+		// link full path from main.cpp
+		extern TCHAR _FULL_PATH_EXE[MAX_PATH];
+		TCHAR BUFF[MAX_PATH];
+		
+		_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+		_tcscat_s(BUFF, MAX_PATH, danceFile_path);
+		_tfopen_s (&danceFile_ptr, BUFF, _T("a+"));		
+		
+		_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+		_tcscat_s(BUFF, MAX_PATH, signalFile_path);
+		_tfopen_s (&signalFile_ptr, BUFF, _T("a+"));
+	}
+	void WaggleDanceDetector::execDetectionWriteDanceFileLine(DANCE d)
+	{
+		extern double uvecToDegree(cv::Point2d in);
+
+		fprintf(danceFile_ptr, "%I64u %I64u %lu %.2f", d.DANCE_FRAME_START, d.DANCE_FRAME_END, d.DANCE_UNIQE_ID, uvecToDegree(d.orient_uvec));
+		
+		for (auto it=d.positions.begin(); it!=d.positions.end(); ++it)
+		{
+			fprintf(danceFile_ptr, " %.5f %.5f",
+				it->x*pow(2, FRAME_REDFAC), it->y*pow(2, FRAME_REDFAC));
+		}
+		
+		fprintf(danceFile_ptr, "\n");
+
+		//if(WDD_VERBOSE)
+		if(true)
+		printf("Waggle dance at %.1f %.1f with orient %.1f (uvec: %.1f,%.1f)\n",
+		d.positions[0].x*pow(2, FRAME_REDFAC), d.positions[0].y*pow(2, FRAME_REDFAC), uvecToDegree(d.orient_uvec), d.orient_uvec.x, d.orient_uvec.y);
+	}
+
+	void WaggleDanceDetector::execDetectionWriteSignalFileLine()
+	{
+		fprintf(signalFile_ptr, "%I64u", WDD_SIGNAL_FRAME_NR);
+		for (auto it=WDD_SIGNAL_ID2POINT_MAP.begin(); it!=WDD_SIGNAL_ID2POINT_MAP.end(); ++it)
+		{
+			fprintf(signalFile_ptr, " %.5f %.5f",
+				it->second.x*pow(2, FRAME_REDFAC), it->second.y*pow(2, FRAME_REDFAC));
+		}
+		fprintf(signalFile_ptr, "\n");
+	}
 	bool WaggleDanceDetector::isWDDSignal()
 	{
 		return WDD_SIGNAL;
@@ -783,11 +813,15 @@ namespace wdd
 	{
 		return &WDD_SIGNAL_ID2POINT_MAP;
 	}
+	const std::vector<DANCE> * WaggleDanceDetector::getWDDFinishedDancesVec()
+	{
+		return &WDD_UNIQ_FINISH_DANCES;
+	}
 	void WaggleDanceDetector::printFBufferConfig()
 	{
 		printf("Printing frame buffer configuration:\n");
-		printf("[WDD_FBUFFER_SIZE] %d\n",WDD_FBUFFER_SIZE);
-		printf("[WDD_FBUFFER_POS] %d\n",WDD_FBUFFER_POS);
+		printf("[WDD_FBUFFER_SIZE] %lu\n",WDD_FBUFFER_SIZE);
+		printf("[WDD_FBUFFER_POS] %lu\n",WDD_FBUFFER_POS);
 	}
 	void WaggleDanceDetector::printFrameConfig()
 	{
@@ -804,7 +838,7 @@ namespace wdd
 		printf("[DD_FREQ_MAX] %.1f\n",DD_FREQ_MAX);
 		printf("[DD_FREQ_STEP] %.1f\n",DD_FREQ_STEP);
 		for(std::size_t i=0; i< DD_FREQS_NUMBER; i++)
-			printf("[FREQ[%d]] %.1f Hz\n", i, DD_FREQS[i]);
+			printf("[FREQ[%lu]] %.1f Hz\n", i, DD_FREQS[i]);
 	}
 	void WaggleDanceDetector::printFreqSamples()
 	{
@@ -821,14 +855,14 @@ namespace wdd
 	{
 		printf("Printing signal configuration:\n");
 		printf("[WDD_SIGNAL_DD_MAXDISTANCE] %.1f\n",WDD_SIGNAL_DD_MAXDISTANCE);
-		printf("[WDD_SIGNAL_DD_MIN_CLUSTER_SIZE] %d\n",
+		printf("[WDD_SIGNAL_DD_MIN_CLUSTER_SIZE] %lu\n",
 			WDD_SIGNAL_DD_MIN_CLUSTER_SIZE);
 		printf("[WDD_SIGNAL_DD_MIN_POTENTIAL] %.1f\n",WDD_SIGNAL_DD_MIN_POTENTIAL);
 	}
 	void WaggleDanceDetector::printPositionConfig()
 	{
 		printf("Printing position configuration:\n");
-		printf("[dd_pos_id2point_map size] %d.\n", DD_POSITIONS_NUMBER);
+		printf("[dd_pos_id2point_map size] %lu.\n", DD_POSITIONS_NUMBER);
 	}
 
 } /* namespace WaggleDanceDetector */

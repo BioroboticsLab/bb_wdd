@@ -57,20 +57,21 @@ namespace wdd
 		}
 	}
 
-	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center)
+	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
 		//TODO set shift according to FBUFFER-SIZE
 		startFrame -= 15;
 		endFrame -= 15;
 
 		cv::Mat * frame_ptr;
-		cv::Mat subframe_monochrome;	
 
 		std::vector<cv::Mat> out;
 
-		cv::Size size(100,100);
+
+		//cv::Size size(100,100);
+		cv::Size size(16,16);
 		//TODO use FRAME_REDFAC
-		cv::Rect roi_rec((center*pow(2, 4)) - cv::Point(50,50), size);
+		cv::Rect roi_rec((center*pow(2, FRAME_REDFAC)) - cv::Point(8,8), size);
 
 		while(startFrame <=  endFrame)
 		{

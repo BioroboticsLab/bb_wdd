@@ -18,6 +18,8 @@ namespace wdd
 		unsigned long long DANCE_FRAME_END;
 
 		std::vector<cv::Point2d> positions;
+
+		cv::Point2d orient_uvec;
 	};
 
 	class WaggleDanceDetector
@@ -149,6 +151,7 @@ namespace wdd
 		bool isWDDDance();
 		std::size_t getWDDSignalNumber();
 		const std::map<std::size_t,cv::Point2d> * getWDDSignalId2PointMap();
+		const std::vector<DANCE> * getWDDFinishedDancesVec();
 	private:
 		void createFreqSamples();
 		void execDetectionGetDDPotentials();
@@ -161,6 +164,7 @@ namespace wdd
 		void initDDSignalValues();
 		void initWDDSignalValues();
 		void initWDDDanceValues();
+		void initOutPutFiles();
 		arma::Col<arma::uword> getNeighbours(arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs);
 		void setFBufferConfig(int wdd_fbuffer_size);
 		void setFrameConfig(std::vector<double> dd_frame_config);

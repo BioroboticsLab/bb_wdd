@@ -6,7 +6,7 @@ public:
 	WaggleDanceOrientator(void);
 	~WaggleDanceOrientator(void);
 
-	static std::vector<cv::Mat> extractOrientationFromImageSequence(const std::vector<cv::Mat> seq_in, std::size_t unique_id);
+	static cv::Point2d extractOrientationFromImageSequence(const std::vector<cv::Mat> seq_in, std::size_t unique_id);
 	static void extractBinaryImageFromTD(cv::Mat *td_ptr, cv::Mat *td_bin_ptr);
 	static void extractUnityOrientationsFromBinaryImage(cv::Mat * td_bin_mat_ptr, std::vector<cv::Vec2d> * unityOrientations_ptr);
 	static cv::Vec2d getMeanOrientationFromUnityOrientations(std::vector<cv::Vec2d> * unityOrientations_ptr);
@@ -17,7 +17,7 @@ public:
 	static void stretch(cv::Mat * in_ptr, cv::Mat * out_ptr);
 	static void showImagesFromFolder(const std::string dirInNameFormat);
 	static void showImage(const cv::Mat * img_ptr);
-	static void saveImage(const cv::Mat * img_ptr, const std::string path_ptr);
+	static void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const TCHAR * path_ptr);
 	static std::vector<cv::Mat> loadImagesFromFolder(const std::string dirInNameFormat);
 	static void exportImage(const cv::Mat *img_ptr, const std::string path_ptr);
 	static void statisticalSmoothingFilter(cv::Mat *img_ptr);
@@ -30,10 +30,11 @@ public:
 	
 	static cv::Mat gaussKernel;
 
-	static std::string path_out_root;
-	static std::string path_out_dyn;
-	static std::string extend_path_out_blob;
-	static std::string file_blobs_detail;
-	static FILE * file_blobs_detail_ptr;
+	static TCHAR * path_out;
+	static TCHAR * path_out_root;
+	static TCHAR * blobDirName;
+	static TCHAR * file_blobs_detail;
+	static TCHAR   path_out_root_img[];
+	static TCHAR   path_out_root_img_blob[];
 };
 

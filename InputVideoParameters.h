@@ -1,15 +1,4 @@
-/*
-* InputVideoParameters.h
-*
-*  Created on: 14.04.2014
-*      Author: sam
-*/
-#include "stdafx.h"
-
-#ifndef INPUTVIDEOPARAMETERS_H_
-#define INPUTVIDEOPARAMETERS_H_
-
-
+#pragma once
 
 namespace wdd
 {
@@ -46,5 +35,3 @@ namespace wdd
 	};
 
 } /* namespace WaggleDanceDetector */
-
-#endif /* INPUTVIDEOPARAMETERS_H_ */

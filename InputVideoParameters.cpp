@@ -1,11 +1,6 @@
-/*
-* InputVideoParameters.cpp
-*
-*  Created on: 14.04.2014
-*      Author: sam
-*
-*/
 #include "stdafx.h"
+#include "InputVideoParameters.h"
+#include "TypeToString.h"
 
 namespace wdd
 {

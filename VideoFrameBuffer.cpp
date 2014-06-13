@@ -9,6 +9,9 @@ namespace wdd
 		MAX_FRAME_HISTORY = 600;
 		FRAME = new cv::Mat[MAX_FRAME_HISTORY];
 		NEXT_CELL_ID = 0;
+		
+		int startFrameShift = WDD_FBUFFER_SIZE/2;
+		int endFrameShift = WDD_FBUFFER_SIZE/2;
 
 		//debug only
 		FRAME_NR = new unsigned long long[MAX_FRAME_HISTORY];
@@ -25,6 +28,11 @@ namespace wdd
 	{
 	}
 
+	void VideoFrameBuffer::setSequecenFrameSize(cv::Size size)
+	{
+		sequenceFrameSize = size;
+		sequenceFramePointOffset = cv::Point2i(size.width/2,size.height/2);
+	}
 	void VideoFrameBuffer::addFrame(cv:: Mat * frame_ptr)
 	{
 		//std::cout<<"DEBUG: VideoFrameBuffer::addFrame - STATUS: "<< NEXT_CELL_ID<<"/"<<MAX_FRAME_HISTORY<<std::endl;
@@ -59,19 +67,20 @@ namespace wdd
 
 	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
-		//TODO set shift according to FBUFFER-SIZE
-		startFrame -= 15;
-		endFrame -= 15;
+		startFrame -= startFrameShift;
+		endFrame -= endFrameShift;
 
+		std::cout<<"HERE"<<std::endl;
+		std::cout<<center<<std::endl;
+		std::cout<<sequenceFramePointOffset<<std::endl;
+		std::cout<<sequenceFrameSize<<std::endl;
+		std::cout<<startFrame<<std::endl;
+		std::cout<<endFrame<<std::endl;
 		cv::Mat * frame_ptr;
 
 		std::vector<cv::Mat> out;
 
-
-		//cv::Size size(100,100);
-		cv::Size size(16,16);
-		//TODO use FRAME_REDFAC
-		cv::Rect roi_rec((center*pow(2, FRAME_REDFAC)) - cv::Point(8,8), size);
+		cv::Rect roi_rec((center*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset, sequenceFrameSize);
 
 		while(startFrame <=  endFrame)
 		{

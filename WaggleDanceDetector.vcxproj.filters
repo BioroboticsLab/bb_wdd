@@ -42,7 +42,10 @@
     <ClInclude Include="VideoFrameBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CVCameraCapture.h">
+    <ClInclude Include="DotDetector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DotDetectorLayer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,7 +77,10 @@
     <ClCompile Include="VideoFrameBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CVCameraCapture.cpp">
+    <ClCompile Include="DotDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DotDetectorLayer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

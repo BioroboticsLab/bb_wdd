@@ -18,6 +18,7 @@
 //
 
 #include "stdafx.h"
+#include "cvblob.h"
 
 using namespace std;
 

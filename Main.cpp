@@ -1,4 +1,8 @@
 #include "stdafx.h"
+#include "DotDetectorLayer.h"
+#include "InputVideoParameters.h"
+#include "VideoFrameBuffer.h"
+#include "WaggleDanceDetector.h"
 
 using namespace wdd;
 
@@ -58,20 +62,42 @@ TCHAR _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {
-	/* default WDD parameter values */
 	int FRAME_WIDTH;
 	int FRAME_HEIGHT;
-	int FRAME_RATE;	
-	int FRAME_RED_FAC = 1;
-	int wdd_fbuffer_size = 32;
-	double wdd_signal_dd_maxdistance = 2.3;
-	int wdd_signal_dd_min_cluster_size = 6;
-	double wdd_signal_dd_min_score = 16444*2;
+	int FRAME_RATE;		
+	//
+	//	Global: video configuration
+	//
+	int FRAME_RED_FAC = 4;
+	
+	//
+	//	Layer 1: DotDetector Configuration
+	//
+	int DD_FREQ_MIN = 11;
+	int DD_FREQ_MAX = 17;
+	double DD_FREQ_STEP = 1;
+	double DD_MIN_POTENTIAL = 16444;
 
-	bool verbose = false;
+	//
+	//	Layer 2: Waggle SIGNAL Configuration
+	//
+	double WDD_SIGNAL_DD_MAXDISTANCE = 2.3;
+	int		WDD_SIGNAL_MIN_CLUSTER_SIZE = 6;
+
+	//
+	//	Layer 3: Waggle Dance Configuration
+	//
+	double	WDD_DANCE_MAX_POSITION_DISTANCEE = sqrt(2);
+	int		WDD_DANCE_MAX_FRAME_GAP = 3;
+	int		WDD_DANCE_MIN_CONSFRAMES = 20;
+
+	//
+	//	Develop: Waggle Dance Configuration
+	//
 	bool visual = true;
+	bool wdd_write_dance_file = true;
+	bool wdd_write_signal_file = true;
 	bool wdd_verbose = false;
-	bool wdd_write_signal_file = false;
 
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
@@ -122,7 +148,7 @@ int main(int nargs, char** argv)
 		InputVideoParameters vp(&capture);
 		FRAME_WIDTH= vp.getFrameWidth();
 		FRAME_HEIGHT = vp.getFrameHeight();
-		FRAME_RATE = 102;
+		FRAME_RATE = 100;
 
 		InputVideoParameters::printPropertiesOf(&capture);
 	}else {
@@ -144,6 +170,8 @@ int main(int nargs, char** argv)
 
 	/* prepare videoFrameBuffer */
 	VideoFrameBuffer videoFrameBuffer(frame_counter, cv::Size(FRAME_HEIGHT, FRAME_WIDTH));
+	videoFrameBuffer.setSequecenFrameSize(cv::Size(100,100));
+
 	/* prepare buffer to hold mono chromized input frame */
 	frame_input_monochrome =
 		cv::Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1);
@@ -155,49 +183,52 @@ int main(int nargs, char** argv)
 	int frame_target_height = cvRound(FRAME_HEIGHT/resize_factor);
 
 	frame_target = cv::Mat(frame_target_height, frame_target_width, CV_8UC1);
+
 	/*
-	* prepare WaggleDanceDetector
+	* prepare DotDetectorLayer config vector
 	*/
-	std::vector<double> dd_freq_config;
-	dd_freq_config.push_back(11);
-	dd_freq_config.push_back(17);
-	dd_freq_config.push_back(1);
+	std::vector<double> ddl_config;
+	ddl_config.push_back(DD_FREQ_MIN);
+	ddl_config.push_back(DD_FREQ_MAX);
+	ddl_config.push_back(DD_FREQ_STEP);
+	ddl_config.push_back(FRAME_RATE);
+	ddl_config.push_back(FRAME_RED_FAC);
+	ddl_config.push_back(DD_MIN_POTENTIAL);
 
-	/* TODO: conversion from int to double to int ?! */
-	std::vector<double> frame_config;
-	frame_config.push_back((double)FRAME_RATE);
-	frame_config.push_back((double)FRAME_RED_FAC);
-	frame_config.push_back((double)frame_target_width);
-	frame_config.push_back((double)frame_target_height);
-
-
-	std::map<std::size_t,cv::Point2i> dd_pos_id2point_map;
-	std::size_t dd_uniq_id = 0;
-
+	std::vector<cv::Point2i> dd_positions;
 	for(int i=0; i<frame_target_width; i++)
 	{
 		for(int j=0; j<frame_target_height; j++)
 		{
 			// x (width), y(height)
-			dd_pos_id2point_map.insert(
-				std::pair<std::size_t, cv::Point2i>(
-				dd_uniq_id++,cv::Point2i(i,j)));
+			dd_positions.push_back(cv::Point2i(i,j));
 		}
 	}
-	std::vector<double> wdd_signal_dd_config;
-	wdd_signal_dd_config.push_back(wdd_signal_dd_maxdistance);
-	wdd_signal_dd_config.push_back(wdd_signal_dd_min_cluster_size);
-	wdd_signal_dd_config.push_back(wdd_signal_dd_min_score);
+	std::cout<<"Initialize with "<<dd_positions.size()<<" DotDetectors."<<std::endl;
 
-	WaggleDanceDetector wdd(
-		dd_freq_config,
-		dd_pos_id2point_map,
-		frame_config,
-		wdd_fbuffer_size,
-		wdd_signal_dd_config,
-		wdd_write_signal_file,
-		wdd_verbose,
-		&videoFrameBuffer);
+	/*
+	* prepare WaggleDanceDetector config vector
+	*/
+	std::vector<double> wdd_config;
+	// Layer 2
+	wdd_config.push_back(WDD_SIGNAL_DD_MAXDISTANCE);
+	wdd_config.push_back(WDD_SIGNAL_MIN_CLUSTER_SIZE);
+	// Layer 3
+	wdd_config.push_back(WDD_DANCE_MAX_POSITION_DISTANCEE);
+	wdd_config.push_back(WDD_DANCE_MAX_FRAME_GAP);
+	wdd_config.push_back(WDD_DANCE_MIN_CONSFRAMES);
+
+
+	WaggleDanceDetector wdd(			
+			dd_positions,
+			&frame_target,
+			ddl_config,
+			wdd_config,
+			&videoFrameBuffer,
+			wdd_write_signal_file,
+			wdd_write_dance_file,
+			wdd_verbose
+			);
 
 
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
@@ -209,6 +240,7 @@ int main(int nargs, char** argv)
 	int Cir_radius = 3;
 	cv::Scalar Cir_color_yel = cv::Scalar(0,255,255);
 	cv::Scalar Cir_color_gre = cv::Scalar(128,255,0);
+	cv::Scalar Cir_color_som = cv::Scalar(128,255,255);
 	//make the circle filled with value < 0
 	int Cir_thikness = -1;
 
@@ -227,11 +259,21 @@ int main(int nargs, char** argv)
 			0, 0, cv::INTER_AREA);
 
 		// feed WDD with tar_frame
-		wdd.addFrame(frame_target, frame_counter, true);
+		wdd.copyFrame(frame_counter);
 
 		// output visually if enabled
 		if(visual)
 		{
+			if(DotDetectorLayer::DD_SIGNALS_NUMBER>0)
+			{
+				for(std::size_t i=0; i< DotDetectorLayer::DD_NUMBER; i++)
+				{
+					if(DotDetectorLayer::DD_SIGNALS[i])
+						cv::circle(frame_input, DotDetectorLayer::DD_POSITIONS[i]*std::pow(2,FRAME_RED_FAC),
+							2, Cir_color_som, Cir_thikness);
+				}
+
+			}
 			//check for WDD Signal
 			if(wdd.isWDDSignal())
 			{
@@ -255,7 +297,7 @@ int main(int nargs, char** argv)
 			}
 
 			cv::imshow("Video", frame_input);
-			cv::waitKey(10);
+			cv::waitKey();
 		}
 		
 		// finally increase frame_input counter	

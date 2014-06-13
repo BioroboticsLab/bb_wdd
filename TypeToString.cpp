@@ -1,11 +1,5 @@
-/*
-* TypeToString.cpp
-*
-*  Created on: 15.04.2014
-*      Author: sam
-*/
 #include "stdafx.h"
-
+#include "TypeToString.h"
 
 namespace wdd
 {

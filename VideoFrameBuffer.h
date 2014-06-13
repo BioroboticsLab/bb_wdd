@@ -1,4 +1,5 @@
 #pragma once
+
 namespace wdd
 {
 	class VideoFrameBuffer
@@ -11,12 +12,20 @@ namespace wdd
 
 		//debug only
 		unsigned long long * FRAME_NR;
+
+		cv::Size sequenceFrameSize;
+		cv::Point sequenceFramePointOffset;
+
+		int startFrameShift;
+		int endFrameShift;
 	public:
 		VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size size);
 		~VideoFrameBuffer(void);
+
+		void setSequecenFrameSize(cv::Size size);
 		void addFrame(cv:: Mat * frame_ptr);
 		cv::Mat * getFrameByNumber(unsigned long long frame_nr);
 		std::vector<cv::Mat> loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
 	};
-}
+} /* namespace WaggleDanceDetector */
 

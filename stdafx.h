@@ -1,5 +1,7 @@
 #pragma once
 
+#define WDD_FBUFFER_SIZE 32
+
 #include "targetver.h"
 
 #include <chrono>
@@ -15,6 +17,7 @@
 #include <windows.h>
 #include "Shlwapi.h"
 
+#include <array>
 #include <deque>
 #include <map>
 #include <unordered_map>
@@ -26,12 +29,3 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv2/opencv.hpp>
-#include "cvblob.h"
-#include "CVCameraCapture.h"
-
-#include "TypeToString.h"
-#include "InputVideoParameters.h"
-#include "VideoFrameBuffer.h"
-#include "WaggleDanceDetector.h"
-#include "WaggleDanceOrientator.h"
-

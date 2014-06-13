@@ -1,14 +1,4 @@
-/*
-* TypeToString.h
-*
-*  Created on: 15.04.2014
-*      Author: sam
-*/
-#include "stdafx.h"
-
-#ifndef TYPETOSTRING_H_
-#define TYPETOSTRING_H_
-
+#pragma once
 
 namespace wdd
 {
@@ -24,5 +14,3 @@ namespace wdd
 	};
 
 } /* namespace WaggleDanceDetector */
-
-#endif /* TYPETOSTRING_H_ */

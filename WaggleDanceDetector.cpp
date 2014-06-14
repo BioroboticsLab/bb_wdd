@@ -1,13 +1,15 @@
 #include "stdafx.h"
 
-#include "DotDetectorLayer.h"
 #include "VideoFrameBuffer.h"
+#include "DotDetectorLayer.h"
 #include "WaggleDanceOrientator.h"
 
 #include "WaggleDanceDetector.h"
 
 namespace wdd
 {
+	bool WaggleDanceDetector::WDD_VERBOSE;
+
 	TCHAR * danceFile_path = _T("\\dance.txt");
 	FILE * danceFile_ptr;
 	TCHAR * signalFile_path = _T("\\signal.txt");
@@ -25,9 +27,9 @@ namespace wdd
 		):
 	WDD_VideoFrameBuffer_ptr(videoFrameBuffer_ptr),
 		WDD_WRITE_DANCE_FILE(wdd_write_dance_file),
-		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file),
-		WDD_VERBOSE(wdd_verbose)
+		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file)
 	{	
+		WaggleDanceDetector::WDD_VERBOSE = wdd_verbose;
 
 		_initWDDSignalValues();
 
@@ -149,15 +151,19 @@ namespace wdd
 	void WaggleDanceDetector::_execDetection()
 	{
 		// check buffer is completly filled
-		if(WDD_FBUFFER_POS < WDD_FBUFFER_SIZE)
+		if(WDD_FBUFFER_POS < WDD_FBUFFER_SIZE-1)
 		{
-			DotDetectorLayer::copyFrame();
+			DotDetectorLayer::copyFrame(false);
 			WDD_FBUFFER_POS++;
 			return;
+		}else if(WDD_FBUFFER_POS == WDD_FBUFFER_SIZE-1)
+		{
+			DotDetectorLayer::copyFrame(true);
+			WDD_FBUFFER_POS++;
+		}else{
+			// run detection on DotDetector layer
+			_execDetectionGetDDPotentials();
 		}
-
-		// run detection on DotDetector layer
-		_execDetectionGetDDPotentials();
 
 		// run detection on WaggleDanceDetector layer
 		_execDetectionGetWDDSignals();
@@ -247,7 +253,8 @@ namespace wdd
 				// check for minimum number of consecutiv frames for a positive dance
 				if(((*it_dances).DANCE_FRAME_END - (*it_dances).DANCE_FRAME_START +1 ) >= WDD_DANCE_MIN_CONSFRAMES)
 				{
-					std::cout<<WDD_SIGNAL_FRAME_NR<<" - EXEC: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
+					if(WDD_VERBOSE)
+						std::cout<<WDD_SIGNAL_FRAME_NR<<" - EXEC: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
 					_execDetectionFinalizeDance(*it_dances);
 				}
 				if(WDD_VERBOSE)
@@ -266,11 +273,13 @@ namespace wdd
 		WDD_DANCE = true;
 
 		// restore needed original frames
-		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(d.DANCE_FRAME_START,d.DANCE_FRAME_END, cv::Point_<int>(d.positions[0]), DotDetectorLayer::FRAME_REDFAC);
+		//std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(d.DANCE_FRAME_START,d.DANCE_FRAME_END, cv::Point_<int>(d.positions[0]), DotDetectorLayer::FRAME_REDFAC);
 
-		cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
+		//cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
 
-		d.orient_uvec = _orient_uvec;
+		//d.orient_uvec = _orient_uvec;
+
+		d.orient_uvec = cv::Point2i(0,0);
 
 		WDD_UNIQ_FINISH_DANCES.push_back(d);
 
@@ -281,8 +290,8 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::_execDetectionGetDDPotentials()
 	{
-		DotDetectorLayer::copyFrameAndDetect();
-		std::cout<<"DotDetectorLayer::DD_SIGNALS_NUMBER: "<<DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
+		DotDetectorLayer::copyFrameAndDetect(WDD_SIGNAL_FRAME_NR);
+		//std::cout<<"DotDetectorLayer::DD_SIGNALS_NUMBER: "<<DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
 	}
 
 	void WaggleDanceDetector::_execDetectionGetWDDSignals()
@@ -442,7 +451,7 @@ namespace wdd
 			_execDetectionWriteSignalFileLine();
 		}
 
-		std::cout<<"WDD_SIGNAL_NUMBER: "<<WDD_SIGNAL_NUMBER<<std::endl;
+		//std::cout<<"WDD_SIGNAL_NUMBER: "<<WDD_SIGNAL_NUMBER<<std::endl;
 	}
 
 	arma::Col<arma::uword> WaggleDanceDetector::getNeighbours(
@@ -516,8 +525,7 @@ namespace wdd
 
 		fprintf(danceFile_ptr, "\n");
 
-		//if(WDD_VERBOSE)
-		if(true)
+		if(WDD_VERBOSE)
 			printf("Waggle dance at %.1f %.1f with orient %.1f (uvec: %.1f,%.1f)\n",
 			d.positions[0].x*pow(2, DotDetectorLayer::FRAME_REDFAC), d.positions[0].y*pow(2, DotDetectorLayer::FRAME_REDFAC), uvecToDegree(d.orient_uvec), d.orient_uvec.x, d.orient_uvec.y);
 	}

@@ -1,4 +1,5 @@
 #pragma once
+#include "VideoFrameBuffer.h"
 
 namespace wdd
 {
@@ -82,10 +83,6 @@ namespace wdd
 		// if set to true, appends wdd signal to output file
 		bool WDD_WRITE_SIGNAL_FILE;
 
-		// defines if verbose execution mode
-		//TODO: check for remove as not used anymore
-		bool WDD_VERBOSE;
-
 	public:
 		WaggleDanceDetector(			
 			std::vector<cv::Point2i> dd_positions,
@@ -107,6 +104,10 @@ namespace wdd
 		const std::map<std::size_t,cv::Point2d> * getWDDSignalId2PointMap();
 		const std::vector<DANCE> * getWDDFinishedDancesVec();
 		void printWDDDanceConfig();
+
+		// defines if verbose execution mode
+		//TODO: check for remove as not used anymore
+		static bool WDD_VERBOSE;
 
 	private:
 		void _initWDDSignalValues();

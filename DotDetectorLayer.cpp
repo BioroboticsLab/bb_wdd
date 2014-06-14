@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DotDetectorLayer.h"
+#include "WaggleDanceDetector.h"
 
 namespace wdd {
 	// is this how c++ works? 
@@ -19,7 +20,7 @@ namespace wdd {
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
 	double **					DotDetectorLayer::DD_FREQS_COSSAMPLES;
 	double **					DotDetectorLayer::DD_FREQS_SINSAMPLES;
-	
+
 
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
 		std::vector<double> ddl_config)
@@ -57,21 +58,67 @@ namespace wdd {
 		delete DotDetectorLayer::DD_SIGNALS;
 	}
 
-	void DotDetectorLayer::copyFrame()
+	void DotDetectorLayer::copyFrame(bool doDetection)
 	{
-		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
-			DotDetectorLayer::_DotDetectors[i]->copyPixel();
+		//arma::mat DEB_DD_SIGNAL_POTENTIALS;
+		//arma::Mat<arma::uword> DEB_DD_RAW_BUFFERS;
 
+		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
+		{
+			DotDetectorLayer::_DotDetectors[i]->copyPixel(doDetection);
+			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
+			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
+		}
+		/*
+		if(doDetection)
+		{
+
+			std::stringstream a;
+			a <<"_nDEB_DD_SIGNAL_POTENTIALS";
+			a << 31;
+			a <<".txt";
+			DEB_DD_SIGNAL_POTENTIALS.save(a.str(), arma::arma_ascii);
+
+			a.str("");
+			a <<"n_DEB_DD_RAW_BUFFER";
+			a << 31;
+			a <<".txt";
+			DEB_DD_RAW_BUFFERS.save(a.str(), arma::arma_ascii);
+		}
+		*/
 		DotDetector::nextBuffPos();
 	}
 
-	void DotDetectorLayer::copyFrameAndDetect()
+	void DotDetectorLayer::copyFrameAndDetect(unsigned long long fn)
 	{
+		//arma::mat DEB_DD_SIGNAL_POTENTIALS;
+		//arma::Mat<arma::uword> DEB_DD_RAW_BUFFERS;
+
 		DD_SIGNALS_NUMBER = 0;
-			for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
+
+		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
+		{
 			DotDetectorLayer::_DotDetectors[i]->copyPixelAndDetect();
 
+			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
+			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
+		}
+		/*
+		std::stringstream a;
+		a <<"_nDEB_DD_SIGNAL_POTENTIALS";
+		a << fn;
+		a <<".txt";
+		DEB_DD_SIGNAL_POTENTIALS.save(a.str(), arma::arma_ascii);
+
+		a.str("");
+		a <<"n_DEB_DD_RAW_BUFFER";
+		a << fn;
+		a <<".txt";
+		DEB_DD_RAW_BUFFERS.save(a.str(), arma::arma_ascii);
+		*/
+
 		DotDetector::nextBuffPos();
+
 	}
 
 	/* Given a DotDetector frequency configuration consisting of min:step:max this
@@ -138,7 +185,7 @@ namespace wdd {
 		_createFreqSamples();
 
 		/* finally present output if verbose mode is on*/
-		if(true)
+		if(WaggleDanceDetector::WDD_VERBOSE)
 		{
 			DotDetectorLayer::printFreqConfig();
 			DotDetectorLayer::printFreqSamples();

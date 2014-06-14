@@ -14,8 +14,11 @@ namespace wdd {
 		// save min, max, amplitude values
 		uchar _MIN,_MAX, _AMPLITUDE;
 
-		// save new min or max flag
-		bool _NEWMINMAX;
+		// save number of each possible pixel value currently in _DD_PX_VALS_RAW
+		std::array<uchar,256> _UINT8_PX_VALS_COUNT;
+
+		// save new min or max flag, old min/max gone flag
+		bool _NEWMINMAX, _OLDMINGONE, _OLDMAXGONE, _NEWMINHERE, _NEWMAXHERE;
 
 		// save position of next sample cos/sin value (=[0;frame_rate-1])
 		std::size_t _sampPos;
@@ -34,21 +37,29 @@ namespace wdd {
 		//TODO: LINK SIZE TO MAIN.CPP
 		std::array<double, 7> _DD_FREQ_SCORES, _ACC_SIN_VAL, _ACC_COS_VAL;
 
-		void _copyPixel();
+		void _copyInitialPixel(bool doDetection);
+		void _copyPixel();		
+		void _getInitialNewMinMax();
+		void _getNewMinMax();
+		void _execFullCalculation();
+		void _execSingleCalculation();
 		void _execDetection();
-		inline double _normalizeValue(uchar u);
-		inline void _nextSampPos();
+		double _normalizeValue(uchar u);
+		void _nextSampPos();
 
 	public:
 		DotDetector(std::size_t UNIQUE_ID, uchar * pixel_src_ptr);
 		~DotDetector(void);
 
-		void copyPixel();
+		void copyPixel(bool doDetection);
 		void copyPixelAndDetect();
 
+		//arma::rowvec7 AUX_DD_FREQ_SCORES;
+		//arma::Row<arma::uword> AUX_DEB_DD_RAW_BUFFERS;
 		/*
 		static 
 		*/
+		// save global position of next buffer write (=[0;WDD_FBUFFER_SIZE-1])
 		static std::size_t _BUFF_POS;
 		static void nextBuffPos();
 	};

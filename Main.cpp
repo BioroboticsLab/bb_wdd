@@ -11,13 +11,13 @@ double uvecToDegree(cv::Point2d in)
 	if(_isnan(in.x) | _isnan(in.y))
 		return std::numeric_limits<double>::quiet_NaN();
 	/*
-	  % rotatet 90 degree counterclock wise - 0° is at top center
-    R= [  0     1; -1     0];
-     
-    u = u * R;
-    
-    theta = atan2(u(2),u(1));
-    ThetaInDegrees = (theta*180/pi);
+	% rotatet 90 degree counterclock wise - 0° is at top center
+	R= [  0     1; -1     0];
+
+	u = u * R;
+
+	theta = atan2(u(2),u(1));
+	ThetaInDegrees = (theta*180/pi);
 	*/
 
 	double theta = atan2(in.y,in.x);
@@ -68,15 +68,15 @@ int main(int nargs, char** argv)
 	//
 	//	Global: video configuration
 	//
-	int FRAME_RED_FAC = 4;
-	
+	int FRAME_RED_FAC = 1;
+
 	//
 	//	Layer 1: DotDetector Configuration
 	//
 	int DD_FREQ_MIN = 11;
 	int DD_FREQ_MAX = 17;
 	double DD_FREQ_STEP = 1;
-	double DD_MIN_POTENTIAL = 16444;
+	double DD_MIN_POTENTIAL = 16444*2;
 
 	//
 	//	Layer 2: Waggle SIGNAL Configuration
@@ -94,9 +94,9 @@ int main(int nargs, char** argv)
 	//
 	//	Develop: Waggle Dance Configuration
 	//
-	bool visual = true;
+	bool visual = false;
 	bool wdd_write_dance_file = true;
-	bool wdd_write_signal_file = true;
+	bool wdd_write_signal_file = false;
 	bool wdd_verbose = false;
 
 	// get the full path to executable 
@@ -113,7 +113,7 @@ int main(int nargs, char** argv)
 			std::cerr<<"Error! No webcam detected!"<<std::endl;
 			exit(-1);
 		}
-		
+
 		/* WEBCAM INPUT STREAM SETTINGS */
 		FRAME_WIDTH= 320;
 		FRAME_HEIGHT = 240;
@@ -148,7 +148,7 @@ int main(int nargs, char** argv)
 		InputVideoParameters vp(&capture);
 		FRAME_WIDTH= vp.getFrameWidth();
 		FRAME_HEIGHT = vp.getFrameHeight();
-		FRAME_RATE = 100;
+		FRAME_RATE = 102;
 
 		InputVideoParameters::printPropertiesOf(&capture);
 	}else {
@@ -178,7 +178,7 @@ int main(int nargs, char** argv)
 
 	/* prepare buffer to hold target frame */
 	double resize_factor =  pow(2.0, FRAME_RED_FAC);
-	
+
 	int frame_target_width = cvRound(FRAME_WIDTH/resize_factor);
 	int frame_target_height = cvRound(FRAME_HEIGHT/resize_factor);
 
@@ -220,22 +220,22 @@ int main(int nargs, char** argv)
 
 
 	WaggleDanceDetector wdd(			
-			dd_positions,
-			&frame_target,
-			ddl_config,
-			wdd_config,
-			&videoFrameBuffer,
-			wdd_write_signal_file,
-			wdd_write_dance_file,
-			wdd_verbose
-			);
+		dd_positions,
+		&frame_target,
+		ddl_config,
+		wdd_config,
+		&videoFrameBuffer,
+		wdd_write_signal_file,
+		wdd_write_dance_file,
+		wdd_verbose
+		);
 
 
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
 	const std::vector<DANCE> * WDDFinishedDances = wdd.getWDDFinishedDancesVec();
 
 	const std::map<std::size_t,cv::Point2d>  WDDDance2PointMap;
-	
+
 
 	int Cir_radius = 3;
 	cv::Scalar Cir_color_yel = cv::Scalar(0,255,255);
@@ -245,9 +245,12 @@ int main(int nargs, char** argv)
 	int Cir_thikness = -1;
 
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
+	std::vector<double> bench_res;
+
 	while(capture.read(frame_input))
 	{
-		
+
 		//convert BGR -> Gray
 		cv::cvtColor(frame_input,frame_input_monochrome, CV_BGR2GRAY);
 
@@ -270,7 +273,7 @@ int main(int nargs, char** argv)
 				{
 					if(DotDetectorLayer::DD_SIGNALS[i])
 						cv::circle(frame_input, DotDetectorLayer::DD_POSITIONS[i]*std::pow(2,FRAME_RED_FAC),
-							2, Cir_color_som, Cir_thikness);
+						2, Cir_color_som, Cir_thikness);
 				}
 
 			}
@@ -285,7 +288,7 @@ int main(int nargs, char** argv)
 			}
 			if(wdd.isWDDDance())
 			{
-				
+
 				for(auto it = WDDFinishedDances->begin(); it!=WDDFinishedDances->end(); ++it)
 				{
 					if( (*it).DANCE_FRAME_END >= frame_counter-10)
@@ -297,9 +300,9 @@ int main(int nargs, char** argv)
 			}
 
 			cv::imshow("Video", frame_input);
-			cv::waitKey();
+			cv::waitKey(10);
 		}
-		
+
 		// finally increase frame_input counter	
 		frame_counter++;
 
@@ -308,10 +311,21 @@ int main(int nargs, char** argv)
 		{
 			std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
 
-			std::cout<<"fps: "<< 100/sec.count() <<"("<< cvRound(sec.count()*1000)<<"ms)"<<std::endl;
+			//std::cout<<"fps: "<< 100/sec.count() <<"("<< cvRound(sec.count()*1000)<<"ms)"<<std::endl;
+
+			bench_res.push_back(100/sec.count());
 
 			start = std::chrono::steady_clock::now();
 		}
 	}
 	capture.release();
+
+	double avg = 0;
+	for(auto it=bench_res.begin(); it!=bench_res.end(); ++it)
+	{
+		std::cout<<"fps: "<<*it<<std::endl;
+		avg += *it;
+	}
+
+	std::cout<<"average fps: "<<avg / bench_res.size()<<std::endl;
 }

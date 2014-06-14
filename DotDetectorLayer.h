@@ -65,8 +65,8 @@ namespace wdd{
 
 		static void release();
 
-		static void copyFrame();
-		static void copyFrameAndDetect();
+		static void copyFrame(bool doDetection);
+		static void copyFrameAndDetect(unsigned long long fn);
 
 
 		static void printFreqConfig();

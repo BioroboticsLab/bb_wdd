@@ -4,21 +4,17 @@
 namespace wdd{
 	class DotDetectorLayer
 	{
-	private:
-		/*
-		members
-		*/
-		static DotDetector ** _DotDetectors;
-		/*
-		functions
-		*/
-		static void _setDDLConfig(std::vector<double> ddl_config);
-		static void _createFreqSamples();
-
 	public:
 		/*
 		members
 		*/
+		// save sampled target sinus and cosinus signals as n-by-m matrix of n =
+		// DD_FREQS_NUMBER with m = WDD_FBUFFER_SIZE sampled values
+		//static double ** DD_FREQS_COSSAMPLES;
+		//static double ** DD_FREQS_SINSAMPLES;
+		static arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DD_FREQS_COSSAMPLES;
+		static arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DD_FREQS_SINSAMPLES;
+
 		// saves positions of used DotDetectors
 		static std::vector<cv::Point2i> DD_POSITIONS;
 		// saves number n of DotDetectors in DD_POSITIONS
@@ -47,11 +43,6 @@ namespace wdd{
 		// saves number of DD_FREQS
 		static std::size_t DD_FREQS_NUMBER;
 
-		// save sampled target sinus and cosinus signals as n-by-m matrix of n =
-		// DD_FREQS_NUMBER with m = WDD_FBUFFER_SIZE sampled values
-		static double ** DD_FREQS_COSSAMPLES;
-		static double ** DD_FREQS_SINSAMPLES;
-
 		// saves frame rate
 		static std::size_t FRAME_RATEi;
 		// saves frame reduction factor
@@ -70,6 +61,17 @@ namespace wdd{
 
 		static void printFreqConfig();
 		static void printFreqSamples();
+
+	private:
+		/*
+		members
+		*/
+		static DotDetector ** _DotDetectors;
+		/*
+		functions
+		*/
+		static void _setDDLConfig(std::vector<double> ddl_config);
+		static void _createFreqSamples();
 	};
 
 } /* namespace WaggleDanceDetector */

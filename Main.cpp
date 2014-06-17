@@ -94,8 +94,8 @@ int main(int nargs, char** argv)
 	//
 	//	Develop: Waggle Dance Configuration
 	//
-	bool visual = true;
-	bool wdd_write_dance_file = true;
+	bool visual = false;
+	bool wdd_write_dance_file = false;
 	bool wdd_write_signal_file = false;
 	bool wdd_verbose = false;
 
@@ -326,11 +326,31 @@ int main(int nargs, char** argv)
 	capture.release();
 
 	double avg = 0;
-	for(auto it=bench_res.begin(); it!=bench_res.end(); ++it)
+	for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)
 	{
 		std::cout<<"fps: "<<*it<<std::endl;
 		avg += *it;
 	}
 
-	std::cout<<"average fps: "<<avg / bench_res.size()<<std::endl;
+	std::cout<<"average fps: "<<avg / (bench_res.size()-1)<<std::endl;
+
+	std::size_t total = DotDetector::_NRCALL_EXECFULL+DotDetector::_NRCALL_EXECSING+DotDetector::_NRCALL_EXECSLEP;
+	printf("FULL: %lu (%.1f %%), SING: %lu (%.1f %%), SLEP: %lu (%.1f %%)\n", 
+		DotDetector::_NRCALL_EXECFULL, 
+		((DotDetector::_NRCALL_EXECFULL + 0.0) / (total + 0.0) )*100,
+		DotDetector::_NRCALL_EXECSING, 
+		((DotDetector::_NRCALL_EXECSING + 0.0) / (total + 0.0) )*100,
+		DotDetector::_NRCALL_EXECSLEP,
+		((DotDetector::_NRCALL_EXECSLEP + 0.0) / (total + 0.0) ) *100) ;
+
+	printf("Collected %d AMPERE samples.\n", DotDetector::_AMP_SAMPLES.size());
+
+	arma::Row<double> asamp = (arma::conv_to<arma::Row<double>>::from(DotDetector::_AMP_SAMPLES));
+
+	printf("mean %f\n", arma::mean( asamp ));
+	printf("median %f\n", arma::median( asamp ));
+	printf("stddev %f\n", arma::stddev( asamp ));
+	printf("var %f\n", arma::var( asamp ));
+	printf("min %f\n", arma::min( asamp ));
+	printf("max %f\n", arma::max( asamp ));
 }

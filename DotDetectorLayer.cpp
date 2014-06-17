@@ -17,8 +17,8 @@ namespace wdd {
 	double						DotDetectorLayer::FRAME_REDFAC;
 	std::vector<double>			DotDetectorLayer::DD_FREQS;
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
-	double **					DotDetectorLayer::DD_FREQS_COSSAMPLES;
-	double **					DotDetectorLayer::DD_FREQS_SINSAMPLES;
+	arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DotDetectorLayer::DD_FREQS_COSSAMPLES;
+	arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DotDetectorLayer::DD_FREQS_SINSAMPLES;
 	DotDetector **				DotDetectorLayer::_DotDetectors;
 
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
@@ -43,13 +43,9 @@ namespace wdd {
 
 		// create DotDetectors, pass unique id and location of pixel
 		for(std::size_t i=0; i<DD_NUMBER; i++)
-		{
 			DotDetectorLayer::_DotDetectors[i] = new DotDetector(i, &((*frame_ptr).at<uchar>(DD_POSITIONS[i])));
-			//if(i==0)
-				//printf("1. sizeof %u\n",sizeof(*_DotDetectors[i]));
-		}
-	}
 
+	}
 
 	void DotDetectorLayer::release(void)
 	{
@@ -63,72 +59,20 @@ namespace wdd {
 
 	void DotDetectorLayer::copyFrame(bool doDetection)
 	{
-		//arma::mat DEB_DD_SIGNAL_POTENTIALS;
-		//arma::Mat<arma::uword> DEB_DD_RAW_BUFFERS;
-
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
-		{
-			DotDetectorLayer::_DotDetectors[i]->copyPixel(doDetection);
-			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
-			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
-			//if(i==0)
-				//printf("2. sizeof %u\n",sizeof(*_DotDetectors[i]));
-		}
-		/*
-		if(doDetection)
-		{
-
-			std::stringstream a;
-			a <<"_nDEB_DD_SIGNAL_POTENTIALS";
-			a << 31;
-			a <<".txt";
-			DEB_DD_SIGNAL_POTENTIALS.save(a.str(), arma::arma_ascii);
-
-			a.str("");
-			a <<"n_DEB_DD_RAW_BUFFER";
-			a << 31;
-			a <<".txt";
-			DEB_DD_RAW_BUFFERS.save(a.str(), arma::arma_ascii);
-		}
-		*/
+			DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
+		
 		DotDetector::nextBuffPos();
 	}
 
 	void DotDetectorLayer::copyFrameAndDetect()
 	{
-		//arma::mat DEB_DD_SIGNAL_POTENTIALS;
-		//arma::Mat<arma::uword> DEB_DD_RAW_BUFFERS;
-
-		DD_SIGNALS_NUMBER = 0;
+		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
-		{
 			DotDetectorLayer::_DotDetectors[i]->copyPixelAndDetect();
 
-			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
-			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
-			//if(i==0)
-			//{
-			//	printf("3. sizeof %u\n",sizeof(*_DotDetectors[i]));
-			//	exit(0);
-			//}
-		}
-		/*
-		std::stringstream a;
-		a <<"_nDEB_DD_SIGNAL_POTENTIALS";
-		a << fn;
-		a <<".txt";
-		DEB_DD_SIGNAL_POTENTIALS.save(a.str(), arma::arma_ascii);
-
-		a.str("");
-		a <<"n_DEB_DD_RAW_BUFFER";
-		a << fn;
-		a <<".txt";
-		DEB_DD_RAW_BUFFERS.save(a.str(), arma::arma_ascii);
-		*/
-
 		DotDetector::nextBuffPos();
-
 	}
 
 	/* Given a DotDetector frequency configuration consisting of min:step:max this
@@ -222,15 +166,6 @@ namespace wdd {
 		//DotDetector::DD_FREQS_NUMBER = dd_freqs.size();
 		DotDetectorLayer::DD_FREQS = dd_freqs;
 
-		DotDetectorLayer::DD_FREQS_COSSAMPLES = new double * [DotDetectorLayer::DD_FREQS_NUMBER];
-		DotDetectorLayer::DD_FREQS_SINSAMPLES = new double * [DotDetectorLayer::DD_FREQS_NUMBER];
-
-		for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER; i++)
-		{
-			DotDetectorLayer::DD_FREQS_COSSAMPLES[i] = new double [DotDetectorLayer::FRAME_RATEi];
-			DotDetectorLayer::DD_FREQS_SINSAMPLES[i] = new double [DotDetectorLayer::FRAME_RATEi];
-		}
-
 		double step = 1.0 / DotDetectorLayer::FRAME_RATEi;
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER;i++)
@@ -239,8 +174,8 @@ namespace wdd {
 
 			for(std::size_t j=0; j<DotDetectorLayer::FRAME_RATEi; j++)
 			{
-				DotDetectorLayer::DD_FREQS_COSSAMPLES[i][j] = cos(fac * step*j);
-				DotDetectorLayer::DD_FREQS_SINSAMPLES[i][j] = sin(fac * step*j);
+				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(i,j) = static_cast<float>(cos(fac * step*j));
+				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(i,j) = static_cast<float>(sin(fac * step*j));
 			}
 		}
 
@@ -261,12 +196,12 @@ namespace wdd {
 		{
 			printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[i]);
 			for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
-				printf("%.3f ",DotDetectorLayer::DD_FREQS_COSSAMPLES[i][j]);
+				printf("%.3f ",DotDetectorLayer::DD_FREQS_COSSAMPLES.at(i,j));
 			printf("\n");
 
 			printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[i]);
 			for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
-				printf("%.3f ",DotDetectorLayer::DD_FREQS_SINSAMPLES[i][j]);
+				printf("%.3f ",DotDetectorLayer::DD_FREQS_SINSAMPLES.at(i,j));
 			printf("\n");
 		}
 	}

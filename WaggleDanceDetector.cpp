@@ -150,6 +150,10 @@ namespace wdd
 	}
 	void WaggleDanceDetector::_execDetection()
 	{
+		//
+		// Layer 1
+		//
+
 		// check buffer is completly filled
 		if(WDD_FBUFFER_POS < WDD_FBUFFER_SIZE-1)
 		{
@@ -162,11 +166,19 @@ namespace wdd
 			WDD_FBUFFER_POS++;
 		}else{
 			// run detection on DotDetector layer
-			_execDetectionGetDDPotentials();
+			DotDetectorLayer::copyFrameAndDetect();
 		}
+
+		//
+		// Layer 2
+		//
 
 		// run detection on WaggleDanceDetector layer
 		_execDetectionGetWDDSignals();
+
+		//
+		// Layer 3
+		//
 
 		// run top level detection, concat over time
 		if(WDD_SIGNAL)
@@ -290,7 +302,7 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::_execDetectionGetDDPotentials()
 	{
-		DotDetectorLayer::copyFrameAndDetect();
+		
 		//std::cout<<"DotDetectorLayer::DD_SIGNALS_NUMBER: "<<DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
 	}
 

@@ -30,7 +30,7 @@ void getExeFullPath(TCHAR * out, std::size_t size)
 	HMODULE hModule = GetModuleHandle(NULL);
 	if (hModule != NULL)
 	{
-		GetModuleFileName(hModule, BUFF, sizeof(BUFF)); 
+		GetModuleFileName(hModule, BUFF, sizeof(BUFF)/sizeof(TCHAR)); 
 		// remove WaggleDanceDetector.exe part (23 chars :P)
 		_tcsncpy_s(out, size, BUFF, _tcslen(BUFF)-23-1);
 	}
@@ -62,9 +62,9 @@ TCHAR _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {
-	int FRAME_WIDTH;
-	int FRAME_HEIGHT;
-	int FRAME_RATE;		
+	int FRAME_WIDTH=-1;
+	int FRAME_HEIGHT=-1;
+	int FRAME_RATE=-1;		
 	//
 	//	Global: video configuration
 	//

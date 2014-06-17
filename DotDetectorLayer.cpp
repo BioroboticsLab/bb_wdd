@@ -4,7 +4,6 @@
 
 namespace wdd {
 	// is this how c++ works? 
-	DotDetector **				DotDetectorLayer::_DotDetectors;
 	std::vector<cv::Point2i>	DotDetectorLayer::DD_POSITIONS;
 	std::size_t					DotDetectorLayer::DD_NUMBER;
 	double						DotDetectorLayer::DD_MIN_POTENTIAL;
@@ -20,7 +19,7 @@ namespace wdd {
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
 	double **					DotDetectorLayer::DD_FREQS_COSSAMPLES;
 	double **					DotDetectorLayer::DD_FREQS_SINSAMPLES;
-
+	DotDetector **				DotDetectorLayer::_DotDetectors;
 
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
 		std::vector<double> ddl_config)
@@ -44,7 +43,11 @@ namespace wdd {
 
 		// create DotDetectors, pass unique id and location of pixel
 		for(std::size_t i=0; i<DD_NUMBER; i++)
+		{
 			DotDetectorLayer::_DotDetectors[i] = new DotDetector(i, &((*frame_ptr).at<uchar>(DD_POSITIONS[i])));
+			//if(i==0)
+				//printf("1. sizeof %u\n",sizeof(*_DotDetectors[i]));
+		}
 	}
 
 
@@ -68,6 +71,8 @@ namespace wdd {
 			DotDetectorLayer::_DotDetectors[i]->copyPixel(doDetection);
 			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
 			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
+			//if(i==0)
+				//printf("2. sizeof %u\n",sizeof(*_DotDetectors[i]));
 		}
 		/*
 		if(doDetection)
@@ -89,7 +94,7 @@ namespace wdd {
 		DotDetector::nextBuffPos();
 	}
 
-	void DotDetectorLayer::copyFrameAndDetect(unsigned long long fn)
+	void DotDetectorLayer::copyFrameAndDetect()
 	{
 		//arma::mat DEB_DD_SIGNAL_POTENTIALS;
 		//arma::Mat<arma::uword> DEB_DD_RAW_BUFFERS;
@@ -102,6 +107,11 @@ namespace wdd {
 
 			//DEB_DD_SIGNAL_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORES);
 			//DEB_DD_RAW_BUFFERS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DEB_DD_RAW_BUFFERS);
+			//if(i==0)
+			//{
+			//	printf("3. sizeof %u\n",sizeof(*_DotDetectors[i]));
+			//	exit(0);
+			//}
 		}
 		/*
 		std::stringstream a;

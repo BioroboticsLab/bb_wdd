@@ -290,7 +290,7 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::_execDetectionGetDDPotentials()
 	{
-		DotDetectorLayer::copyFrameAndDetect(WDD_SIGNAL_FRAME_NR);
+		DotDetectorLayer::copyFrameAndDetect();
 		//std::cout<<"DotDetectorLayer::DD_SIGNALS_NUMBER: "<<DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
 	}
 
@@ -564,7 +564,7 @@ namespace wdd
 	{
 		printf("Printing WDD signal configuration:\n");
 		printf("[WDD_DANCE_MAX_POS_DIST] %.1f\n", WDD_DANCE_MAX_POS_DIST);
-		printf("[WDD_DANCE_MAX_FRAME_GAP] %d\n", WDD_DANCE_MAX_FRAME_GAP);
-		printf("[WDD_DANCE_MIN_CONSFRAMES] %d\n", WDD_DANCE_MIN_CONSFRAMES);
+		printf("[WDD_DANCE_MAX_FRAME_GAP] %ul\n", WDD_DANCE_MAX_FRAME_GAP);
+		printf("[WDD_DANCE_MIN_CONSFRAMES] %ul\n", WDD_DANCE_MIN_CONSFRAMES);
 	}
 } /* namespace WaggleDanceDetector */

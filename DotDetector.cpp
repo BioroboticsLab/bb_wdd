@@ -3,7 +3,7 @@
 #include "DotDetectorLayer.h"
 
 namespace wdd {
-	// is this how c++ works? 
+	
 	std::size_t DotDetector::_BUFF_POS;
 	/*
 	public functions
@@ -19,8 +19,11 @@ namespace wdd {
 		_MAX = 255;
 		_MIN = 0;
 		_AMPLITUDE = 0;
+
 		_UINT8_PX_VALS_COUNT.fill(0);
-		_NEWMINMAX = false;
+
+		_OLDMINGONE = _OLDMAXGONE = _NEWMINHERE = _NEWMAXHERE = _NEWMINMAX = false;
+
 		_sampPos = 0;
 
 		_DD_PX_VALS_SIN = new double * [DotDetectorLayer::DD_FREQS_NUMBER];

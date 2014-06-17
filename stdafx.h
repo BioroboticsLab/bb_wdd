@@ -2,6 +2,12 @@
 
 #define WDD_FBUFFER_SIZE 32
 
+/*
+#if !defined(ARMA_NO_DEBUG)
+  #define ARMA_NO_DEBUG
+#endif
+  */
+
 #include "targetver.h"
 
 #include <chrono>

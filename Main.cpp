@@ -94,7 +94,7 @@ int main(int nargs, char** argv)
 	//
 	//	Develop: Waggle Dance Configuration
 	//
-	bool visual = false;
+	bool visual = true;
 	bool wdd_write_dance_file = true;
 	bool wdd_write_signal_file = false;
 	bool wdd_verbose = false;
@@ -182,6 +182,11 @@ int main(int nargs, char** argv)
 	int frame_target_width = cvRound(FRAME_WIDTH/resize_factor);
 	int frame_target_height = cvRound(FRAME_HEIGHT/resize_factor);
 
+	std::cout<<"Printing WaggleDanceDetector frame parameter:"<<std::endl;
+	printf("frame_height: %d\n", frame_target_height);
+	printf("frame_width: %d\n", frame_target_width);
+	printf("frame_rate: %d\n", FRAME_RATE);
+	printf("frame_red_fac: %d\n", FRAME_RED_FAC);
 	frame_target = cv::Mat(frame_target_height, frame_target_width, CV_8UC1);
 
 	/*

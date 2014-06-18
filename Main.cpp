@@ -59,6 +59,7 @@ bool dirExists(const TCHAR * dirPath)
 
 /* saves to full path to executable */
 TCHAR _FULL_PATH_EXE[MAX_PATH]; 
+//std::vector<unsigned __int64> loop_bench_res_sing, loop_bench_avg;
 
 int main(int nargs, char** argv)
 {
@@ -252,6 +253,8 @@ int main(int nargs, char** argv)
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
 	std::vector<double> bench_res;
+	//loop_bench_res_sing.reserve(dd_positions.size());
+	//loop_bench_avg.reserve(1000);
 
 	while(capture.read(frame_input))
 	{
@@ -353,4 +356,15 @@ int main(int nargs, char** argv)
 	printf("var %f\n", arma::var( asamp ));
 	printf("min %f\n", arma::min( asamp ));
 	printf("max %f\n", arma::max( asamp ));
+	/*
+	unsigned __int64 sum = 0;
+	for(auto it=loop_bench_avg.begin(); it!=loop_bench_avg.end(); ++it)
+	{
+		//printf("%ul\n", *it);
+		sum += *it;
+	}
+
+	printf("total avg %I64u\n", sum/loop_bench_avg.size());
+	exit(0);
+	*/
 }

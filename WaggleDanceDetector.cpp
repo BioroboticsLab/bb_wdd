@@ -8,6 +8,7 @@
 
 namespace wdd
 {
+	unsigned long long WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
 	bool WaggleDanceDetector::WDD_VERBOSE;
 
 	TCHAR * danceFile_path = _T("\\dance.txt");
@@ -144,7 +145,7 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::copyFrame(unsigned long long frame_nr)
 	{	
-		WDD_SIGNAL_FRAME_NR = frame_nr;
+		WaggleDanceDetector::WDD_SIGNAL_FRAME_NR = frame_nr;
 
 		_execDetection();
 	}

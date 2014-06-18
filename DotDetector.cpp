@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DotDetector.h"
 #include "DotDetectorLayer.h"
+#include "WaggleDanceDetector.h"
 
 namespace wdd {
 
@@ -224,6 +225,9 @@ namespace wdd {
 	}
 	inline void DotDetector::_execFullCalculation()
 	{
+		// reset accumulators to zero
+		memset(&_ACC_VAL, 0, sizeof(_ACC_VAL));
+
 		// calculate normalization for all values, new min/max set already
 		//arma::Row<uchar> t = arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW.begin(), WDD_FBUFFER_SIZE, false, true);
 		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
@@ -237,19 +241,19 @@ namespace wdd {
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR *2;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR -1;
 
-		// reset accumulators to zero
-		memset(&_ACC_VAL, 0, sizeof(_ACC_VAL));
-
 		// recalculate cos/sin values and set accumulators
 		// get correct starting position in ring buffer
 		std::size_t startPos = (_BUFF_POS+1) % WDD_FBUFFER_SIZE;
 		std::size_t currtPos;
 
-		_sampPos = 0;
-		/*
-		unsigned __int64 t1, t2 = 0;
-		t1 = GetRDTSC();
-		*/
+
+		//unsigned __int64 t1, t2 = 0;
+
+
+		//unsigned __int64 MESS[14];
+		//for(std::size_t k=0;k < 14; k++)
+		//	MESS[k] = 0;
+
 		float px_val;
 		SAMP res;
 		for(std::size_t j=0; j<WDD_FBUFFER_SIZE; j++)
@@ -258,64 +262,133 @@ namespace wdd {
 			currtPos = (j + startPos) % WDD_FBUFFER_SIZE;
 			px_val = _DD_PX_VALS_NOR[currtPos];
 
+			//t1 = GetRDTSC();
 			res.c0 = DotDetectorLayer::SAMPLES[j].c0 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c0 = res.c0;
 			_ACC_VAL.c0 += res.c0;
+			//t2 = GetRDTSC();
 
+			//MESS[0]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c1 = DotDetectorLayer::SAMPLES[j].c1 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c1 = res.c1;
 			_ACC_VAL.c1 += res.c1;
+			//t2 = GetRDTSC();
 
+			//MESS[1]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c2 = DotDetectorLayer::SAMPLES[j].c2 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c2 = res.c2;
 			_ACC_VAL.c2 += res.c2;
+			//t2 = GetRDTSC();
 
+			//MESS[2]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c3 = DotDetectorLayer::SAMPLES[j].c3 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c3 = res.c3;
 			_ACC_VAL.c3 += res.c3;
+			//t2 = GetRDTSC();
 
+			//MESS[3]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c4 = DotDetectorLayer::SAMPLES[j].c4 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c4 = res.c4;
 			_ACC_VAL.c4 += res.c4;
+			//t2 = GetRDTSC();
 
+			//MESS[4]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c5 = DotDetectorLayer::SAMPLES[j].c5 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c5 = res.c5;
 			_ACC_VAL.c5 += res.c5;
+			//t2 = GetRDTSC();
 
+			//MESS[5]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.c6 = DotDetectorLayer::SAMPLES[j].c6 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].c6 = res.c6;
 			_ACC_VAL.c6 += res.c6;
+			//t2 = GetRDTSC();
 
+			//MESS[6]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s0 = DotDetectorLayer::SAMPLES[j].s0 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s0 = res.s0;
 			_ACC_VAL.s0 += res.s0;
+			//t2 = GetRDTSC();
 
+			//MESS[7]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s1 = DotDetectorLayer::SAMPLES[j].s1 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s1 = res.s1;
 			_ACC_VAL.s1 += res.s1;
+			//t2 = GetRDTSC();
 
+			//MESS[8]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s2 = DotDetectorLayer::SAMPLES[j].s2 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s2 = res.s2;
 			_ACC_VAL.s2 += res.s2;
+			//t2 = GetRDTSC();
 
+			//MESS[9]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s3 = DotDetectorLayer::SAMPLES[j].s3 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s3 = res.s3;
 			_ACC_VAL.s3 += res.s3;
+			//t2 = GetRDTSC();
 
+			//MESS[10]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s4 = DotDetectorLayer::SAMPLES[j].s4 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s4 = res.s4;
 			_ACC_VAL.s4 += res.s4;
+			//t2 = GetRDTSC();
 
+			//MESS[11]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s5 = DotDetectorLayer::SAMPLES[j].s5 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s5 = res.s5;
 			_ACC_VAL.s5 += res.s5;
+			//t2 = GetRDTSC();
 
+			//MESS[12]+=(t2-t1);
+
+			//t1 = GetRDTSC();
 			res.s6 = DotDetectorLayer::SAMPLES[j].s6 * px_val;
 			_DD_PX_VALS_COSSIN[currtPos].s6 = res.s6;
-			_ACC_VAL.s6 += res.s6;
+			_ACC_VAL.s6 += res.s6;		
+			//t2 = GetRDTSC();
+
+			//MESS[13]+=(t2-t1);
 		}
 		_sampPos = WDD_FBUFFER_SIZE;
-
+		
+		/*
+		if((WaggleDanceDetector::WDD_SIGNAL_FRAME_NR == 31) || (WaggleDanceDetector::WDD_SIGNAL_FRAME_NR == 1000))
+		{			
+			if((0 <= _UNIQUE_ID) && (_UNIQUE_ID <= 10))
+			{
+				printf("[%p]\n", &_DD_PX_VALS_COSSIN);
+				printf("[%d]\t",_UNIQUE_ID);
+				for(std::size_t k=0;k < 14; k++)
+					printf("%.0f ", (MESS[k]+0.0)/(WDD_FBUFFER_SIZE+0.0));
+				printf("\n");
+			}
+		}
+		*/
 		/*
 		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
@@ -340,47 +413,104 @@ namespace wdd {
 		*/
 		/*
 		t2 = GetRDTSC();
-		printf("%ul ticks\n", t2-t1);
-
-		if(_UNIQUE_ID == 100)
-			exit(0);
+		extern std::vector<unsigned __int64> loop_bench_res_sing;
+		loop_bench_res_sing.push_back(t2-t1);
 		*/
 	}
 
 	inline void DotDetector::_execSingleCalculation()
 	{
-		/*
+
 		_normalizeValue(_DD_PX_VALS_RAW[_BUFF_POS], &_DD_PX_VALS_NOR[_BUFF_POS]);
 
-		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
-		{
-		_ACC_COS_VAL.at(freq_i) -= _DD_PX_VALS_COS.at(_BUFF_POS, freq_i);
+		// init loop vars
 
-		_DD_PX_VALS_COS.at(_BUFF_POS, freq_i) = 
-		DotDetectorLayer::DD_FREQS_COSSAMPLES.at(_sampPos, freq_i) * _DD_PX_VALS_NOR.at(_BUFF_POS);
+		float px_val = _DD_PX_VALS_NOR[_BUFF_POS];
+		SAMP res;
 
-		_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(_BUFF_POS, freq_i);
+		res.c0 = DotDetectorLayer::SAMPLES[_sampPos].c0 * px_val;		
+		_ACC_VAL.c0 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c0;
+		_ACC_VAL.c0 += res.c0;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c0 = res.c0;
 
-		_ACC_SIN_VAL.at(freq_i) -= _DD_PX_VALS_SIN.at(_BUFF_POS, freq_i);
+		res.c1 = DotDetectorLayer::SAMPLES[_sampPos].c1 * px_val;
+		_ACC_VAL.c1 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c1;		
+		_ACC_VAL.c1 += res.c1;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c1 = res.c1;
 
-		_DD_PX_VALS_SIN.at(_BUFF_POS, freq_i) = 
-		DotDetectorLayer::DD_FREQS_SINSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(_BUFF_POS);
-		_ACC_SIN_VAL[freq_i] += _DD_PX_VALS_SIN.at(_BUFF_POS, freq_i);
-		}
+		res.c2 = DotDetectorLayer::SAMPLES[_sampPos].c2 * px_val;
+		_ACC_VAL.c2 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c2;
+		_ACC_VAL.c2 += res.c2;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c2 = res.c2;
+
+		res.c3 = DotDetectorLayer::SAMPLES[_sampPos].c3 * px_val;
+		_ACC_VAL.c3 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c3;
+		_ACC_VAL.c3 += res.c3;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c3 = res.c3;
+
+		res.c4 = DotDetectorLayer::SAMPLES[_sampPos].c4 * px_val;
+		_ACC_VAL.c4 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c4;
+		_ACC_VAL.c4 += res.c4;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c4 = res.c4;
+
+		res.c5 = DotDetectorLayer::SAMPLES[_sampPos].c5 * px_val;
+		_ACC_VAL.c5 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c5;
+		_ACC_VAL.c5 += res.c5;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c5 = res.c5;		
+
+		res.c6 = DotDetectorLayer::SAMPLES[_sampPos].c6 * px_val;
+		_ACC_VAL.c6 -= _DD_PX_VALS_COSSIN[_BUFF_POS].c6;
+		_ACC_VAL.c6 += res.c6;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].c6 = res.c6;
+
+		res.s0 = DotDetectorLayer::SAMPLES[_sampPos].s0 * px_val;
+		_ACC_VAL.s0 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s0;
+		_ACC_VAL.s0 += res.s0;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s0 = res.s0;
+
+		res.s1 = DotDetectorLayer::SAMPLES[_sampPos].s1 * px_val;
+		_ACC_VAL.s1 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s1;
+		_ACC_VAL.s1 += res.s1;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s1 = res.s1;
+
+		res.s2 = DotDetectorLayer::SAMPLES[_sampPos].s2 * px_val;
+		_ACC_VAL.s2 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s2;
+		_ACC_VAL.s2 += res.s2;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s2 = res.s2;
+
+		res.s3 = DotDetectorLayer::SAMPLES[_sampPos].s3 * px_val;
+		_ACC_VAL.s3 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s3;
+		_ACC_VAL.s3 += res.s3;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s3 = res.s3;
+
+		res.s4 = DotDetectorLayer::SAMPLES[_sampPos].s4 * px_val;
+		_ACC_VAL.s4 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s4;
+		_ACC_VAL.s4 += res.s4;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s4 = res.s4;
+
+		res.s5 = DotDetectorLayer::SAMPLES[_sampPos].s5 * px_val;
+		_ACC_VAL.s5 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s5;
+		_ACC_VAL.s5 += res.s5;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s5 = res.s5;
+
+		res.s6 = DotDetectorLayer::SAMPLES[_sampPos].s6 * px_val;
+		_ACC_VAL.s6 -= _DD_PX_VALS_COSSIN[_BUFF_POS].s6;
+		_ACC_VAL.s6 += res.s6;
+		_DD_PX_VALS_COSSIN[_BUFF_POS].s6 = res.s6;
+
 		_nextSampPos();
-		*/
 	}
 
 	inline void DotDetector::_execDetection()
 	{
-		/*
-		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
-		{
 		// score_i = sinSum_i^2 + cosSum_i^2
-		_DD_FREQ_SCORES.at(freq_i) = 
-		_ACC_SIN_VAL.at(freq_i)*_ACC_SIN_VAL.at(freq_i) +
-		_ACC_COS_VAL.at(freq_i)*_ACC_COS_VAL(freq_i);
-		}
+		_DD_FREQ_SCORES[0] = (_ACC_VAL.c0 * _ACC_VAL.c0)+(_ACC_VAL.s0 * _ACC_VAL.s0);
+		_DD_FREQ_SCORES[1] = (_ACC_VAL.c1 * _ACC_VAL.c1)+(_ACC_VAL.s1 * _ACC_VAL.s1);
+		_DD_FREQ_SCORES[2] = (_ACC_VAL.c2 * _ACC_VAL.c2)+(_ACC_VAL.s2 * _ACC_VAL.s2);
+		_DD_FREQ_SCORES[3] = (_ACC_VAL.c3 * _ACC_VAL.c3)+(_ACC_VAL.s3 * _ACC_VAL.s3);
+		_DD_FREQ_SCORES[4] = (_ACC_VAL.c4 * _ACC_VAL.c4)+(_ACC_VAL.s4 * _ACC_VAL.s4);
+		_DD_FREQ_SCORES[5] = (_ACC_VAL.c5 * _ACC_VAL.c5)+(_ACC_VAL.s5 * _ACC_VAL.s5);
+		_DD_FREQ_SCORES[6] = (_ACC_VAL.c6 * _ACC_VAL.c6)+(_ACC_VAL.s6 * _ACC_VAL.s6);	
 
 		// sort values
 		_DD_FREQ_SCORES = arma::sort(_DD_FREQ_SCORES);
@@ -389,7 +519,7 @@ namespace wdd {
 
 		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
-		potential += (freq_i+1)*_DD_FREQ_SCORES[freq_i];
+			potential += (freq_i+1)*_DD_FREQ_SCORES[freq_i];
 		}
 
 		potential *= _AMPLITUDE;
@@ -398,15 +528,15 @@ namespace wdd {
 
 		if(potential > DotDetectorLayer::DD_MIN_POTENTIAL)
 		{
-		DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = true;
-		DotDetectorLayer::DD_SIGNALS_NUMBER++;
-		_AMP_SAMPLES.push_back(_AMPLITUDE);
+			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = true;
+			DotDetectorLayer::DD_SIGNALS_NUMBER++;
+			_AMP_SAMPLES.push_back(_AMPLITUDE);
 		}
 		else
 		{
-		DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
+			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
 		}
-		*/
+
 	}
 	inline void DotDetector::_normalizeValue(uchar u, float * f_ptr)
 	{

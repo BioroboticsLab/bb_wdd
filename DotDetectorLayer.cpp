@@ -80,7 +80,17 @@ namespace wdd {
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
 			DotDetectorLayer::_DotDetectors[i]->copyPixelAndDetect();
+		/*
+		extern std::vector<unsigned __int64> loop_bench_res_sing, loop_bench_avg;
 
+		unsigned __int64 sum = 0;
+		for(auto it=loop_bench_res_sing.begin(); it!=loop_bench_res_sing.end(); ++it)
+			sum += *it;
+
+		sum /= loop_bench_res_sing.size();
+
+		loop_bench_avg.push_back(sum);
+		*/
 		DotDetector::nextBuffPos();
 	}
 
@@ -232,7 +242,7 @@ namespace wdd {
 		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
 			printf("%.3f ", SAMPLES[j].c1);
 		printf("\n");
-		
+
 		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[1]);
 		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
 			printf("%.3f ", SAMPLES[j].s1);
@@ -252,7 +262,7 @@ namespace wdd {
 		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
 			printf("%.3f ", SAMPLES[j].c3);
 		printf("\n");
-		
+
 		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[3]);
 		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
 			printf("%.3f ", SAMPLES[j].s3);

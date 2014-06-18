@@ -17,8 +17,7 @@ namespace wdd
 	class WaggleDanceDetector
 	{			
 		std::size_t WDD_FBUFFER_POS;
-		// saves unique #frame
-		unsigned long long WDD_SIGNAL_FRAME_NR;
+		
 
 		//
 		// Layer 2
@@ -108,6 +107,8 @@ namespace wdd
 		// defines if verbose execution mode
 		//TODO: check for remove as not used anymore
 		static bool WDD_VERBOSE;
+		// saves unique #frame
+		static unsigned long long WDD_SIGNAL_FRAME_NR;
 
 	private:
 		void _initWDDSignalValues();

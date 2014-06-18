@@ -12,8 +12,8 @@ namespace wdd{
 		// DD_FREQS_NUMBER with m = WDD_FBUFFER_SIZE sampled values
 		//static double ** DD_FREQS_COSSAMPLES;
 		//static double ** DD_FREQS_SINSAMPLES;
-		static arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DD_FREQS_COSSAMPLES;
-		static arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DD_FREQS_SINSAMPLES;
+		static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_COSSAMPLES;
+		static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_SINSAMPLES;
 
 		// saves positions of used DotDetectors
 		static std::vector<cv::Point2i> DD_POSITIONS;

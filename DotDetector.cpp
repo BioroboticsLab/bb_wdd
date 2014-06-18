@@ -13,6 +13,16 @@ namespace wdd {
 	/*
 	public functions
 	*/
+	unsigned __int64 inline GetRDTSC() {
+		__asm {
+			; Flush the pipeline
+				XOR eax, eax
+				CPUID
+				; Get RDTSC counter in edx:eax
+				RDTSC
+		}
+	}
+
 	DotDetector::DotDetector(std::size_t UNIQUE_ID, uchar * pixel_src_ptr):
 		// copy passed unique id 
 		//(= position in arrays of DotDetectorLayer)
@@ -34,10 +44,12 @@ namespace wdd {
 		_DD_FREQ_SCORES.fill(0);
 		_ACC_SIN_VAL.fill(0);
 		_ACC_COS_VAL.fill(0);
-		
-		/*
+
+		/*		
 		printf("aux_pixel_ptr: %d\n",
 		offsetof(DotDetector, DotDetector::aux_pixel_ptr));
+		printf("_UNIQUE_ID: %d\n",
+		offsetof(DotDetector, DotDetector::_UNIQUE_ID));
 		printf("_sampPos: %d\n",
 		offsetof(DotDetector, DotDetector::_sampPos));
 		printf("_MIN: %d\n",
@@ -74,12 +86,8 @@ namespace wdd {
 		printf("_ACC_COS_VAL: %d\n",
 		offsetof(DotDetector, DotDetector::_ACC_COS_VAL));
 
-		printf("_UNIQUE_ID: %d\n",
-		offsetof(DotDetector, DotDetector::_UNIQUE_ID));
-		
-
 		exit(0);
-		*/
+		*/		
 	}
 
 	DotDetector::~DotDetector(void)
@@ -218,9 +226,9 @@ namespace wdd {
 	{
 		// calculate normalization for all values, new min/max set already
 		//arma::Row<uchar> t = arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW.begin(), WDD_FBUFFER_SIZE, false, true);
-		//_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
-		
-		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
+		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
+
+		//		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
 
 		//_DD_PX_VALS_NOR.print("_DD_PX_VALS_NOR");
 		//_DD_PX_VALS_NOR = (((_DD_PX_VALS_NOR - _MIN) / _AMPLITUDE) * 2) -1;
@@ -238,77 +246,89 @@ namespace wdd {
 		std::size_t startPos = (_BUFF_POS+1) % WDD_FBUFFER_SIZE;
 		std::size_t currtPos;
 
-
+		//_sampPos = 0;
+		/*
+		unsigned __int64 t1, t2 = 0;
+		t1 = GetRDTSC();
+		*/
 		for(std::size_t j=0; j<WDD_FBUFFER_SIZE; j++)
 		{
-
 			currtPos = (j + startPos) % WDD_FBUFFER_SIZE;
 			//currtPos = (currtPos < WDD_FBUFFER_SIZE ? currtPos : 0);
 
 			for(std::size_t freq_i=0; freq_i<DotDetectorLayer::DD_FREQS_NUMBER; freq_i++)
 			{
-				_DD_PX_VALS_COS.at(freq_i,currtPos) = 
-					DotDetectorLayer::DD_FREQS_COSSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(currtPos);
+				_DD_PX_VALS_COS.at(currtPos, freq_i) = 
+					DotDetectorLayer::DD_FREQS_COSSAMPLES.at(_sampPos, freq_i) * _DD_PX_VALS_NOR.at(currtPos);
 
-				_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(freq_i,currtPos);
+				_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(currtPos, freq_i);
 
-				_DD_PX_VALS_SIN.at(freq_i,currtPos) =
-					DotDetectorLayer::DD_FREQS_SINSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(currtPos);
+				_DD_PX_VALS_SIN.at(currtPos, freq_i) =
+					DotDetectorLayer::DD_FREQS_SINSAMPLES.at(currtPos, freq_i) * _DD_PX_VALS_NOR.at(currtPos);
 
-				_ACC_SIN_VAL.at(freq_i) += _DD_PX_VALS_SIN.at(freq_i,currtPos);
+				_ACC_SIN_VAL.at(freq_i) += _DD_PX_VALS_SIN.at(currtPos, freq_i);
 			}
 			// next buffer position -> next sample position
 			_nextSampPos();
 		}
+
+
 		/*
-		for(std::size_t freq_i=0; freq_i<DotDetectorLayer::DD_FREQS_NUMBER; freq_i++)
+		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
 		for(std::size_t j=0; j<WDD_FBUFFER_SIZE; j++)
 		{
 		currtPos = (j + startPos)% WDD_FBUFFER_SIZE;
 
-		_DD_PX_VALS_COS.at(freq_i,currtPos) =
-		DotDetectorLayer::DD_FREQS_COSSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(currtPos);
+		_DD_PX_VALS_COS.at(currtPos, freq_i) =
+		DotDetectorLayer::DD_FREQS_COSSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(currtPos);
 
-		_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(freq_i,currtPos);
+		_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(currtPos, freq_i);
 
-		_DD_PX_VALS_SIN.at(freq_i,currtPos) =
-		DotDetectorLayer::DD_FREQS_SINSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(currtPos);
+		_DD_PX_VALS_SIN.at(currtPos, freq_i) =
+		DotDetectorLayer::DD_FREQS_SINSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(currtPos);
 
-		_ACC_SIN_VAL.at(freq_i) += _DD_PX_VALS_SIN.at(freq_i,currtPos);
+		_ACC_SIN_VAL.at(freq_i) += _DD_PX_VALS_SIN.at(currtPos, freq_i);
 
 		// next buffer position -> next sample position
 		_nextSampPos();
 		}
 		}
 		*/
+		/*
+		t2 = GetRDTSC();
+		printf("%ul ticks\n", t2-t1);
+
+		if(_UNIQUE_ID == 100)
+			exit(0);
+			*/
 	}
 
 	inline void DotDetector::_execSingleCalculation()
 	{
-		 _normalizeValue(_DD_PX_VALS_RAW[_BUFF_POS], &_DD_PX_VALS_NOR[_BUFF_POS]);
+		_normalizeValue(_DD_PX_VALS_RAW[_BUFF_POS], &_DD_PX_VALS_NOR[_BUFF_POS]);
 
-		for(std::size_t freq_i=0; freq_i<DotDetectorLayer::DD_FREQS_NUMBER; freq_i++)
+		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
-			_ACC_COS_VAL.at(freq_i) -= _DD_PX_VALS_COS.at(freq_i,_BUFF_POS);
+			_ACC_COS_VAL.at(freq_i) -= _DD_PX_VALS_COS.at(_BUFF_POS, freq_i);
 
-			_DD_PX_VALS_COS.at(freq_i,_BUFF_POS) = 
-				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(_BUFF_POS);
+			_DD_PX_VALS_COS.at(_BUFF_POS, freq_i) = 
+				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(_sampPos, freq_i) * _DD_PX_VALS_NOR.at(_BUFF_POS);
 
-			_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(freq_i,_BUFF_POS);
+			_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(_BUFF_POS, freq_i);
 
-			_ACC_SIN_VAL.at(freq_i) -= _DD_PX_VALS_SIN.at(freq_i,_BUFF_POS);
+			_ACC_SIN_VAL.at(freq_i) -= _DD_PX_VALS_SIN.at(_BUFF_POS, freq_i);
 
-			_DD_PX_VALS_SIN.at(freq_i,_BUFF_POS) = 
-				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(freq_i,_sampPos) * _DD_PX_VALS_NOR.at(_BUFF_POS);
-			_ACC_SIN_VAL[freq_i] += _DD_PX_VALS_SIN.at(freq_i,_BUFF_POS);
+			_DD_PX_VALS_SIN.at(_BUFF_POS, freq_i) = 
+				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(_BUFF_POS);
+			_ACC_SIN_VAL[freq_i] += _DD_PX_VALS_SIN.at(_BUFF_POS, freq_i);
 		}
 		_nextSampPos();
 	}
 
 	inline void DotDetector::_execDetection()
 	{
-		for(std::size_t freq_i=0; freq_i<DotDetectorLayer::DD_FREQS_NUMBER; freq_i++)
+		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
 			// score_i = sinSum_i^2 + cosSum_i^2
 			_DD_FREQ_SCORES.at(freq_i) = 
@@ -321,7 +341,7 @@ namespace wdd {
 
 		double potential = 0;
 
-		for(std::size_t freq_i=0; freq_i<DotDetectorLayer::DD_FREQS_NUMBER; freq_i++)
+		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
 			potential += (freq_i+1)*_DD_FREQ_SCORES[freq_i];
 		}
@@ -355,7 +375,7 @@ namespace wdd {
 		// values between [0;frame_rate-1]
 		//_sampPos++;
 		//_sampPos %= DotDetectorLayer::FRAME_RATEi;
-		_sampPos = ( ++_sampPos < DotDetectorLayer::FRAME_RATEi ? _sampPos : 0);
+		_sampPos = ( ++_sampPos < WDD_FRAME_RATE ? _sampPos : 0);
 	}
 
 	void DotDetector::nextBuffPos()

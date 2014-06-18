@@ -17,8 +17,8 @@ namespace wdd {
 	double						DotDetectorLayer::FRAME_REDFAC;
 	std::vector<double>			DotDetectorLayer::DD_FREQS;
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
-	arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DotDetectorLayer::DD_FREQS_COSSAMPLES;
-	arma::Mat<float>::fixed<WDD_FREQ_NUMBER,WDD_FRAME_RATE> DotDetectorLayer::DD_FREQS_SINSAMPLES;
+	arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_COSSAMPLES;
+	arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_SINSAMPLES;
 	DotDetector **				DotDetectorLayer::_DotDetectors;
 
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
@@ -43,7 +43,14 @@ namespace wdd {
 
 		// create DotDetectors, pass unique id and location of pixel
 		for(std::size_t i=0; i<DD_NUMBER; i++)
+		{
 			DotDetectorLayer::_DotDetectors[i] = new DotDetector(i, &((*frame_ptr).at<uchar>(DD_POSITIONS[i])));
+			//std::cout<<sizeof(*DotDetectorLayer::_DotDetectors[i])<<std::endl;
+			//std::cout<<&(*DotDetectorLayer::_DotDetectors[i])<<std::endl;
+
+			//if(i==2)
+				//exit(0);
+		}
 
 	}
 
@@ -61,7 +68,7 @@ namespace wdd {
 	{
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
 			DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
-		
+
 		DotDetector::nextBuffPos();
 	}
 
@@ -168,16 +175,17 @@ namespace wdd {
 
 		double step = 1.0 / DotDetectorLayer::FRAME_RATEi;
 
-		for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER;i++)
+		for(std::size_t s=0; s<DotDetectorLayer::FRAME_RATEi; s++)
 		{
-			double fac = 2*CV_PI*DotDetectorLayer::DD_FREQS[i];
-
-			for(std::size_t j=0; j<DotDetectorLayer::FRAME_RATEi; j++)
+			for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER;i++)
 			{
-				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(i,j) = static_cast<float>(cos(fac * step*j));
-				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(i,j) = static_cast<float>(sin(fac * step*j));
+				double fac = 2*CV_PI*DotDetectorLayer::DD_FREQS[i];
+
+				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(s,i) = static_cast<float>(cos(fac * step * s));
+				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(s,i) = static_cast<float>(sin(fac * step * s));
 			}
 		}
+
 
 	}
 	void DotDetectorLayer::printFreqConfig()

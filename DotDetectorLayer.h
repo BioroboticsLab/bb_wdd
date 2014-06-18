@@ -2,6 +2,7 @@
 #include "DotDetector.h"
 
 namespace wdd{
+
 	class DotDetectorLayer
 	{
 	public:
@@ -12,8 +13,9 @@ namespace wdd{
 		// DD_FREQS_NUMBER with m = WDD_FBUFFER_SIZE sampled values
 		//static double ** DD_FREQS_COSSAMPLES;
 		//static double ** DD_FREQS_SINSAMPLES;
-		static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_COSSAMPLES;
-		static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_SINSAMPLES;
+		//static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_COSSAMPLES;
+		//static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_SINSAMPLES;
+		static SAMP SAMPLES[WDD_FRAME_RATE];
 
 		// saves positions of used DotDetectors
 		static std::vector<cv::Point2i> DD_POSITIONS;

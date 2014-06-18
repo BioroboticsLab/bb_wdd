@@ -17,8 +17,10 @@ namespace wdd {
 	double						DotDetectorLayer::FRAME_REDFAC;
 	std::vector<double>			DotDetectorLayer::DD_FREQS;
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
-	arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_COSSAMPLES;
-	arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_SINSAMPLES;
+	SAMP						DotDetectorLayer::SAMPLES[WDD_FRAME_RATE];
+
+	//arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_COSSAMPLES;
+	//arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_SINSAMPLES;
 	DotDetector **				DotDetectorLayer::_DotDetectors;
 
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
@@ -49,7 +51,7 @@ namespace wdd {
 			//std::cout<<&(*DotDetectorLayer::_DotDetectors[i])<<std::endl;
 
 			//if(i==2)
-				//exit(0);
+			//exit(0);
 		}
 
 	}
@@ -173,17 +175,32 @@ namespace wdd {
 		//DotDetector::DD_FREQS_NUMBER = dd_freqs.size();
 		DotDetectorLayer::DD_FREQS = dd_freqs;
 
-		double step = 1.0 / DotDetectorLayer::FRAME_RATEi;
+		double step = 1.0 / WDD_FRAME_RATE;
 
-		for(std::size_t s=0; s<DotDetectorLayer::FRAME_RATEi; s++)
+		for(std::size_t s=0; s<WDD_FRAME_RATE; s++)
 		{
-			for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER;i++)
-			{
-				double fac = 2*CV_PI*DotDetectorLayer::DD_FREQS[i];
+			double fac = 2*CV_PI;
 
-				DotDetectorLayer::DD_FREQS_COSSAMPLES.at(s,i) = static_cast<float>(cos(fac * step * s));
-				DotDetectorLayer::DD_FREQS_SINSAMPLES.at(s,i) = static_cast<float>(sin(fac * step * s));
-			}
+			SAMPLES[s].c0 = static_cast<float>(cos(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s0 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c1 = static_cast<float>(cos(fac * dd_freqs[1] * step * s));
+			SAMPLES[s].s1 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c2 = static_cast<float>(cos(fac * dd_freqs[2] * step * s));
+			SAMPLES[s].s2 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c3 = static_cast<float>(cos(fac * dd_freqs[3] * step * s));
+			SAMPLES[s].s3 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c4 = static_cast<float>(cos(fac * dd_freqs[4] * step * s));
+			SAMPLES[s].s4 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c5 = static_cast<float>(cos(fac * dd_freqs[5] * step * s));
+			SAMPLES[s].s5 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+
+			SAMPLES[s].c6 = static_cast<float>(cos(fac * dd_freqs[6] * step * s));	
+			SAMPLES[s].s6 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
 		}
 
 
@@ -200,17 +217,76 @@ namespace wdd {
 	void DotDetectorLayer::printFreqSamples()
 	{
 		printf("Printing frequency samples:\n");
-		for(std::size_t i=0; i<DotDetectorLayer::DD_FREQS_NUMBER; i++)
-		{
-			printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[i]);
-			for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
-				printf("%.3f ",DotDetectorLayer::DD_FREQS_COSSAMPLES.at(i,j));
-			printf("\n");
 
-			printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[i]);
-			for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
-				printf("%.3f ",DotDetectorLayer::DD_FREQS_SINSAMPLES.at(i,j));
-			printf("\n");
-		}
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[0]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c0);
+		printf("\n");
+
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[0]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s0);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[1]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c1);
+		printf("\n");
+		
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[1]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s1);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[2]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c2);
+		printf("\n");
+
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[2]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s2);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[3]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c3);
+		printf("\n");
+		
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[3]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s3);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[4]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c4);
+		printf("\n");
+
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[4]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s4);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[5]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c5);
+		printf("\n");
+
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[5]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s5);
+		printf("\n");
+
+		printf("[%.1f Hz (cos)] ", DotDetectorLayer::DD_FREQS[6]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].c6);
+		printf("\n");
+
+		printf("[%.1f Hz (sin)] ", DotDetectorLayer::DD_FREQS[6]);
+		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
+			printf("%.3f ", SAMPLES[j].s6);
+		printf("\n");
+
 	}
 } /* namespace WaggleDanceDetector */

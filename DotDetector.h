@@ -1,6 +1,13 @@
 #pragma once
 
 namespace wdd {
+	struct SAMP {
+		float c0,c1,c2,c3,c4,c5,c6;
+		char padding0;
+		float s0,s1,s2,s3,s4,s5,s6;
+		char padding1;
+	};
+
 	class DotDetector
 	{
 	private:
@@ -56,51 +63,33 @@ namespace wdd {
 		// END BLOCK3 (543)
 
 		// START BLOCK4 (544 % 16 == 0)
-		// container to save DD_FREQ_NUMBER x WDD_FBUFFER_SIZE cos values
-		// 984 bytes (896 bytes raw, 88 bytes overhead)
-		arma::Mat<float>::fixed<WDD_FBUFFER_SIZE, WDD_FREQ_NUMBER> _DD_PX_VALS_COS;
-		// END BLOCK4 (1527)
-		char padding3[8];
-		// END BLOCK4 (1535)
+		// container to save COS/SIN values of corresponding _DD_PX_VALS_NOR
+		// 2048 bytes
+		SAMP _DD_PX_VALS_COSSIN[WDD_FBUFFER_SIZE];
+		// END BLOCK4 (2591)
 
-		// START BLOCK5 (1536 % 16 == 0)
-		// container to save DD_FREQ_NUMBER x WDD_FBUFFER_SIZE sin values
-		// 984 bytes (896 bytes raw, 88 bytes overhead)
-		arma::Mat<float>::fixed<WDD_FBUFFER_SIZE, WDD_FREQ_NUMBER> _DD_PX_VALS_SIN;
-		// END BLOCK4 (2519)
-		char padding4[8];
-		// END BLOCK5 (2527)
-
-		// START BLOCK6 (2528 % 16 == 0)
+		// START BLOCK5 (2592 % 16 == 0)
 		// container to save frequency scores
 		// 92 bytes (28 bytes raw, 64 bytes overhead)
 		arma::Row<float>::fixed<WDD_FREQ_NUMBER> _DD_FREQ_SCORES; 
-		// END BLOCK6 (2619)
+		// END BLOCK6 (2683)
 		char padding5[4];
-		// END BLOCK6 (2623)
+		// END BLOCK5 (2687)
 
-		// START BLOCK7 (2624 % 16 == 0)
-		// container to save accumulated COS and scores
-		// 92 bytes (28 bytes raw, 64 bytes overhead)
-		arma::Row<float>::fixed<WDD_FREQ_NUMBER> _ACC_COS_VAL;
-		// END BLOCK7 (2715)
-		char padding6[4];
-		// END BLOCK7 (2719)
-
-		// START BLOCK8 (2720 % 16 == 0)
-		// container to save accumulated SIN and scores
-		// 92 bytes (28 bytes raw, 64 bytes overhead)
-		arma::Row<float>::fixed<WDD_FREQ_NUMBER>_ACC_SIN_VAL;
-		// END BLOCK8 (2811)
-		char padding7[4];
-		// END BLOCK8 (2815)
+		// START BLOCK6 (2688 % 16 == 0)
+		// container to save accumulated COS/SIN
+		// 64 bytes
+		SAMP _ACC_VAL;
+		// END BLOCK6 (2751)
+		//2752 % 16 == 0
+		//2752 % 32 == 0
 
 		void _getInitialNewMinMax();
 		void _getNewMinMax();
 		void _execFullCalculation();
 		void _execSingleCalculation();
 		void _execDetection();
-//		float _normalizeValue(uchar u);
+		//		float _normalizeValue(uchar u);
 		void _normalizeValue(uchar u, float * f_ptr);
 		void _nextSampPos();
 	public:

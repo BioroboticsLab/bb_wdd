@@ -452,7 +452,6 @@ namespace wdd {
 		{
 			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = true;
 			DotDetectorLayer::DD_SIGNALS_NUMBER++;
-			_AMP_SAMPLES.push_back(_AMPLITUDE);
 		}
 		else
 		{

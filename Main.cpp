@@ -270,7 +270,7 @@ int main(int nargs, char** argv)
 	{
 		printf("Start camera warmup..\n");
 		bool WARMUP_DONE = false;
-		unsinged int WARMUMP_FPS_HIT = 0;
+		unsigned int WARMUP_FPS_HIT = 0;
 		while(capture.read(frame_input))
 		{
 			//convert BGR -> Gray

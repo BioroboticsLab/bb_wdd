@@ -179,6 +179,7 @@ namespace wdd
 				pos++;
 
 			std::cout<<"First signaling DD id: "<<pos<<std::endl;
+/*
 			std::array<uchar,32> * dd_px_raw_ptr = &DotDetectorLayer::_DotDetectors[pos]->_DD_PX_VALS_RAW;
 
 			for(auto it= dd_px_raw_ptr->begin(); it!=dd_px_raw_ptr->end(); ++it)
@@ -192,6 +193,7 @@ namespace wdd
 				exit(0);
 
 			return;
+			*/
 		}
 
 		//

@@ -9,9 +9,9 @@ namespace wdd
 		MAX_FRAME_HISTORY = 600;
 		FRAME = new cv::Mat[MAX_FRAME_HISTORY];
 		NEXT_CELL_ID = 0;
-		
-		int startFrameShift = WDD_FBUFFER_SIZE/2;
-		int endFrameShift = WDD_FBUFFER_SIZE/2;
+
+		startFrameShift = cvRound( WDD_FBUFFER_SIZE/2.0 );
+		endFrameShift = cvRound(WDD_FBUFFER_SIZE/2.0);
 
 		//debug only
 		FRAME_NR = new unsigned long long[MAX_FRAME_HISTORY];
@@ -27,7 +27,6 @@ namespace wdd
 	VideoFrameBuffer::~VideoFrameBuffer(void)
 	{
 	}
-
 	void VideoFrameBuffer::setSequecenFrameSize(cv::Size size)
 	{
 		sequenceFrameSize = size;
@@ -47,53 +46,62 @@ namespace wdd
 		CURRENT_FRAME_NR++;	
 	}
 
-	cv::Mat * VideoFrameBuffer::getFrameByNumber(unsigned long long frame_nr)
+	cv::Mat * VideoFrameBuffer::getFrameByNumber(unsigned long long req_frame_nr)
 	{
-		unsigned int offset = static_cast<unsigned int>(CURRENT_FRAME_NR - frame_nr);
-		//std::cout<<"DEBUG: VideoFrameBuffer::getFrameByNumber - STATUS: fnr:"<< frame_nr<<" cfnr:"<<CURRENT_FRAME_NR<<" offset:"<<offset<<std::endl;
-		if( offset > MAX_FRAME_HISTORY)
+		if(CURRENT_FRAME_NR >= req_frame_nr)
 		{
-			std::cerr<< "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame "<<frame_nr<<" - history too small!"<<std::endl;
-			return NULL;
+			unsigned int offset = static_cast<unsigned int>(CURRENT_FRAME_NR - req_frame_nr);
+
+			if( offset <= MAX_FRAME_HISTORY)
+			{
+				offset = (NEXT_CELL_ID - offset) % MAX_FRAME_HISTORY;
+				return &FRAME[offset];
+
+			}
+			else
+			{
+				std::cerr<< "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame "<<req_frame_nr<<" - history too small!"<<std::endl;
+				return NULL;
+			}
 		}
 		else
 		{
-			offset = (NEXT_CELL_ID - offset) % MAX_FRAME_HISTORY;
-			//debug only
-			//std::cout<< "DEBUG: VideoFrameBuffer loaded frame "<<frame_nr<<std::endl;
-			return &FRAME[offset];
+			std::cerr<< "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame "<<req_frame_nr<<" - history too small!"<<std::endl;
+			return NULL;
 		}
 	}
 
 	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
-		startFrame -= startFrameShift;
-		endFrame -= endFrameShift;
+		// safe bounds		
+		unsigned long long _startFrame = startFrame >= startFrameShift ? startFrame-startFrameShift : 0;
+		const unsigned long long _endFrame = endFrame >= endFrameShift ? endFrame-endFrameShift : 0;
 
-		std::cout<<"HERE"<<std::endl;
-		std::cout<<center<<std::endl;
-		std::cout<<sequenceFramePointOffset<<std::endl;
-		std::cout<<sequenceFrameSize<<std::endl;
-		std::cout<<startFrame<<std::endl;
-		std::cout<<endFrame<<std::endl;
-		cv::Mat * frame_ptr;
+		const int roi_rec_x = static_cast<int>((center.x*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset.x);
+		const int roi_rec_y = static_cast<int>((center.y*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset.y);
 
 		std::vector<cv::Mat> out;
+		if( roi_rec_x < 0 || roi_rec_y < 0)
+		{
+			std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc center "<< center<< " out of bounds!"<<std::endl;
+			return out;
+		}
+
+		cv::Mat * frame_ptr;
 
 		cv::Rect roi_rec((center*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset, sequenceFrameSize);
-
-		while(startFrame <=  endFrame)
+		while(_startFrame <=  _endFrame)
 		{
-			frame_ptr = getFrameByNumber(startFrame);
+			frame_ptr = getFrameByNumber(_startFrame);
 			if(!frame_ptr->empty())
 			{
 				cv::Mat subframe_monochrome(*frame_ptr, roi_rec);
 				out.push_back(subframe_monochrome.clone());
 			}
 			else
-				std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc frame "<< startFrame<< " empty!"<<std::endl;
+				std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc frame "<< _startFrame<< " empty!"<<std::endl;
 
-			startFrame++;
+			_startFrame++;
 		}
 
 		return out;

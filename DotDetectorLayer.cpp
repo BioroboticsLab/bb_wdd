@@ -68,6 +68,8 @@ namespace wdd {
 
 	void DotDetectorLayer::copyFrame(bool doDetection)
 	{
+		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
+	
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
 			DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
 

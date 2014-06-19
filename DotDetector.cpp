@@ -5,24 +5,7 @@
 
 namespace wdd {
 
-	std::size_t DotDetector::_BUFF_POS;
-	std::size_t DotDetector::_NRCALL_EXECFULL=0;
-	std::size_t DotDetector::_NRCALL_EXECSING=0;
-	std::size_t DotDetector::_NRCALL_EXECSLEP=0;
-	std::vector<uchar> DotDetector::_AMP_SAMPLES;
-
-	/*
-	public functions
-	*/
-	unsigned __int64 inline GetRDTSC() {
-		__asm {
-			; Flush the pipeline
-				XOR eax, eax
-				CPUID
-				; Get RDTSC counter in edx:eax
-				RDTSC
-		}
-	}
+	std::size_t DotDetector::_BUFF_POS=0;
 
 	DotDetector::DotDetector(std::size_t UNIQUE_ID, uchar * pixel_src_ptr):
 		// copy passed unique id 
@@ -34,17 +17,10 @@ namespace wdd {
 		_OLDMINGONE(false),_OLDMAXGONE(false),_NEWMINHERE(false),_NEWMAXHERE(false), _NEWMINMAX(false),
 		_MAX(255),_MIN(0),_AMPLITUDE(0),_sampPos(0)
 	{
-		//		_DD_PX_VALS_COS.fill(0);
-		//_DD_PX_VALS_SIN.fill(0);
-
 		_DD_PX_VALS_RAW.fill(0);
 		_DD_PX_VALS_NOR.fill(0);
-
 		_UINT8_PX_VALS_COUNT.fill(0);
-
 		_DD_FREQ_SCORES.fill(0);
-		//	_ACC_SIN_VAL.fill(0);
-		//	_ACC_COS_VAL.fill(0);
 
 		/*		
 		printf("aux_pixel_ptr: %d\n",
@@ -186,7 +162,6 @@ namespace wdd {
 		{
 			DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = 0;
 			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
-			DotDetector::_NRCALL_EXECSLEP++;
 			_NEWMINMAX = true;
 			return;
 		}
@@ -194,14 +169,12 @@ namespace wdd {
 		// when new min/max encountered,..
 		if(_NEWMINMAX)
 		{
-			DotDetector::_NRCALL_EXECFULL++;
 			_execFullCalculation();
 			_NEWMINMAX = false;
 		}
 		// else only one new value needs to be transformed
 		else
 		{
-			DotDetector::_NRCALL_EXECSING++;
 			_execSingleCalculation();
 		}
 
@@ -233,9 +206,7 @@ namespace wdd {
 		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
 
 		//		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
-
-		//_DD_PX_VALS_NOR.print("_DD_PX_VALS_NOR");
-		//_DD_PX_VALS_NOR = (((_DD_PX_VALS_NOR - _MIN) / _AMPLITUDE) * 2) -1;
+		
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR - _MIN;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR * _AMPLITUDE_INV;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR *2;
@@ -245,14 +216,6 @@ namespace wdd {
 		// get correct starting position in ring buffer
 		std::size_t startPos = (_BUFF_POS+1) % WDD_FBUFFER_SIZE;
 		std::size_t currtPos;
-
-
-		//unsigned __int64 t1, t2 = 0;
-
-
-		//unsigned __int64 MESS[14];
-		//for(std::size_t k=0;k < 14; k++)
-		//	MESS[k] = 0;
 
 		float px_val;
 		SAMP res;
@@ -375,47 +338,6 @@ namespace wdd {
 			//MESS[13]+=(t2-t1);
 		}
 		_sampPos = WDD_FBUFFER_SIZE;
-		
-		/*
-		if((WaggleDanceDetector::WDD_SIGNAL_FRAME_NR == 31) || (WaggleDanceDetector::WDD_SIGNAL_FRAME_NR == 1000))
-		{			
-			if((0 <= _UNIQUE_ID) && (_UNIQUE_ID <= 10))
-			{
-				printf("[%p]\n", &_DD_PX_VALS_COSSIN);
-				printf("[%d]\t",_UNIQUE_ID);
-				for(std::size_t k=0;k < 14; k++)
-					printf("%.0f ", (MESS[k]+0.0)/(WDD_FBUFFER_SIZE+0.0));
-				printf("\n");
-			}
-		}
-		*/
-		/*
-		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
-		{
-		for(std::size_t j=0; j<WDD_FBUFFER_SIZE; j++)
-		{
-		currtPos = (j + startPos)% WDD_FBUFFER_SIZE;
-
-		_DD_PX_VALS_COS.at(currtPos, freq_i) =
-		DotDetectorLayer::DD_FREQS_COSSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(currtPos);
-
-		_ACC_COS_VAL.at(freq_i) += _DD_PX_VALS_COS.at(currtPos, freq_i);
-
-		_DD_PX_VALS_SIN.at(currtPos, freq_i) =
-		DotDetectorLayer::DD_FREQS_SINSAMPLES.at(_sampPos,freq_i) * _DD_PX_VALS_NOR.at(currtPos);
-
-		_ACC_SIN_VAL.at(freq_i) += _DD_PX_VALS_SIN.at(currtPos, freq_i);
-
-		// next buffer position -> next sample position
-		_nextSampPos();
-		}
-		}
-		*/
-		/*
-		t2 = GetRDTSC();
-		extern std::vector<unsigned __int64> loop_bench_res_sing;
-		loop_bench_res_sing.push_back(t2-t1);
-		*/
 	}
 
 	inline void DotDetector::_execSingleCalculation()
@@ -513,8 +435,8 @@ namespace wdd {
 		_DD_FREQ_SCORES[6] = (_ACC_VAL.c6 * _ACC_VAL.c6)+(_ACC_VAL.s6 * _ACC_VAL.s6);	
 
 		// sort values
-		_DD_FREQ_SCORES = arma::sort(_DD_FREQ_SCORES);
-
+		//_DD_FREQ_SCORES = arma::sort(_DD_FREQ_SCORES);
+		std::sort(_DD_FREQ_SCORES.begin(), _DD_FREQ_SCORES.begin()+WDD_FREQ_NUMBER);
 		double potential = 0;
 
 		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)

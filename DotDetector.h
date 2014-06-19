@@ -3,9 +3,9 @@
 namespace wdd {
 	struct SAMP {
 		float c0,c1,c2,c3,c4,c5,c6;
-		char padding0;
+		char padding0[4];
 		float s0,s1,s2,s3,s4,s5,s6;
-		char padding1;
+		char padding1[4];
 	};
 
 	class DotDetector
@@ -71,7 +71,7 @@ namespace wdd {
 		// START BLOCK5 (2592 % 16 == 0)
 		// container to save frequency scores
 		// 92 bytes (28 bytes raw, 64 bytes overhead)
-		arma::Row<float>::fixed<WDD_FREQ_NUMBER> _DD_FREQ_SCORES; 
+		std::array<float,WDD_FREQ_NUMBER> _DD_FREQ_SCORES; 
 		// END BLOCK6 (2683)
 		char padding5[4];
 		// END BLOCK5 (2687)
@@ -99,8 +99,6 @@ namespace wdd {
 		void copyInitialPixel(bool doDetection);
 		void copyPixelAndDetect();
 
-		//arma::rowvec7 AUX_DD_FREQ_SCORES;
-		//arma::Row<arma::uword> AUX_DEB_DD_RAW_BUFFERS;
 		/*
 		static 
 		*/

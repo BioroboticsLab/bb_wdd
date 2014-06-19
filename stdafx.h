@@ -24,11 +24,8 @@
 #include "Shlwapi.h"
 
 #include <array>
-#include <deque>
 #include <map>
-#include <unordered_map>
 #include <limits>
-#include <list>
 #include <vector>
 
 #include <armadillo>

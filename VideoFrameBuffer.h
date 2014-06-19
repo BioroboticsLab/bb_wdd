@@ -5,19 +5,19 @@ namespace wdd
 	class VideoFrameBuffer
 	{
 		unsigned int MAX_FRAME_HISTORY;
+		unsigned int startFrameShift;
+		unsigned int endFrameShift;
+		unsigned int NEXT_CELL_ID;
 
 		cv::Mat * FRAME;
-		unsigned int NEXT_CELL_ID;
+		
 		unsigned long long CURRENT_FRAME_NR;
-
 		//debug only
 		unsigned long long * FRAME_NR;
 
 		cv::Size sequenceFrameSize;
 		cv::Point sequenceFramePointOffset;
 
-		int startFrameShift;
-		int endFrameShift;
 	public:
 		VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size size);
 		~VideoFrameBuffer(void);

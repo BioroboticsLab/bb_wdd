@@ -59,13 +59,20 @@ bool dirExists(const TCHAR * dirPath)
 
 /* saves to full path to executable */
 TCHAR _FULL_PATH_EXE[MAX_PATH]; 
-//std::vector<unsigned __int64> loop_bench_res_sing, loop_bench_avg;
+
+enum RUN_MODE {TEST, LIVE};
 
 int main(int nargs, char** argv)
 {
 	int FRAME_WIDTH=-1;
 	int FRAME_HEIGHT=-1;
-	int FRAME_RATE=-1;		
+	int FRAME_RATE=-1;
+	
+	RUN_MODE RM;
+	
+	//WaggleDanceOrientator
+	cv::Size videoFrameBufferExtractSize(20,20);
+	
 	//
 	//	Global: video configuration
 	//
@@ -119,13 +126,14 @@ int main(int nargs, char** argv)
 		FRAME_WIDTH= 320;
 		FRAME_HEIGHT = 240;
 		//DEBUG
-		FRAME_RATE = 102;
+		FRAME_RATE = WDD_FRAME_RATE;
 		//FRAME_RATE = atoi(argv[1]);
 
 		capture.set(CV_CAP_PROP_FRAME_WIDTH , FRAME_WIDTH);
 		capture.set(CV_CAP_PROP_FRAME_HEIGHT , FRAME_HEIGHT);
 		capture.set(CV_CAP_PROP_FPS, FRAME_RATE);
 		InputVideoParameters::printPropertiesOf(&capture);
+		RM = LIVE;
 	}
 	// one argument passed to executable - TEST MODE ON
 	else if (nargs == 2)
@@ -149,9 +157,10 @@ int main(int nargs, char** argv)
 		InputVideoParameters vp(&capture);
 		FRAME_WIDTH= vp.getFrameWidth();
 		FRAME_HEIGHT = vp.getFrameHeight();
-		FRAME_RATE = 102;
+		FRAME_RATE = WDD_FRAME_RATE;
 
 		InputVideoParameters::printPropertiesOf(&capture);
+		RM = TEST;
 	}else {
 		std::cerr<<"Error! Wrong number of arguments!"<<std::endl;
 	}
@@ -171,7 +180,7 @@ int main(int nargs, char** argv)
 
 	/* prepare videoFrameBuffer */
 	VideoFrameBuffer videoFrameBuffer(frame_counter, cv::Size(FRAME_HEIGHT, FRAME_WIDTH));
-	videoFrameBuffer.setSequecenFrameSize(cv::Size(100,100));
+	videoFrameBuffer.setSequecenFrameSize(videoFrameBufferExtractSize);
 
 	/* prepare buffer to hold mono chromized input frame */
 	frame_input_monochrome =
@@ -210,7 +219,8 @@ int main(int nargs, char** argv)
 			dd_positions.push_back(cv::Point2i(i,j));
 		}
 	}
-	std::cout<<"Initialize with "<<dd_positions.size()<<" DotDetectors."<<std::endl;
+	printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f).\n", 
+		dd_positions.size(), DD_MIN_POTENTIAL);
 
 	/*
 	* prepare WaggleDanceDetector config vector
@@ -256,6 +266,57 @@ int main(int nargs, char** argv)
 	//loop_bench_res_sing.reserve(dd_positions.size());
 	//loop_bench_avg.reserve(1000);
 
+	if(RM == LIVE)
+	{
+		printf("Start camera warmup..\n");
+		bool WARMUP_DONE = false;
+		unsinged int WARMUMP_FPS_HIT = 0;
+		while(capture.read(frame_input))
+		{
+			//convert BGR -> Gray
+			cv::cvtColor(frame_input,frame_input_monochrome, CV_BGR2GRAY);
+
+			// save to global Frame Buffer
+			videoFrameBuffer.addFrame(&frame_input_monochrome);
+
+			// subsample
+			cv::resize(frame_input_monochrome, frame_target, frame_target.size(),
+				0, 0, cv::INTER_AREA);
+			if(!WARMUP_DONE)
+			{
+				wdd.copyInitialFrame(frame_counter, false);
+			}
+			else
+			{
+				wdd.copyInitialFrame(frame_counter, true);
+				break;
+			}
+			
+			// finally increase frame_input counter	
+			frame_counter++;
+			
+			//test fps
+			if((frame_counter % 100) == 0)
+			{
+				std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
+				double fps = 100/sec.count();
+				printf("%1.f fps ..", fps);
+				if(abs(WDD_FRAME_RATE - fps) < 1)
+				{
+					printf("\t [GOOD]\n");
+					WARMUP_DONE = ++WARMUP_FPS_HIT >= 3 ? true : false;
+				}
+				else
+				{
+					printf("\t [BAD]\n");
+				}
+
+				start = std::chrono::steady_clock::now();
+			}
+		}
+		printf("Camera warmup done!\n");
+	}
+	
 	while(capture.read(frame_input))
 	{
 
@@ -327,7 +388,7 @@ int main(int nargs, char** argv)
 		}
 	}
 	capture.release();
-
+	/*
 	double avg = 0;
 	for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)
 	{

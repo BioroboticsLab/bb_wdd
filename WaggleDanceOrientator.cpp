@@ -366,7 +366,7 @@ namespace wdd
 			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
 			// draw the orientation line
-			cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 3,CV_AA);
+			//cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 3,CV_AA);
 
 			// set image file name
 			TCHAR BUFF_PATH[MAX_PATH];
@@ -381,6 +381,8 @@ namespace wdd
 			// append 
 			_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 			_tcscat_s(BUFF_PATH, MAX_PATH, _T(".png"));
+
+			cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
 
 			// write image to disk
 			WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);

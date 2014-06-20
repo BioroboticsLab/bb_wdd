@@ -392,7 +392,7 @@ int main(int nargs, char** argv)
 			}
 
 			cv::imshow("Video", frame_input);
-			cv::waitKey(10);
+			cv::waitKey(1);
 		}
 #ifdef WDD_DDL_DEBUG_FULL
 		if(frame_counter >= WDD_FBUFFER_SIZE-1)
@@ -418,6 +418,22 @@ int main(int nargs, char** argv)
 			bench_res.push_back(100/sec.count());
 
 			start = std::chrono::steady_clock::now();
+		}
+
+		if(RM == LIVE)
+		{
+			if((frame_counter % 500) == 0)
+			{
+				printf("collected fps: ");
+				double avg = 0;
+				for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)
+				{
+					printf("%.1f ", *it);
+					avg += *it;
+				}
+				printf("(avg: %.1f)\n", avg/bench_res.size());
+				bench_res.clear();
+			}
 		}
 	}
 	capture.release();

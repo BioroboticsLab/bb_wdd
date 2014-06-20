@@ -23,6 +23,11 @@ namespace wdd {
 	//arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_SINSAMPLES;
 	DotDetector **				DotDetectorLayer::_DotDetectors;
 
+#ifdef WDD_DDL_DEBUG_FULL
+	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_POTENTIALS;
+	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_FREQ_SCORE;
+	arma::Mat<unsigned int>			DotDetectorLayer::DDL_DEBUG_DD_RAW_PX_VAL;
+#endif
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
 		std::vector<double> ddl_config)
 	{
@@ -66,34 +71,65 @@ namespace wdd {
 		delete DotDetectorLayer::DD_SIGNALS;
 	}
 
+	// expect to be used as initial function to fill buffer and have only one single call
+	// with doDetection = true
 	void DotDetectorLayer::copyFrame(bool doDetection)
 	{
+#ifdef WDD_DDL_DEBUG_FULL
+		if(doDetection)
+			DDL_DEBUG_DD_POTENTIALS.clear();DDL_DEBUG_DD_FREQ_SCORE.clear();DDL_DEBUG_DD_RAW_PX_VAL.clear();
+#endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
-	
+
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
+		{
 			DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
+#ifdef WDD_DDL_DEBUG_FULL		
+			if(doDetection)
+			{
+				if(i < WDD_DDL_DEBUG_FULL_MAX_DDS)	
+				{
+					DDL_DEBUG_DD_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_POTENTIALS);
+					DDL_DEBUG_DD_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORE);
+					DDL_DEBUG_DD_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_RAW_PX_VAL);					
+				}
+			}
+#endif
+		}// end for-loop
 
 		DotDetector::nextBuffPos();
+
+#ifdef WDD_DDL_DEBUG_FULL
+		if(doDetection)
+			DotDetectorLayer::debugWriteFiles();
+#endif
 	}
 
 	void DotDetectorLayer::copyFrameAndDetect()
 	{
+#ifdef WDD_DDL_DEBUG_FULL
+		DDL_DEBUG_DD_POTENTIALS.clear();DDL_DEBUG_DD_FREQ_SCORE.clear();DDL_DEBUG_DD_RAW_PX_VAL.clear();
+#endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
+		{
 			DotDetectorLayer::_DotDetectors[i]->copyPixelAndDetect();
-		/*
-		extern std::vector<unsigned __int64> loop_bench_res_sing, loop_bench_avg;
+#ifdef WDD_DDL_DEBUG_FULL		
+			if(i < WDD_DDL_DEBUG_FULL_MAX_DDS)	
+			{
+				DDL_DEBUG_DD_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_POTENTIALS);
+				DDL_DEBUG_DD_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORE);
+				DDL_DEBUG_DD_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_RAW_PX_VAL);					
+			}
+#endif
 
-		unsigned __int64 sum = 0;
-		for(auto it=loop_bench_res_sing.begin(); it!=loop_bench_res_sing.end(); ++it)
-			sum += *it;
+		}// end for-loop
 
-		sum /= loop_bench_res_sing.size();
-
-		loop_bench_avg.push_back(sum);
-		*/
 		DotDetector::nextBuffPos();
+#ifdef WDD_DDL_DEBUG_FULL
+		DotDetectorLayer::debugWriteFiles();
+#endif
 	}
 
 	/* Given a DotDetector frequency configuration consisting of min:step:max this
@@ -299,6 +335,27 @@ namespace wdd {
 		for(std::size_t j=0; j< DotDetectorLayer::FRAME_RATEi; j++)
 			printf("%.3f ", SAMPLES[j].s6);
 		printf("\n");
-
 	}
+#ifdef WDD_DDL_DEBUG_FULL
+	void DotDetectorLayer::debugWriteFiles()
+	{
+		std::stringstream a;
+		a <<"DDL_DEBUG_DD_POTENTIALS_F";
+		a << WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_POTENTIALS.save(a.str(), arma::arma_ascii);
+
+		a.str("");
+		a <<"DDL_DEBUG_DD_FREQ_SCORE_F";
+		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_FREQ_SCORE.save(a.str(), arma::arma_ascii);
+
+		a.str("");
+		a <<"DDL_DEBUG_DD_RAW_PX_VAL_F";
+		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_RAW_PX_VAL.save(a.str(), arma::arma_ascii);
+	}
+#endif
 } /* namespace WaggleDanceDetector */

@@ -67,12 +67,12 @@ int main(int nargs, char** argv)
 	int FRAME_WIDTH=-1;
 	int FRAME_HEIGHT=-1;
 	int FRAME_RATE=-1;
-	
+
 	RUN_MODE RM;
-	
+
 	//WaggleDanceOrientator
 	cv::Size videoFrameBufferExtractSize(20,20);
-	
+
 	//
 	//	Global: video configuration
 	//
@@ -102,7 +102,7 @@ int main(int nargs, char** argv)
 	//
 	//	Develop: Waggle Dance Configuration
 	//
-	bool visual = false;
+	bool visual = true;
 	bool wdd_write_dance_file = false;
 	bool wdd_write_signal_file = false;
 	bool wdd_verbose = false;
@@ -164,8 +164,9 @@ int main(int nargs, char** argv)
 	}else {
 		std::cerr<<"Error! Wrong number of arguments!"<<std::endl;
 	}
-
-
+#ifdef WDD_DDL_DEBUG_FULL
+	std::cout<<"************** WDD_DDL_DEBUG_FULL ON!   **************"<<std::endl;
+#endif
 	cv::Mat frame_input;
 	cv::Mat frame_input_monochrome;
 	cv::Mat frame_target;
@@ -291,10 +292,21 @@ int main(int nargs, char** argv)
 				wdd.copyInitialFrame(frame_counter, true);
 				break;
 			}
-			
+#ifdef WDD_DDL_DEBUG_FULL
+			if(frame_counter >= WDD_FBUFFER_SIZE-1)
+				printf("Frame# %llu\t DD_SIGNALS_NUMBER: %d\n", WaggleDanceDetector::WDD_SIGNAL_FRAME_NR, DotDetectorLayer::DD_SIGNALS_NUMBER);
+
+			if(frame_counter >= WDD_DDL_DEBUG_FULL_MAX_FRAME-1)
+			{
+				std::cout<<"************** WDD_DDL_DEBUG_FULL DONE! **************"<<std::endl;
+				printf("WDD_DDL_DEBUG_FULL captured %d frames.\n", WDD_DDL_DEBUG_FULL_MAX_FRAME);
+				capture.release();
+				exit(0);
+			}
+#endif
 			// finally increase frame_input counter	
 			frame_counter++;
-			
+
 			//test fps
 			if((frame_counter % 100) == 0)
 			{
@@ -316,7 +328,7 @@ int main(int nargs, char** argv)
 		}
 		printf("Camera warmup done!\n");
 	}
-	
+
 	while(capture.read(frame_input))
 	{
 
@@ -331,7 +343,18 @@ int main(int nargs, char** argv)
 			0, 0, cv::INTER_AREA);
 
 		// feed WDD with tar_frame
-		wdd.copyFrame(frame_counter);
+		if(frame_counter < WDD_FBUFFER_SIZE-1)
+		{
+			wdd.copyInitialFrame(frame_counter, false);
+		}
+		else if (frame_counter == WDD_FBUFFER_SIZE-1)
+		{
+			wdd.copyInitialFrame(frame_counter, true);			
+		}
+		else 
+		{
+			wdd.copyFrame(frame_counter);
+		}
 
 		// output visually if enabled
 		if(visual)
@@ -371,10 +394,20 @@ int main(int nargs, char** argv)
 			cv::imshow("Video", frame_input);
 			cv::waitKey(10);
 		}
+#ifdef WDD_DDL_DEBUG_FULL
+		if(frame_counter >= WDD_FBUFFER_SIZE-1)
+			printf("Frame# %llu\t DD_SIGNALS_NUMBER: %d\n", WaggleDanceDetector::WDD_SIGNAL_FRAME_NR, DotDetectorLayer::DD_SIGNALS_NUMBER);
 
+		if(frame_counter >= WDD_DDL_DEBUG_FULL_MAX_FRAME-1)
+		{
+			std::cout<<"************** WDD_DDL_DEBUG_FULL DONE! **************"<<std::endl;
+			printf("WDD_DDL_DEBUG_FULL captured %d frames.\n", WDD_DDL_DEBUG_FULL_MAX_FRAME);
+			capture.release();
+			exit(0);
+		}
+#endif
 		// finally increase frame_input counter	
 		frame_counter++;
-
 		// benchmark output
 		if((frame_counter % 100) == 0)
 		{
@@ -388,7 +421,7 @@ int main(int nargs, char** argv)
 		}
 	}
 	capture.release();
-	/*
+
 	double avg = 0;
 	for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)
 	{
@@ -397,15 +430,15 @@ int main(int nargs, char** argv)
 	}
 
 	std::cout<<"average fps: "<<avg / (bench_res.size()-1)<<std::endl;
-
+	/*
 	std::size_t total = DotDetector::_NRCALL_EXECFULL+DotDetector::_NRCALL_EXECSING+DotDetector::_NRCALL_EXECSLEP;
 	printf("FULL: %lu (%.1f %%), SING: %lu (%.1f %%), SLEP: %lu (%.1f %%)\n", 
-		DotDetector::_NRCALL_EXECFULL, 
-		((DotDetector::_NRCALL_EXECFULL + 0.0) / (total + 0.0) )*100,
-		DotDetector::_NRCALL_EXECSING, 
-		((DotDetector::_NRCALL_EXECSING + 0.0) / (total + 0.0) )*100,
-		DotDetector::_NRCALL_EXECSLEP,
-		((DotDetector::_NRCALL_EXECSLEP + 0.0) / (total + 0.0) ) *100) ;
+	DotDetector::_NRCALL_EXECFULL, 
+	((DotDetector::_NRCALL_EXECFULL + 0.0) / (total + 0.0) )*100,
+	DotDetector::_NRCALL_EXECSING, 
+	((DotDetector::_NRCALL_EXECSING + 0.0) / (total + 0.0) )*100,
+	DotDetector::_NRCALL_EXECSLEP,
+	((DotDetector::_NRCALL_EXECSLEP + 0.0) / (total + 0.0) ) *100) ;
 
 	printf("Collected %d AMPERE samples.\n", DotDetector::_AMP_SAMPLES.size());
 
@@ -421,8 +454,8 @@ int main(int nargs, char** argv)
 	unsigned __int64 sum = 0;
 	for(auto it=loop_bench_avg.begin(); it!=loop_bench_avg.end(); ++it)
 	{
-		//printf("%ul\n", *it);
-		sum += *it;
+	//printf("%ul\n", *it);
+	sum += *it;
 	}
 
 	printf("total avg %I64u\n", sum/loop_bench_avg.size());

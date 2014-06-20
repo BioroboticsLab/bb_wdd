@@ -8,6 +8,14 @@
   #define ARMA_NO_DEBUG
 #endif
 
+
+#if !defined(WDD_DDL_DEBUG_FULL)
+	#define WDD_DDL_DEBUG_FULL
+	#define WDD_DDL_DEBUG_FULL_MAX_FRAME 40
+	#define WDD_DDL_DEBUG_FULL_MAX_DDS 100
+#endif
+
+
 #include "targetver.h"
 
 #include <chrono>

@@ -93,6 +93,12 @@ namespace wdd {
 		void _normalizeValue(uchar u, float * f_ptr);
 		void _nextSampPos();
 	public:
+
+#ifdef WDD_DDL_DEBUG_FULL
+		arma::Row<float>::fixed<1> AUX_DD_POTENTIALS;
+		arma::Row<float>::fixed<WDD_FREQ_NUMBER> AUX_DD_FREQ_SCORE;
+		arma::Row<unsigned int>::fixed<WDD_FBUFFER_SIZE> AUX_DD_RAW_PX_VAL;
+#endif
 		DotDetector(std::size_t UNIQUE_ID, uchar * pixel_src_ptr);
 		~DotDetector(void);
 

@@ -50,6 +50,13 @@ namespace wdd{
 		// saves frame reduction factor
 		static double FRAME_REDFAC;
 
+#ifdef WDD_DDL_DEBUG_FULL
+		static arma::Mat<float> DDL_DEBUG_DD_POTENTIALS;
+		static arma::Mat<float> DDL_DEBUG_DD_FREQ_SCORE;
+		static arma::Mat<unsigned int> DDL_DEBUG_DD_RAW_PX_VAL;
+
+		static void debugWriteFiles();
+#endif
 		/*
 		functions
 		*/

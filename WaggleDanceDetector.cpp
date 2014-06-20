@@ -167,33 +167,10 @@ namespace wdd
 		DotDetectorLayer::copyFrameAndDetect();
 		if(DotDetectorLayer::DD_SIGNALS_NUMBER > 100)
 		{
-			std::cout<<"3. DotDetectorLayer::DD_NUMBER: "<<  DotDetectorLayer::DD_NUMBER<<std::endl;
-			std::cout<<"3. DotDetectorLayer::DD_MIN_POTENTIAL: "<<  DotDetectorLayer::DD_MIN_POTENTIAL<<std::endl;
-
-			std::cout<<"Drop frame "<< 
+			std::cout<<"WDD LAYER 1 OVERFLOW DETECTED! Drop frame "<< 
 				WaggleDanceDetector::WDD_SIGNAL_FRAME_NR <<
-				": DD SIGNAL NUMBER OVERFLOW! "<< DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
-			std::size_t pos =0;
-
-			while(DotDetectorLayer::DD_SIGNALS[pos] != 0)
-				pos++;
-
-			std::cout<<"First signaling DD id: "<<pos<<std::endl;
-/*
-			std::array<uchar,32> * dd_px_raw_ptr = &DotDetectorLayer::_DotDetectors[pos]->_DD_PX_VALS_RAW;
-
-			for(auto it= dd_px_raw_ptr->begin(); it!=dd_px_raw_ptr->end(); ++it)
-				std::cout<<static_cast<int>(*it)<<" ";
-
-			std::cout<<std::endl;
-
-			std::cout<<"Potential: "<<DotDetectorLayer::DD_POTENTIALS[pos]<<std::endl;
-
-			if(WaggleDanceDetector::WDD_SIGNAL_FRAME_NR > 420)
-				exit(0);
-
+				" - DD SIGNALS NUMBER: "<< DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
 			return;
-			*/
 		}
 
 		//

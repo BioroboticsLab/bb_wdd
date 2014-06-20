@@ -87,7 +87,13 @@ namespace wdd {
 		if(doDetection)
 		{
 			_getInitialNewMinMax();
-
+			// DEBUG
+#ifdef WDD_DDL_DEBUG_FULL
+			std::vector<uchar> tmp;
+			std::copy(_DD_PX_VALS_RAW.begin(),_DD_PX_VALS_RAW.end(), std::back_inserter(tmp));
+			arma::Row<uchar> T(tmp);
+			AUX_DD_RAW_PX_VAL = arma::conv_to<arma::Row<unsigned int>>::from(T);
+#endif
 			if(_AMPLITUDE == 0)
 			{
 				DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = 0;
@@ -146,7 +152,25 @@ namespace wdd {
 		}
 
 		// DEBUG
-		//AUX_DEB_DD_RAW_BUFFERS[_BUFF_POS] = _DD_PX_VALS_RAW[_BUFF_POS];
+#ifdef WDD_DDL_DEBUG_FULL
+		std::vector<uchar> tmp;
+		std::copy(_DD_PX_VALS_RAW.begin(),_DD_PX_VALS_RAW.end(), std::back_inserter(tmp));
+		arma::Row<uchar> T(tmp);
+		AUX_DD_RAW_PX_VAL = arma::conv_to<arma::Row<unsigned int>>::from(T);
+
+		/*
+		if(_UNIQUE_ID == 0)
+		{
+		std::cout<<"[UID: "<<_UNIQUE_ID<<"]_DD_PX_VALS_RAW: ";
+		for(auto it=_DD_PX_VALS_RAW.begin(); it!=_DD_PX_VALS_RAW.end(); ++it)
+		std::cout<<static_cast<int>(*it)<<" ";
+		std::cout<<std::endl;
+
+		arma::Row<uchar> T(tmp);
+		T.print("T:");
+		}
+		*/
+#endif
 
 		if(_OLDMINGONE | _OLDMAXGONE | _NEWMINHERE | _NEWMAXHERE)
 		{
@@ -206,7 +230,7 @@ namespace wdd {
 		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
 
 		//		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
-		
+
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR - _MIN;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR * _AMPLITUDE_INV;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR *2;
@@ -434,10 +458,13 @@ namespace wdd {
 		_DD_FREQ_SCORES[5] = (_ACC_VAL.c5 * _ACC_VAL.c5)+(_ACC_VAL.s5 * _ACC_VAL.s5);
 		_DD_FREQ_SCORES[6] = (_ACC_VAL.c6 * _ACC_VAL.c6)+(_ACC_VAL.s6 * _ACC_VAL.s6);	
 
+#ifdef WDD_DDL_DEBUG_FULL
+		AUX_DD_FREQ_SCORE = arma::Row<float>((float *)&_DD_FREQ_SCORES.begin(), WDD_FREQ_NUMBER, true, true);
+#endif
 		// sort values
 		//_DD_FREQ_SCORES = arma::sort(_DD_FREQ_SCORES);
 		std::sort(_DD_FREQ_SCORES.begin(), _DD_FREQ_SCORES.begin()+WDD_FREQ_NUMBER);
-		double potential = 0;
+		float potential = 0;
 
 		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
 		{
@@ -458,6 +485,9 @@ namespace wdd {
 			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
 		}
 
+#ifdef WDD_DDL_DEBUG_FULL
+		AUX_DD_POTENTIALS(0) = potential;		
+#endif
 	}
 	inline void DotDetector::_normalizeValue(uchar u, float * f_ptr)
 	{

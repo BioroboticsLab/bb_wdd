@@ -54,7 +54,12 @@ namespace wdd{
 		static arma::Mat<float> DDL_DEBUG_DD_POTENTIALS;
 		static arma::Mat<float> DDL_DEBUG_DD_FREQ_SCORE;
 		static arma::Mat<unsigned int> DDL_DEBUG_DD_RAW_PX_VAL;
-
+		
+		static std::vector<std::size_t> DDL_DEBUG_DD_FIRING_IDs;
+		static arma::Mat<float> DDL_DEBUG_DD_FIRING_ID_POTENTIALS;
+		static arma::Mat<float> DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE;
+		static arma::Mat<unsigned int> DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL;
+		
 		static void debugWriteFiles();
 #endif
 		/*

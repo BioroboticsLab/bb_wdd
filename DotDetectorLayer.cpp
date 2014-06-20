@@ -26,7 +26,11 @@ namespace wdd {
 #ifdef WDD_DDL_DEBUG_FULL
 	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_POTENTIALS;
 	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_FREQ_SCORE;
-	arma::Mat<unsigned int>			DotDetectorLayer::DDL_DEBUG_DD_RAW_PX_VAL;
+	arma::Mat<unsigned int>		DotDetectorLayer::DDL_DEBUG_DD_RAW_PX_VAL;
+	std::vector<std::size_t>	DotDetectorLayer::DDL_DEBUG_DD_FIRING_IDs(WDD_DDL_DEBUG_FULL_MAX_FIRING_DDS);
+	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_FIRING_ID_POTENTIALS;
+	arma::Mat<float>			DotDetectorLayer::DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE;
+	arma::Mat<unsigned int>		DotDetectorLayer::DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL;	
 #endif
 	void DotDetectorLayer::init(std::vector<cv::Point2i> dd_positions, cv::Mat * frame_ptr, 
 		std::vector<double> ddl_config)
@@ -77,7 +81,11 @@ namespace wdd {
 	{
 #ifdef WDD_DDL_DEBUG_FULL
 		if(doDetection)
+		{
 			DDL_DEBUG_DD_POTENTIALS.clear();DDL_DEBUG_DD_FREQ_SCORE.clear();DDL_DEBUG_DD_RAW_PX_VAL.clear();
+			DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.clear();DDL_DEBUG_DD_FIRING_IDs.clear();
+			DDL_DEBUG_DD_FIRING_ID_POTENTIALS.clear();DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.clear();
+		}
 #endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
 
@@ -93,6 +101,10 @@ namespace wdd {
 					DDL_DEBUG_DD_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORE);
 					DDL_DEBUG_DD_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_RAW_PX_VAL);					
 				}
+				if(DotDetectorLayer::DD_SIGNALS[i] && (DDL_DEBUG_DD_FIRING_IDs.size() < WDD_DDL_DEBUG_FULL_MAX_FIRING_DDS))
+				{
+					DDL_DEBUG_DD_FIRING_IDs.push_back(i);
+				}
 			}
 #endif
 		}// end for-loop
@@ -101,7 +113,19 @@ namespace wdd {
 
 #ifdef WDD_DDL_DEBUG_FULL
 		if(doDetection)
+		{
+			std::size_t i=0;			
+			for(auto it=DDL_DEBUG_DD_FIRING_IDs.begin();it!=DDL_DEBUG_DD_FIRING_IDs.end();++it, i++)
+			{
+				DDL_DEBUG_DD_FIRING_ID_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_POTENTIALS);
+				DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_FREQ_SCORE);
+				DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_RAW_PX_VAL);
+			}
+			DDL_DEBUG_DD_FIRING_ID_POTENTIALS.insert_cols(0,arma::conv_to<arma::Col<float>>::from(arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs)));
+			DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.insert_cols(0,arma::conv_to<arma::Col<float>>::from(arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs)));
+			DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.insert_cols(0,arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs));
 			DotDetectorLayer::debugWriteFiles();
+		}
 #endif
 	}
 
@@ -109,6 +133,8 @@ namespace wdd {
 	{
 #ifdef WDD_DDL_DEBUG_FULL
 		DDL_DEBUG_DD_POTENTIALS.clear();DDL_DEBUG_DD_FREQ_SCORE.clear();DDL_DEBUG_DD_RAW_PX_VAL.clear();
+		DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.clear();
+		DDL_DEBUG_DD_FIRING_ID_POTENTIALS.clear();DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.clear();
 #endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
 
@@ -122,12 +148,38 @@ namespace wdd {
 				DDL_DEBUG_DD_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_FREQ_SCORE);
 				DDL_DEBUG_DD_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[i]->AUX_DD_RAW_PX_VAL);					
 			}
+			if(DotDetectorLayer::DD_SIGNALS[i] && (DDL_DEBUG_DD_FIRING_IDs.size() < WDD_DDL_DEBUG_FULL_MAX_FIRING_DDS))
+			{
+				bool isNew = true;
+				//check for id
+				for(auto it=DDL_DEBUG_DD_FIRING_IDs.begin();it!=DDL_DEBUG_DD_FIRING_IDs.end();++it)
+				{
+					if(*it == i)
+					{
+						isNew = false; break;
+					}
+				}
+				if(isNew)
+				{
+					DDL_DEBUG_DD_FIRING_IDs.push_back(i);
+				}
+			}
 #endif
 
 		}// end for-loop
 
 		DotDetector::nextBuffPos();
 #ifdef WDD_DDL_DEBUG_FULL
+		std::size_t i=0;
+		for(auto it=DDL_DEBUG_DD_FIRING_IDs.begin();it!=DDL_DEBUG_DD_FIRING_IDs.end();++it, i++)
+		{
+			DDL_DEBUG_DD_FIRING_ID_POTENTIALS.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_POTENTIALS);
+			DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_FREQ_SCORE);
+			DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.insert_rows(i,DotDetectorLayer::_DotDetectors[*it]->AUX_DD_RAW_PX_VAL);
+		}
+		DDL_DEBUG_DD_FIRING_ID_POTENTIALS.insert_cols(0,arma::conv_to<arma::Col<float>>::from(arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs)));
+		DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.insert_cols(0,arma::conv_to<arma::Col<float>>::from(arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs)));
+		DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.insert_cols(0,arma::Col<unsigned int>(DDL_DEBUG_DD_FIRING_IDs));
 		DotDetectorLayer::debugWriteFiles();
 #endif
 	}
@@ -233,22 +285,22 @@ namespace wdd {
 			SAMPLES[s].s0 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
 
 			SAMPLES[s].c1 = static_cast<float>(cos(fac * dd_freqs[1] * step * s));
-			SAMPLES[s].s1 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s1 = static_cast<float>(sin(fac * dd_freqs[1] * step * s));
 
 			SAMPLES[s].c2 = static_cast<float>(cos(fac * dd_freqs[2] * step * s));
-			SAMPLES[s].s2 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s2 = static_cast<float>(sin(fac * dd_freqs[2] * step * s));
 
 			SAMPLES[s].c3 = static_cast<float>(cos(fac * dd_freqs[3] * step * s));
-			SAMPLES[s].s3 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s3 = static_cast<float>(sin(fac * dd_freqs[3] * step * s));
 
 			SAMPLES[s].c4 = static_cast<float>(cos(fac * dd_freqs[4] * step * s));
-			SAMPLES[s].s4 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s4 = static_cast<float>(sin(fac * dd_freqs[4] * step * s));
 
 			SAMPLES[s].c5 = static_cast<float>(cos(fac * dd_freqs[5] * step * s));
-			SAMPLES[s].s5 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s5 = static_cast<float>(sin(fac * dd_freqs[5] * step * s));
 
 			SAMPLES[s].c6 = static_cast<float>(cos(fac * dd_freqs[6] * step * s));	
-			SAMPLES[s].s6 = static_cast<float>(sin(fac * dd_freqs[0] * step * s));
+			SAMPLES[s].s6 = static_cast<float>(sin(fac * dd_freqs[6] * step * s));
 		}
 
 
@@ -356,6 +408,25 @@ namespace wdd {
 		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
 		a <<".txt";
 		DDL_DEBUG_DD_RAW_PX_VAL.save(a.str(), arma::arma_ascii);
+
+
+		a.str("");
+		a <<"DDL_DEBUG_DD_FIRING_ID_POTENTIALS_F";
+		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_FIRING_ID_POTENTIALS.save(a.str(), arma::arma_ascii);
+
+		a.str("");
+		a <<"DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE_F";
+		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.save(a.str(), arma::arma_ascii);
+
+		a.str("");
+		a <<"DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL_F";
+		a <<  WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
+		a <<".txt";
+		DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL.save(a.str(), arma::arma_ascii);
 	}
 #endif
 } /* namespace WaggleDanceDetector */

@@ -167,9 +167,9 @@ namespace wdd
 		DotDetectorLayer::copyFrameAndDetect();
 		if(DotDetectorLayer::DD_SIGNALS_NUMBER > 100)
 		{
-			std::cout<<"WDD LAYER 1 OVERFLOW DETECTED! Drop frame "<< 
-				WaggleDanceDetector::WDD_SIGNAL_FRAME_NR <<
-				" - DD SIGNALS NUMBER: "<< DotDetectorLayer::DD_SIGNALS_NUMBER<<std::endl;
+			printf("[WARNING] WDD LAYER 1 OVERFLOW! Drop frame %llu (DD_SIGNALS_NUMBER: %d)\n",
+				WaggleDanceDetector::WDD_SIGNAL_FRAME_NR,
+				DotDetectorLayer::DD_SIGNALS_NUMBER);
 			return;
 		}
 

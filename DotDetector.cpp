@@ -254,7 +254,6 @@ namespace wdd {
 			_DD_PX_VALS_COSSIN[currtPos].c0 = res.c0;
 			_ACC_VAL.c0 += res.c0;
 			//t2 = GetRDTSC();
-
 			//MESS[0]+=(t2-t1);
 
 			//t1 = GetRDTSC();
@@ -262,8 +261,8 @@ namespace wdd {
 			_DD_PX_VALS_COSSIN[currtPos].c1 = res.c1;
 			_ACC_VAL.c1 += res.c1;
 			//t2 = GetRDTSC();
-
 			//MESS[1]+=(t2-t1);
+
 
 			//t1 = GetRDTSC();
 			res.c2 = DotDetectorLayer::SAMPLES[j].c2 * px_val;
@@ -310,6 +309,7 @@ namespace wdd {
 			_DD_PX_VALS_COSSIN[currtPos].s0 = res.s0;
 			_ACC_VAL.s0 += res.s0;
 			//t2 = GetRDTSC();
+
 
 			//MESS[7]+=(t2-t1);
 
@@ -361,6 +361,7 @@ namespace wdd {
 
 			//MESS[13]+=(t2-t1);
 		}
+
 		_sampPos = WDD_FBUFFER_SIZE;
 	}
 
@@ -474,6 +475,8 @@ namespace wdd {
 		potential *= _AMPLITUDE;
 
 		DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = potential;
+
+
 
 		if(potential > DotDetectorLayer::DD_MIN_POTENTIAL)
 		{

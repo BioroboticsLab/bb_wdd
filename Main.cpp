@@ -177,10 +177,11 @@ int main(int nargs, char** argv)
 
 
 	/* prepare frame_counter */
-	unsigned long long frame_counter = 0;
+	unsigned long long frame_counter_global = 0;
+	unsigned long long frame_counter_warmup = 0;
 
 	/* prepare videoFrameBuffer */
-	VideoFrameBuffer videoFrameBuffer(frame_counter, cv::Size(FRAME_HEIGHT, FRAME_WIDTH));
+	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_HEIGHT, FRAME_WIDTH));
 	videoFrameBuffer.setSequecenFrameSize(videoFrameBufferExtractSize);
 
 	/* prepare buffer to hold mono chromized input frame */
@@ -250,7 +251,6 @@ int main(int nargs, char** argv)
 
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
 	const std::vector<DANCE> * WDDFinishedDances = wdd.getWDDFinishedDancesVec();
-
 	const std::map<std::size_t,cv::Point2d>  WDDDance2PointMap;
 
 
@@ -285,30 +285,21 @@ int main(int nargs, char** argv)
 				0, 0, cv::INTER_AREA);
 			if(!WARMUP_DONE)
 			{
-				wdd.copyInitialFrame(frame_counter, false);
+				wdd.copyInitialFrame(frame_counter_global, false);
 			}
 			else
 			{
-				wdd.copyInitialFrame(frame_counter, true);
+				// save number of frames needed for camera warmup
+				frame_counter_warmup = frame_counter_global;
+				wdd.copyInitialFrame(frame_counter_global, true);
 				break;
 			}
-#ifdef WDD_DDL_DEBUG_FULL
-			if(frame_counter >= WDD_FBUFFER_SIZE-1)
-				printf("Frame# %llu\t DD_SIGNALS_NUMBER: %d\n", WaggleDanceDetector::WDD_SIGNAL_FRAME_NR, DotDetectorLayer::DD_SIGNALS_NUMBER);
 
-			if(frame_counter >= WDD_DDL_DEBUG_FULL_MAX_FRAME-1)
-			{
-				std::cout<<"************** WDD_DDL_DEBUG_FULL DONE! **************"<<std::endl;
-				printf("WDD_DDL_DEBUG_FULL captured %d frames.\n", WDD_DDL_DEBUG_FULL_MAX_FRAME);
-				capture.release();
-				exit(0);
-			}
-#endif
 			// finally increase frame_input counter	
-			frame_counter++;
+			frame_counter_global++;
 
 			//test fps
-			if((frame_counter % 100) == 0)
+			if((frame_counter_global % 100) == 0)
 			{
 				std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
 				double fps = 100/sec.count();
@@ -326,7 +317,7 @@ int main(int nargs, char** argv)
 				start = std::chrono::steady_clock::now();
 			}
 		}
-		printf("Camera warmup done!\n");
+		printf("Camera warmup done!\n\n\n");
 	}
 
 	while(capture.read(frame_input))
@@ -343,17 +334,17 @@ int main(int nargs, char** argv)
 			0, 0, cv::INTER_AREA);
 
 		// feed WDD with tar_frame
-		if(frame_counter < WDD_FBUFFER_SIZE-1)
+		if(frame_counter_global < WDD_FBUFFER_SIZE-1)
 		{
-			wdd.copyInitialFrame(frame_counter, false);
+			wdd.copyInitialFrame(frame_counter_global, false);
 		}
-		else if (frame_counter == WDD_FBUFFER_SIZE-1)
+		else if (frame_counter_global == WDD_FBUFFER_SIZE-1)
 		{
-			wdd.copyInitialFrame(frame_counter, true);			
+			wdd.copyInitialFrame(frame_counter_global, true);			
 		}
 		else 
 		{
-			wdd.copyFrame(frame_counter);
+			wdd.copyFrame(frame_counter_global);
 		}
 
 		// output visually if enabled
@@ -383,7 +374,7 @@ int main(int nargs, char** argv)
 
 				for(auto it = WDDFinishedDances->begin(); it!=WDDFinishedDances->end(); ++it)
 				{
-					if( (*it).DANCE_FRAME_END >= frame_counter-10)
+					if( (*it).DANCE_FRAME_END >= frame_counter_global-10)
 					{
 						cv::circle(frame_input, (*it).positions[0]*std::pow(2,FRAME_RED_FAC),
 							Cir_radius, Cir_color_gre, Cir_thikness);
@@ -395,10 +386,11 @@ int main(int nargs, char** argv)
 			cv::waitKey(1);
 		}
 #ifdef WDD_DDL_DEBUG_FULL
-		if(frame_counter >= WDD_FBUFFER_SIZE-1)
+		if(frame_counter_global >= WDD_FBUFFER_SIZE-1)
 			printf("Frame# %llu\t DD_SIGNALS_NUMBER: %d\n", WaggleDanceDetector::WDD_SIGNAL_FRAME_NR, DotDetectorLayer::DD_SIGNALS_NUMBER);
 
-		if(frame_counter >= WDD_DDL_DEBUG_FULL_MAX_FRAME-1)
+		// check exit condition
+		if((frame_counter_global-frame_counter_warmup) >= WDD_DDL_DEBUG_FULL_MAX_FRAME-1)
 		{
 			std::cout<<"************** WDD_DDL_DEBUG_FULL DONE! **************"<<std::endl;
 			printf("WDD_DDL_DEBUG_FULL captured %d frames.\n", WDD_DDL_DEBUG_FULL_MAX_FRAME);
@@ -407,9 +399,9 @@ int main(int nargs, char** argv)
 		}
 #endif
 		// finally increase frame_input counter	
-		frame_counter++;
+		frame_counter_global++;
 		// benchmark output
-		if((frame_counter % 100) == 0)
+		if((frame_counter_global % 100) == 0)
 		{
 			std::chrono::duration<double> sec = std::chrono::steady_clock::now() - start;
 
@@ -422,7 +414,7 @@ int main(int nargs, char** argv)
 
 		if(RM == LIVE)
 		{
-			if((frame_counter % 500) == 0)
+			if((frame_counter_global % 500) == 0)
 			{
 				printf("collected fps: ");
 				double avg = 0;

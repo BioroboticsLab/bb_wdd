@@ -80,9 +80,6 @@ namespace wdd {
 		// save raw pixel value
 		_DD_PX_VALS_RAW[_BUFF_POS] = *aux_pixel_ptr;
 
-		// increase count of pixel value
-		_UINT8_PX_VALS_COUNT[_DD_PX_VALS_RAW[_BUFF_POS]]++;
-
 		// check if it is last call to _copyInitialPixel, all _DD_PX_VALS_RAW[] set
 		if(doDetection)
 		{
@@ -187,6 +184,10 @@ namespace wdd {
 			DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = 0;
 			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
 			_NEWMINMAX = true;
+#ifdef WDD_DDL_DEBUG_FULL
+			AUX_DD_POTENTIALS.fill(0);
+			AUX_DD_FREQ_SCORE.fill(0);
+#endif
 			return;
 		}
 
@@ -211,12 +212,19 @@ namespace wdd {
 	*/
 	inline void DotDetector::_getInitialNewMinMax()
 	{
+		// get initial count of raw pixel values
+		for(std::size_t i=0; i < WDD_FBUFFER_SIZE ; i++)
+			_UINT8_PX_VALS_COUNT[_DD_PX_VALS_RAW[i]]++;
+
+		// move maximum border towards left
 		while(_UINT8_PX_VALS_COUNT[_MAX] == 0)
 			_MAX--;
 
+		// move minimum border towards left
 		while(_UINT8_PX_VALS_COUNT[_MIN] == 0)
 			_MIN++;
 
+		// finally get amplitude and save inversed one
 		_AMPLITUDE = _MAX - _MIN;
 		_AMPLITUDE_INV = 1.0f /_AMPLITUDE;
 	}
@@ -226,10 +234,10 @@ namespace wdd {
 		memset(&_ACC_VAL, 0, sizeof(_ACC_VAL));
 
 		// calculate normalization for all values, new min/max set already
-		//arma::Row<uchar> t = arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW.begin(), WDD_FBUFFER_SIZE, false, true);
-		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
+		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(
+			arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
 
-		//		_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
+		//_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
 
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR - _MIN;
 		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR * _AMPLITUDE_INV;
@@ -462,9 +470,9 @@ namespace wdd {
 #ifdef WDD_DDL_DEBUG_FULL
 		AUX_DD_FREQ_SCORE = arma::Row<float>((float *)&_DD_FREQ_SCORES.begin(), WDD_FREQ_NUMBER, true, true);
 #endif
-		// sort values
-		//_DD_FREQ_SCORES = arma::sort(_DD_FREQ_SCORES);
+		// sort freq score values
 		std::sort(_DD_FREQ_SCORES.begin(), _DD_FREQ_SCORES.begin()+WDD_FREQ_NUMBER);
+
 		float potential = 0;
 
 		for(std::size_t freq_i=0; freq_i<WDD_FREQ_NUMBER; freq_i++)
@@ -475,8 +483,6 @@ namespace wdd {
 		potential *= _AMPLITUDE;
 
 		DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = potential;
-
-
 
 		if(potential > DotDetectorLayer::DD_MIN_POTENTIAL)
 		{

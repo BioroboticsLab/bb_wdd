@@ -102,10 +102,10 @@ int main(int nargs, char** argv)
 	//
 	//	Develop: Waggle Dance Configuration
 	//
-	bool visual = true;
-	bool wdd_write_dance_file = false;
+	bool visual = false;
+	bool wdd_write_dance_file = true;
 	bool wdd_write_signal_file = false;
-	bool wdd_verbose = false;
+	int wdd_verbose = 1;
 
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
@@ -418,7 +418,7 @@ int main(int nargs, char** argv)
 			{
 				printf("collected fps: ");
 				double avg = 0;
-				for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)
+				for(auto it=bench_res.begin(); it!=bench_res.end(); ++it)
 				{
 					printf("%.1f ", *it);
 					avg += *it;

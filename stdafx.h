@@ -8,6 +8,10 @@
   #define ARMA_NO_DEBUG
 #endif
 
+#if !defined(WDD_EXTRACT_ORIENT)
+	#define WDD_EXTRACT_ORIENT
+#endif
+
 /*
 #if !defined(WDD_DDL_DEBUG_FULL)
 	#define WDD_DDL_DEBUG_FULL

@@ -34,6 +34,9 @@ namespace wdd
 	*/
 	cv::Point2d WaggleDanceOrientator::extractOrientationFromImageSequence(std::vector<cv::Mat> seq_in, std::size_t unique_id)
 	{
+		WaggleDanceOrientator::picID = 0;
+		WaggleDanceOrientator::blobID = 0;
+
 		// TODO externalize single init of folder structure
 		if(WDO_VERBOSE)
 		{
@@ -97,6 +100,7 @@ namespace wdd
 			// save path_out_root_img_blob
 			_tcscpy_s(path_out_root_img_blob, MAX_PATH, BUFF_PATH);
 		}
+
 		std::vector<cv::Vec2d> unityOrientations;
 
 		// *_u8 hold the subsampled 8-bit grayscale frames
@@ -173,7 +177,6 @@ namespace wdd
 			WaggleDanceOrientator::saveDetectedOrientationImages(&seq_in, &orient);
 
 
-		// TODO: remove FAKE RETURN
 		return orient;
 	}
 	/*
@@ -359,35 +362,50 @@ namespace wdd
 		// preallocate 3 channel image output buffer
 		cv::Mat image_out(size, CV_8UC3);
 
+		// set image file name buffer
+		TCHAR BUFF_PATH[MAX_PATH];
+		TCHAR BUFF_UID[MAX_PATH];
+
 		std::size_t i=0;
-		for (auto it=(*seq_in_ptr).begin(); it!=(*seq_in_ptr).end(); ++it)
+		for (auto it=seq_in_ptr->begin(); it!=seq_in_ptr->end(); ++it)
 		{
 			// convert & copy input image into BGR
 			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
-			// draw the orientation line
-			//cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 3,CV_AA);
-
-			// set image file name
-			TCHAR BUFF_PATH[MAX_PATH];
-			TCHAR BUFF_UID[MAX_PATH];
 			// create dynamic path_out string
 			_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
 			_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\image_"));
 
-			// convert unique id into TCHAR
-			_itot_s(picID+i, BUFF_UID, MAX_PATH, 10);
+			// convert picID=[0;seq_in_ptr->size()-1]
+			_stprintf_s(BUFF_UID, MAX_PATH, L"%03d", i);
 
 			// append 
 			_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 			_tcscat_s(BUFF_PATH, MAX_PATH, _T(".png"));
 
-			cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
+			//cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
 
 			// write image to disk
 			WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
 			i++;
+
+			//clear buffers
+			memset(BUFF_PATH,0,MAX_PATH*sizeof(TCHAR));
+			memset(BUFF_UID,0,MAX_PATH*sizeof(TCHAR));
 		}
+
+		//finally draw detected orientation
+		//black background
+		image_out.setTo(0);
+
+		// draw the orientation line
+		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
+		
+		// create dynamic path_out string
+		_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
+		_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\orient.png"));
+
+		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
 	}
 	void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Mat * labels_ptr, std::vector<double> * majMinAxisLenghts_ptr)
 	{	
@@ -428,9 +446,7 @@ namespace wdd
 		cv::line(blob_visual, CENT*_zoomFactor, HEAD*_zoomFactor, CV_RGB(0.,255.,0.),1,CV_AA);
 		cv::line(blob_visual, CENT*_zoomFactor, BOTT*_zoomFactor, CV_RGB(255.,0.,0.),1,CV_AA);
 
-		//ss.str(std::string());
-		//ss <<path_out_dyn<<"blobs/"<<"image_"<<picID<<"_blob_"<<blobID<<".png";
-
+		
 		// set blob file name
 		TCHAR BUFF_PATH[MAX_PATH];
 		TCHAR BUFF_UID[MAX_PATH];
@@ -438,8 +454,8 @@ namespace wdd
 		_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img_blob);
 		_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\image_"));
 
-		// convert unique id into TCHAR
-		_itot_s(picID, BUFF_UID, MAX_PATH, 10);
+		// convert picID
+		_stprintf_s(BUFF_UID, MAX_PATH, L"%03d", picID);
 		//append
 		_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 

@@ -73,23 +73,27 @@ namespace wdd
 
 	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
-		// safe bounds		
+		// safe frame bounds
 		unsigned long long _startFrame = startFrame >= startFrameShift ? startFrame-startFrameShift : 0;
 		const unsigned long long _endFrame = endFrame >= endFrameShift ? endFrame-endFrameShift : 0;
 
-		const int roi_rec_x = static_cast<int>((center.x*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset.x);
-		const int roi_rec_y = static_cast<int>((center.y*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset.y);
+		const unsigned short _center_x = static_cast<int>(center.x*pow(2, FRAME_REDFAC));
+		const unsigned short _center_y = static_cast<int>(center.y*pow(2, FRAME_REDFAC));
+
+		int roi_rec_x = static_cast<int>(_center_x - sequenceFramePointOffset.x);
+		int roi_rec_y = static_cast<int>(_center_y - sequenceFramePointOffset.y);
+
+		// safe roi edge
+		roi_rec_x = roi_rec_x < 0 ? 0 : roi_rec_x;
+		roi_rec_y = roi_rec_y < 0 ? 0 : roi_rec_y;
+		
+		// set roi
+		cv::Rect roi_rec(cv::Point2i(roi_rec_x,roi_rec_y), sequenceFrameSize);
 
 		std::vector<cv::Mat> out;
-		if( roi_rec_x < 0 || roi_rec_y < 0)
-		{
-			std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc center "<< center<< " out of bounds!"<<std::endl;
-			return out;
-		}
 
 		cv::Mat * frame_ptr;
 
-		cv::Rect roi_rec((center*pow(2, FRAME_REDFAC)) - sequenceFramePointOffset, sequenceFrameSize);
 		while(_startFrame <=  _endFrame)
 		{
 			frame_ptr = getFrameByNumber(_startFrame);

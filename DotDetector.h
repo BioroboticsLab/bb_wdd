@@ -12,29 +12,27 @@ namespace wdd {
 	{
 	private:
 		// START BLOCK0 (0)
-		// container to save raw uint8 frame values of a single position
-		// 72 bytes (32 bytes raw, 40 bytes overhead)
-		//arma::Row<uchar>::fixed<WDD_FBUFFER_SIZE> _DD_PX_VALS_RAW;
-		// 32 bytes
+		// container to save raw uint8 frame pixel values of a single position		
+		// 32 byte
 		std::array<uchar,WDD_FBUFFER_SIZE> _DD_PX_VALS_RAW;
 		// END BLOCK0 (31)
 
 		// START BLOCK1 (32 % 16 == 0)
 		// save extern pointer to DotDetectorLayer cv::Mat frame
 		// (is expected to be at same location over runtime)
-		// 4 bytes
+		// 4 byte
 		uchar * aux_pixel_ptr;
 		//
 		// save position of next sample cos/sin value (=[0;frame_rate-1])
-		// 4 bytes
+		// 4 byte
 		std::size_t _sampPos;
 		//
 		// save own ID
-		// 4 bytes
+		// 4 byte
 		std::size_t _UNIQUE_ID;
 		//
 		// save inverse amplitude for faster normalization
-		// 4 bytes
+		// 4 byte
 		float _AMPLITUDE_INV;
 		//
 		// save min, max, amplitude values
@@ -44,13 +42,13 @@ namespace wdd {
 		// save new min or max flag, old min/max gone flag
 		// 5 byte
 		bool _NEWMINMAX, _OLDMINGONE, _OLDMAXGONE, _NEWMINHERE, _NEWMAXHERE;
-		// END BLOCK1 (24 bytes)
+		// END BLOCK1 (24 byte)
 		char padding1[8];
-		// END BLOCK1 (32 bytes) (63)
+		// END BLOCK1 (63)
 
 		// START BLOCK2 (64 % 16 == 0)
 		// save number of each possible pixel value currently in _DD_PX_VALS_RAW
-		// 256 bytes
+		// 256 byte
 		std::array<uchar,256> _UINT8_PX_VALS_COUNT;
 		// END BLOCK2 (319)
 
@@ -64,7 +62,7 @@ namespace wdd {
 
 		// START BLOCK4 (544 % 16 == 0)
 		// container to save COS/SIN values of corresponding _DD_PX_VALS_NOR
-		// 2048 bytes
+		// 2048 byte
 		SAMP _DD_PX_VALS_COSSIN[WDD_FBUFFER_SIZE];
 		// END BLOCK4 (2591)
 

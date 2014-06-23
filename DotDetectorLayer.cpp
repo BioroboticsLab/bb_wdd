@@ -18,7 +18,7 @@ namespace wdd {
 	std::vector<double>			DotDetectorLayer::DD_FREQS;
 	std::size_t					DotDetectorLayer::DD_FREQS_NUMBER;
 	SAMP						DotDetectorLayer::SAMPLES[WDD_FRAME_RATE];
-
+	std::vector<unsigned __int64> DotDetectorLayer::DDL_DEBUG_PERF;
 	//arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_COSSAMPLES;
 	//arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DotDetectorLayer::DD_FREQS_SINSAMPLES;
 	DotDetector **				DotDetectorLayer::_DotDetectors;
@@ -128,7 +128,15 @@ namespace wdd {
 		}
 #endif
 	}
-
+	unsigned __int64 inline GetRDTSC() {
+		__asm {
+			; Flush the pipeline
+				XOR eax, eax
+				CPUID
+				; Get RDTSC counter in edx:eax
+				RDTSC
+		}
+	}
 	void DotDetectorLayer::copyFrameAndDetect()
 	{
 #ifdef WDD_DDL_DEBUG_FULL
@@ -137,6 +145,8 @@ namespace wdd {
 		DDL_DEBUG_DD_FIRING_ID_POTENTIALS.clear();DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.clear();
 #endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
+		
+		unsigned __int64 t1 = GetRDTSC();
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
 		{
@@ -169,6 +179,10 @@ namespace wdd {
 		}// end for-loop
 
 		DotDetector::nextBuffPos();
+		
+		unsigned __int64 t2 = GetRDTSC();
+		DDL_DEBUG_PERF.push_back(t2-t1);
+
 #ifdef WDD_DDL_DEBUG_FULL
 		std::size_t i=0;
 		for(auto it=DDL_DEBUG_DD_FIRING_IDs.begin();it!=DDL_DEBUG_DD_FIRING_IDs.end();++it, i++)

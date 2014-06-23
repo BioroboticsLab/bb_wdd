@@ -50,6 +50,7 @@ namespace wdd{
 		// saves frame reduction factor
 		static double FRAME_REDFAC;
 
+		static std::vector<unsigned __int64> DDL_DEBUG_PERF;
 #ifdef WDD_DDL_DEBUG_FULL
 		static arma::Mat<float> DDL_DEBUG_DD_POTENTIALS;
 		static arma::Mat<float> DDL_DEBUG_DD_FREQ_SCORE;

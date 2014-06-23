@@ -74,13 +74,13 @@ namespace wdd {
 
 		// START BLOCK5 (2432 % 16 == 0)
 		// container to save frequency scores
-		// 92 bytes (28 bytes raw, 64 bytes overhead)
+		// 28 bytes
 		std::array<float,WDD_FREQ_NUMBER> _DD_FREQ_SCORES; 
-		// END BLOCK5 (2523)
+		// END BLOCK5 (2459)
 		char padding5[36];
-		// END BLOCK5 (2559)
+		// END BLOCK5 (2495)
 
-		// TOTAL 40 cl a 64 byte = 2560  byte
+		// TOTAL 39 cl a 64 byte = 2496  byte
 
 		void _getInitialNewMinMax();
 		void _getNewMinMax();

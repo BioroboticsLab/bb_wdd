@@ -110,10 +110,10 @@ namespace wdd {
 		static std::size_t _BUFF_POS;
 
 		//DEBUG 
-		static std::size_t _NRCALL_EXECFULL;
-		static std::size_t _NRCALL_EXECSING;
-		static std::size_t _NRCALL_EXECSLEP;
-		static std::vector<uchar> _AMP_SAMPLES;
+		//static std::size_t _NRCALL_EXECFULL;
+		//static std::size_t _NRCALL_EXECSING;
+		//static std::size_t _NRCALL_EXECSLEP;
+		//static std::vector<uchar> _AMP_SAMPLES;
 		static void nextBuffPos();
 	};
 } /* namespace WaggleDanceDetector */

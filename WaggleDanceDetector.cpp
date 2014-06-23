@@ -65,6 +65,7 @@ namespace wdd
 	{
 		WDD_DANCE = false;
 		WDD_DANCE_ID = 0;
+		WDD_DANCE_NUMBER = 0;
 	}
 	/*
 	* Dependencies: NULL
@@ -288,7 +289,7 @@ namespace wdd
 	void WaggleDanceDetector::_execDetectionFinalizeDance(DANCE d)
 	{
 		WDD_DANCE = true;
-		WDD_UNIQ_FINISH_DANCES.push_back(d);
+		//WDD_UNIQ_FINISH_DANCES.push_back(d);
 
 #ifdef WDD_EXTRACT_ORIENT
 		// restore needed original frames
@@ -313,13 +314,15 @@ namespace wdd
 		{
 			extern double uvecToDegree(cv::Point2d in);
 			printf("Waggle dance #%d at:\t %.1f %.1f with orient %.1f (uvec: %.1f,%.1f)\n",
-				WDD_UNIQ_FINISH_DANCES.size(),
+				WDD_DANCE_NUMBER,
 				d.positions[0].x*pow(2, DotDetectorLayer::FRAME_REDFAC), 
 				d.positions[0].y*pow(2, DotDetectorLayer::FRAME_REDFAC), 
 				uvecToDegree(d.orient_uvec), 
 				d.orient_uvec.x, 
 				d.orient_uvec.y);
 		}
+
+		WDD_DANCE_NUMBER++;
 	}
 	/*	
 	*/

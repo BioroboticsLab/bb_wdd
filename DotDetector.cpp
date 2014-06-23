@@ -232,18 +232,7 @@ namespace wdd {
 	{
 		// reset accumulators to zero
 		memset(&_ACC_VAL, 0, sizeof(_ACC_VAL));
-
-		// calculate normalization for all values, new min/max set already
-		//_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(
-			//arma::Row<uchar>((uchar *)&_DD_PX_VALS_RAW, WDD_FBUFFER_SIZE, false, true));
-
-		//_DD_PX_VALS_NOR = arma::conv_to<arma::Row<float>>::from(_DD_PX_VALS_RAW);
-		/*
-		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR - _MIN;
-		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR * _AMPLITUDE_INV;
-		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR *2;
-		_DD_PX_VALS_NOR = _DD_PX_VALS_NOR -1;
-		*/
+		
 		// recalculate cos/sin values and set accumulators
 		// get correct starting position in ring buffer
 		std::size_t startPos = (_BUFF_POS+1) % WDD_FBUFFER_SIZE;

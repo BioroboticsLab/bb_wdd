@@ -429,12 +429,14 @@ int main(int nargs, char** argv)
 		}
 	}
 	capture.release();
-
+	
+	/*
 	unsigned __int64 avgUL = 0;
 	for(auto it=DotDetectorLayer::DDL_DEBUG_PERF.begin(); it!=DotDetectorLayer::DDL_DEBUG_PERF.end(); ++it)
 		avgUL += *it;
 
 	std::cout<<"average perf ticks: "<<avgUL / (DotDetectorLayer::DDL_DEBUG_PERF.size())<<std::endl;
+	*/
 
 	double avg = 0;
 	for(auto it=bench_res.begin()+1; it!=bench_res.end(); ++it)

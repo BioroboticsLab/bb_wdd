@@ -48,6 +48,9 @@ namespace wdd
 		// unique dance id counter
 		std::size_t WDD_DANCE_ID;
 
+		// sequencial dance number counter
+		std::size_t WDD_DANCE_NUMBER;
+
 		// maps to show top level WDD signals (=dances)
 		std::vector<DANCE> WDD_UNIQ_DANCES;
 

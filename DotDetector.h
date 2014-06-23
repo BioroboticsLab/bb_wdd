@@ -3,7 +3,7 @@
 namespace wdd {
 	struct SAMP {
 		float c0,c1,c2,c3,c4,c5,c6;
-		char padding0[4];
+		float n;
 		float s0,s1,s2,s3,s4,s5,s6;
 		char padding1[4];
 	};
@@ -47,40 +47,40 @@ namespace wdd {
 		// END BLOCK1 (63)
 
 		// START BLOCK2 (64 % 16 == 0)
+		// container to save accumulated COS/SIN per freq values
+		// 64 byte
+		SAMP _ACC_VAL;
+		// END BLOCK2 (127)
+
+		// START BLOCK3 (128 % 16 == 0)
 		// save number of each possible pixel value currently in _DD_PX_VALS_RAW
 		// 256 byte
 		std::array<uchar,256> _UINT8_PX_VALS_COUNT;
-		// END BLOCK2 (319)
+		// END BLOCK3 (319)
 
-		// START BLOCK3 (320 % 16 == 0)
-		// container to save [-1:1] scaled values
-		// 216 bytes (128 bytes raw, 88 bytes overhead)
-		arma::Row<float>::fixed<WDD_FBUFFER_SIZE> _DD_PX_VALS_NOR;
-		// END BLOCK3 (535)
-		char padding2[8];
-		// END BLOCK3 (543)
+												// START BLOCK3 (320 % 16 == 0)
+												// container to save [-1:1] scaled values
+												// 216 bytes (128 bytes raw, 88 bytes overhead)
+												//arma::Row<float>::fixed<WDD_FBUFFER_SIZE> _DD_PX_VALS_NOR;
+												// END BLOCK3 (535)
+												//char padding2[8];
+												// END BLOCK3 (543)
 
-		// START BLOCK4 (544 % 16 == 0)
-		// container to save COS/SIN values of corresponding _DD_PX_VALS_NOR
+		// START BLOCK4 (384 % 16 == 0)
+		// container to save COS/SIN/NOR values of corresponding _DD_PX_VALS_NOR
 		// 2048 byte
-		SAMP _DD_PX_VALS_COSSIN[WDD_FBUFFER_SIZE];
-		// END BLOCK4 (2591)
+		SAMP _DD_PX_VALS_COSSINNOR[WDD_FBUFFER_SIZE];
+		// END BLOCK4 (2367)
 
-		// START BLOCK5 (2592 % 16 == 0)
+		// START BLOCK5 (2432 % 16 == 0)
 		// container to save frequency scores
 		// 92 bytes (28 bytes raw, 64 bytes overhead)
 		std::array<float,WDD_FREQ_NUMBER> _DD_FREQ_SCORES; 
-		// END BLOCK6 (2683)
-		char padding5[4];
-		// END BLOCK5 (2687)
+		// END BLOCK5 (2523)
+		char padding5[36];
+		// END BLOCK5 (2559)
 
-		// START BLOCK6 (2688 % 16 == 0)
-		// container to save accumulated COS/SIN
-		// 64 bytes
-		SAMP _ACC_VAL;
-		// END BLOCK6 (2751)
-		//2752 % 16 == 0
-		//2752 % 32 == 0
+		// TOTAL 40 cl a 64 byte = 2560  byte
 
 		void _getInitialNewMinMax();
 		void _getNewMinMax();

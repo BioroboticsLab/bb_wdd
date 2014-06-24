@@ -20,7 +20,7 @@ namespace wdd
 		static void stretch(cv::Mat * in_ptr, cv::Mat * out_ptr);
 		static void showImagesFromFolder(const std::string dirInNameFormat);
 		static void showImage(const cv::Mat * img_ptr);
-		static void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const TCHAR * path_ptr);
+		static void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const char * path_ptr);
 		static std::vector<cv::Mat> loadImagesFromFolder(const std::string dirInNameFormat);
 		static void exportImage(const cv::Mat *img_ptr, const std::string path_ptr);
 		static void statisticalSmoothingFilter(cv::Mat *img_ptr);
@@ -33,11 +33,11 @@ namespace wdd
 
 		static cv::Mat gaussKernel;
 
-		static TCHAR * path_out;
-		static TCHAR * path_out_root;
-		static TCHAR * blobDirName;
-		static TCHAR * file_blobs_detail;
-		static TCHAR   path_out_root_img[];
-		static TCHAR   path_out_root_img_blob[];
+		static char * path_out;
+		static char * path_out_root;
+		static char * blobDirName;
+		static char * file_blobs_detail;
+		static char   path_out_root_img[];
+		static char   path_out_root_img_blob[];
 	};
 } /* namespace WaggleDanceDetector */

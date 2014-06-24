@@ -4,14 +4,16 @@
 namespace wdd
 {
 	struct DANCE{
-		std::size_t DANCE_UNIQE_ID;
-
 		unsigned long long DANCE_FRAME_START;
 		unsigned long long DANCE_FRAME_END;
+
+		std::size_t DANCE_UNIQE_ID;
 
 		std::vector<cv::Point2d> positions;
 
 		cv::Point2d orient_uvec;
+
+		time_t rawtime;
 	};
 
 	class WaggleDanceDetector

@@ -3,6 +3,7 @@
 #include "InputVideoParameters.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
+#include "WaggleDanceExport.h"
 
 using namespace wdd;
 
@@ -23,16 +24,16 @@ double uvecToDegree(cv::Point2d in)
 	double theta = atan2(in.y,in.x);
 	return theta * 180/CV_PI;
 }
-void getExeFullPath(TCHAR * out, std::size_t size)
+void getExeFullPath(char * out, std::size_t size)
 {
-	TCHAR BUFF[MAX_PATH];
+	char BUFF[MAX_PATH];
 
 	HMODULE hModule = GetModuleHandle(NULL);
 	if (hModule != NULL)
 	{
-		GetModuleFileName(hModule, BUFF, sizeof(BUFF)/sizeof(TCHAR)); 
+		GetModuleFileName(hModule, BUFF, sizeof(BUFF)/sizeof(char)); 
 		// remove WaggleDanceDetector.exe part (23 chars :P)
-		_tcsncpy_s(out, size, BUFF, _tcslen(BUFF)-23-1);
+		_tcsncpy_s(out, size, BUFF, strlen(BUFF)-23-1);
 	}
 	else
 	{
@@ -47,7 +48,7 @@ bool fileExists (const std::string& file_name)
 	return (stat (file_name.c_str(), &buffer) == 0);
 }
 
-bool dirExists(const TCHAR * dirPath)
+bool dirExists(const char * dirPath)
 {
 	int result = PathIsDirectory((LPCTSTR)dirPath);
 
@@ -58,12 +59,17 @@ bool dirExists(const TCHAR * dirPath)
 }
 
 /* saves to full path to executable */
-TCHAR _FULL_PATH_EXE[MAX_PATH]; 
+char _FULL_PATH_EXE[MAX_PATH]; 
 
 enum RUN_MODE {TEST, LIVE};
 
 int main(int nargs, char** argv)
 {
+	// get the full path to executable 
+	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
+	char videoFilename[MAXCHAR];
+	WaggleDanceExport::execRootExistChk();
+
 	int FRAME_WIDTH=-1;
 	int FRAME_HEIGHT=-1;
 	int FRAME_RATE=-1;
@@ -72,6 +78,9 @@ int main(int nargs, char** argv)
 
 	//WaggleDanceOrientator
 	cv::Size videoFrameBufferExtractSize(20,20);
+	
+	//WaggleDanceExport
+	WaggleDanceExport::execRootExistChk();
 
 	//
 	//	Global: video configuration
@@ -107,10 +116,7 @@ int main(int nargs, char** argv)
 	bool wdd_write_signal_file = false;
 	int wdd_verbose = 1;
 
-	// get the full path to executable 
-	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
-
-	char videoFilename[MAXCHAR];
+	
 
 	cv::VideoCapture capture(0);
 	if (nargs == 1)

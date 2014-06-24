@@ -22,12 +22,12 @@ namespace wdd
 		0.0033, 0.0479, 0.1164, 0.0479, 0.0033,
 		0.0002, 0.0033, 0.0081, 0.0033, 0.0002);
 
-	TCHAR * WaggleDanceOrientator::path_out = _T("\\verbose");
-	TCHAR * WaggleDanceOrientator::path_out_root = _T("\\verbose\\wdo");
-	TCHAR * WaggleDanceOrientator::blobDirName = _T("\\blobs");
-	TCHAR * WaggleDanceOrientator::file_blobs_detail = _T("\\blobs_detail.txt");
-	TCHAR WaggleDanceOrientator::path_out_root_img[MAX_PATH];
-	TCHAR WaggleDanceOrientator::path_out_root_img_blob[MAX_PATH];
+	char * WaggleDanceOrientator::path_out = "\\verbose";
+	char * WaggleDanceOrientator::path_out_root = "\\verbose\\wdo";
+	char * WaggleDanceOrientator::blobDirName = "\\blobs";
+	char * WaggleDanceOrientator::file_blobs_detail = "\\blobs_detail.txt";
+	char WaggleDanceOrientator::path_out_root_img[MAX_PATH];
+	char WaggleDanceOrientator::path_out_root_img_blob[MAX_PATH];
 
 	/*
 	* static functions
@@ -41,64 +41,64 @@ namespace wdd
 		if(WDO_VERBOSE)
 		{
 			// link to help functionin main.cpp
-			extern bool dirExists(const TCHAR * dirPath);
+			extern bool dirExists(const char * dirPath);
 			// link full path from main.cpp
-			extern TCHAR _FULL_PATH_EXE[MAX_PATH];
+			extern char _FULL_PATH_EXE[MAX_PATH];
 
-			TCHAR BUFF_PATH[MAX_PATH];
-			TCHAR BUFF_UID[MAX_PATH];
+			char BUFF_PATH[MAX_PATH];
+			char BUFF_UID[MAX_PATH];
 
 			// create path to .\verbose
-			_tcscpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
-			_tcscat_s(BUFF_PATH, MAX_PATH, path_out);
+			strcpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
+			strcat_s(BUFF_PATH, MAX_PATH, path_out);
 
 			// check for path_out folder
 			if(!dirExists(BUFF_PATH))
 			{
 				if(!CreateDirectory(BUFF_PATH, NULL))
-					_tprintf(_T("\nCouldn't create %s directory.\n"), BUFF_PATH);
+					printf("ERROR! Couldn't create %s directory.\n", BUFF_PATH);
 			}
 
 			// create path to .\verbose\wdo
-			_tcscpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
-			_tcscat_s(BUFF_PATH, MAX_PATH, path_out_root);
+			strcpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
+			strcat_s(BUFF_PATH, MAX_PATH, path_out_root);
 
 			// check for path_out folder
 			if(!dirExists(BUFF_PATH))
 			{
 				if(!CreateDirectory(BUFF_PATH, NULL))
-					_tprintf(_T("\nCouldn't create %s directory.\n"), BUFF_PATH);
+					printf("\nCouldn't create %s directory.\n", BUFF_PATH);
 			}
 
 			// create dynamic path_out string
-			_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\"));
+			strcat_s(BUFF_PATH, MAX_PATH, "\\");
 
-			// convert unique id into TCHAR
-			_itot_s(unique_id, BUFF_UID, MAX_PATH, 10);
+			// convert unique id
+			_itoa_s(unique_id, BUFF_UID, MAX_PATH, 10);
 
 			// append 
-			_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+			strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 
 			if(!dirExists(BUFF_PATH))
 			{
 				// Create a new dynamic directory
 				if(!CreateDirectory(BUFF_PATH, NULL))
-					_tprintf(_T("\nCouldn't create %s directory.\n"), BUFF_PATH);
+					printf("\nCouldn't create %s directory.\n", BUFF_PATH);
 			}
 			// save path_out_root_img
-			_tcscpy_s(path_out_root_img, MAX_PATH, BUFF_PATH);
+			strcpy_s(path_out_root_img, MAX_PATH, BUFF_PATH);
 
 			// create dynamic path 
-			_tcscat_s(BUFF_PATH, MAX_PATH, blobDirName);
+			strcat_s(BUFF_PATH, MAX_PATH, blobDirName);
 
 			if(!dirExists(BUFF_PATH))
 			{
 				// Create a new dynamic directory
 				if(!CreateDirectory(BUFF_PATH, NULL))
-					_tprintf(_T("\nCouldn't create %s directory.\n"), BUFF_PATH);
+					printf("\nCouldn't create %s directory.\n", BUFF_PATH);
 			}
 			// save path_out_root_img_blob
-			_tcscpy_s(path_out_root_img_blob, MAX_PATH, BUFF_PATH);
+			strcpy_s(path_out_root_img_blob, MAX_PATH, BUFF_PATH);
 		}
 
 		std::vector<cv::Vec2d> unityOrientations;
@@ -363,8 +363,8 @@ namespace wdd
 		cv::Mat image_out(size, CV_8UC3);
 
 		// set image file name buffer
-		TCHAR BUFF_PATH[MAX_PATH];
-		TCHAR BUFF_UID[MAX_PATH];
+		char BUFF_PATH[MAX_PATH];
+		char BUFF_UID[MAX_PATH];
 
 		std::size_t i=0;
 		for (auto it=seq_in_ptr->begin(); it!=seq_in_ptr->end(); ++it)
@@ -373,15 +373,15 @@ namespace wdd
 			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
 			// create dynamic path_out string
-			_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-			_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\image_"));
+			strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
+			strcat_s(BUFF_PATH, MAX_PATH, "\\image_");
 
 			// convert picID=[0;seq_in_ptr->size()-1]
-			_stprintf_s(BUFF_UID, MAX_PATH, L"%03d", i);
+			sprintf_s(BUFF_UID, MAX_PATH, "%03d", i);
 
 			// append 
-			_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
-			_tcscat_s(BUFF_PATH, MAX_PATH, _T(".png"));
+			strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+			strcat_s(BUFF_PATH, MAX_PATH, ".png");
 
 			//cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
 
@@ -390,8 +390,8 @@ namespace wdd
 			i++;
 
 			//clear buffers
-			memset(BUFF_PATH,0,MAX_PATH*sizeof(TCHAR));
-			memset(BUFF_UID,0,MAX_PATH*sizeof(TCHAR));
+			memset(BUFF_PATH,0,MAX_PATH*sizeof(char));
+			memset(BUFF_UID,0,MAX_PATH*sizeof(char));
 		}
 
 		//finally draw detected orientation
@@ -402,8 +402,8 @@ namespace wdd
 		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
 		
 		// create dynamic path_out string
-		_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-		_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\orient.png"));
+		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
+		strcat_s(BUFF_PATH, MAX_PATH, "\\orient.png");
 
 		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
 	}
@@ -448,27 +448,27 @@ namespace wdd
 
 		
 		// set blob file name
-		TCHAR BUFF_PATH[MAX_PATH];
-		TCHAR BUFF_UID[MAX_PATH];
+		char BUFF_PATH[MAX_PATH];
+		char BUFF_UID[MAX_PATH];
 		// create dynamic path_out string
-		_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img_blob);
-		_tcscat_s(BUFF_PATH, MAX_PATH, _T("\\image_"));
+		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img_blob);
+		strcat_s(BUFF_PATH, MAX_PATH, "\\image_");
 
 		// convert picID
-		_stprintf_s(BUFF_UID, MAX_PATH, L"%03d", picID);
+		sprintf_s(BUFF_UID, MAX_PATH, "%03d", picID);
 		//append
-		_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+		strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 
 		//append
-		_tcscat_s(BUFF_PATH, MAX_PATH, _T("_blob_"));
+		strcat_s(BUFF_PATH, MAX_PATH, "_blob_");
 
-		// convert unique id into TCHAR
-		_itot_s(blobID, BUFF_UID, MAX_PATH, 10);
+		// convert unique id
+		_itoa_s(blobID, BUFF_UID, MAX_PATH, 10);
 		//append
-		_tcscat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+		strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
 
 		// append 
-		_tcscat_s(BUFF_PATH, MAX_PATH, _T(".png"));
+		strcat_s(BUFF_PATH, MAX_PATH, ".png");
 
 
 		WaggleDanceOrientator::saveImage(&blob_visual, BUFF_PATH);
@@ -478,12 +478,12 @@ namespace wdd
 	{
 		FILE * file_blobs_detail_ptr;
 
-		TCHAR BUFF_PATH[MAX_PATH];
-		_tcscpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-		_tcscat_s(BUFF_PATH, MAX_PATH, file_blobs_detail);
+		char BUFF_PATH[MAX_PATH];
+		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
+		strcat_s(BUFF_PATH, MAX_PATH, file_blobs_detail);
 
 
-		_tfopen_s (&file_blobs_detail_ptr, BUFF_PATH, _T("a+"));
+		fopen_s (&file_blobs_detail_ptr, BUFF_PATH, "a+");
 
 		if(file_blobs_detail_ptr != NULL)
 		{
@@ -665,18 +665,13 @@ namespace wdd
 		cv::waitKey();
 	}
 
-	void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const TCHAR * path_ptr)
+	void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const char * path_ptr)
 	{
 		bool result;
 
-		// convert TCHAR i.o. to use openCV 
-		char path_char_ptr[MAX_PATH];
-		std::size_t   i;
-		wcstombs_s(&i, path_char_ptr, MAX_PATH, path_ptr, wcslen(path_ptr) + 1);
-
 		try {
 
-			result = cv::imwrite(path_char_ptr, *img_ptr);
+			result = cv::imwrite(path_ptr, *img_ptr);
 		}
 		catch (std::runtime_error& ex) {
 			std::cerr << "Exception saving image '"<<path_ptr

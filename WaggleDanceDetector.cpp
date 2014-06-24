@@ -3,6 +3,7 @@
 #include "VideoFrameBuffer.h"
 #include "DotDetectorLayer.h"
 #include "WaggleDanceOrientator.h"
+#include "WaggleDanceExport.h"
 
 #include "WaggleDanceDetector.h"
 
@@ -11,9 +12,9 @@ namespace wdd
 	unsigned long long WaggleDanceDetector::WDD_SIGNAL_FRAME_NR;
 	int WaggleDanceDetector::WDD_VERBOSE;
 
-	TCHAR * danceFile_path = _T("\\dance.txt");
+	char * danceFile_path = "\\dance.txt";
 	FILE * danceFile_ptr;
-	TCHAR * signalFile_path = _T("\\signal.txt");
+	char * signalFile_path = "\\signal.txt";
 	FILE * signalFile_ptr;
 
 	WaggleDanceDetector::WaggleDanceDetector(			
@@ -78,20 +79,20 @@ namespace wdd
 		if(WDD_WRITE_DANCE_FILE || WDD_WRITE_SIGNAL_FILE)
 		{
 			// link full path from main.cpp
-			extern TCHAR _FULL_PATH_EXE[MAX_PATH];
-			TCHAR BUFF[MAX_PATH];
+			extern char _FULL_PATH_EXE[MAX_PATH];
+			char BUFF[MAX_PATH];
 
 			if(WDD_WRITE_DANCE_FILE)
 			{
-				_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-				_tcscat_s(BUFF, MAX_PATH, danceFile_path);
-				_tfopen_s (&danceFile_ptr, BUFF, _T("a+"));
+				strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+				strcat_s(BUFF, MAX_PATH, danceFile_path);
+				fopen_s (&danceFile_ptr, BUFF, "a+");
 			}
 			if(WDD_WRITE_SIGNAL_FILE)
 			{
-				_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-				_tcscat_s(BUFF, MAX_PATH, signalFile_path);
-				_tfopen_s (&signalFile_ptr, BUFF, _T("a+"));
+				strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+				strcat_s(BUFF, MAX_PATH, signalFile_path);
+				fopen_s (&signalFile_ptr, BUFF, "a+");
 			}
 		}
 	}
@@ -261,6 +262,7 @@ namespace wdd
 				d.DANCE_FRAME_START = WDD_SIGNAL_FRAME_NR;
 				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
 				d.positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
+				d.rawtime = time(0);
 				WDD_UNIQ_DANCES.push_back(d);
 			}
 			else if(newPosition)
@@ -332,6 +334,8 @@ namespace wdd
 				d.orient_uvec.x, 
 				d.orient_uvec.y);
 		}
+
+		WaggleDanceExport::write(seq, d, 0);
 
 		WDD_DANCE_NUMBER++;
 	}

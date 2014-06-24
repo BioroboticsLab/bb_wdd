@@ -32,7 +32,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #define NOMINMAX
-#include <tchar.h>
+//#include <tchar.h>
+#include "atlstr.h"
 #include <windows.h>
 #include "Shlwapi.h"
 

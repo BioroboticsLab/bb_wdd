@@ -47,8 +47,11 @@ namespace wdd
 
 	WaggleDanceDetector::~WaggleDanceDetector()
 	{
-		fclose (danceFile_ptr);
-		fclose (signalFile_ptr);
+		if(WDD_WRITE_DANCE_FILE)
+			fclose (danceFile_ptr);
+
+		if(WDD_WRITE_SIGNAL_FILE)
+			fclose (signalFile_ptr);
 	}
 	/*
 	* Dependencies: NULL
@@ -71,18 +74,26 @@ namespace wdd
 	* Dependencies: NULL
 	*/
 	void WaggleDanceDetector::_initOutPutFiles()
-	{
-		// link full path from main.cpp
-		extern TCHAR _FULL_PATH_EXE[MAX_PATH];
-		TCHAR BUFF[MAX_PATH];
+	{		
+		if(WDD_WRITE_DANCE_FILE || WDD_WRITE_SIGNAL_FILE)
+		{
+			// link full path from main.cpp
+			extern TCHAR _FULL_PATH_EXE[MAX_PATH];
+			TCHAR BUFF[MAX_PATH];
 
-		_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-		_tcscat_s(BUFF, MAX_PATH, danceFile_path);
-		_tfopen_s (&danceFile_ptr, BUFF, _T("a+"));		
-
-		_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-		_tcscat_s(BUFF, MAX_PATH, signalFile_path);
-		_tfopen_s (&signalFile_ptr, BUFF, _T("a+"));
+			if(WDD_WRITE_DANCE_FILE)
+			{
+				_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+				_tcscat_s(BUFF, MAX_PATH, danceFile_path);
+				_tfopen_s (&danceFile_ptr, BUFF, _T("a+"));
+			}
+			if(WDD_WRITE_SIGNAL_FILE)
+			{
+				_tcscpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+				_tcscat_s(BUFF, MAX_PATH, signalFile_path);
+				_tfopen_s (&signalFile_ptr, BUFF, _T("a+"));
+			}
+		}
 	}
 	void WaggleDanceDetector::_setWDDConfig(std::vector<double> wdd_config)
 	{

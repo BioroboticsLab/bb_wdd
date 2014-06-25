@@ -111,7 +111,7 @@ int main(int nargs, char** argv)
 	//	Develop: Waggle Dance Configuration
 	//
 	bool visual = false;
-	bool wdd_write_dance_file = true;
+	bool wdd_write_dance_file = false;
 	bool wdd_write_signal_file = false;
 	int wdd_verbose = 1;
 

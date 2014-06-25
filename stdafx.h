@@ -3,6 +3,7 @@
 #define WDD_FBUFFER_SIZE 32
 #define WDD_FREQ_NUMBER 7
 #define WDD_FRAME_RATE 102
+#define VFB_MAX_FRAME_HISTORY 600
 
 #if !defined(ARMA_NO_DEBUG)
   #define ARMA_NO_DEBUG

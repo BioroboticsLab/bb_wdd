@@ -72,9 +72,7 @@ namespace wdd
 		//
 		// get dir <ID>
 		std::size_t dirID = countDirectories(relpath_YYYYMMDD_HHMM_camID);
-
-		std::cout<<"dirID: "<<dirID<<std::endl;
-
+		
 		// convert camID to string
 		_itoa_s(dirID, buf_dirID, sizeof(buf_dirID), 10);
 

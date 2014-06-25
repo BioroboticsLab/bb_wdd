@@ -76,6 +76,9 @@ namespace wdd
 		// pointer to videoFrameBuffer (accessing history frames)
 		VideoFrameBuffer * WDD_VideoFrameBuffer_ptr;
 
+		int _startFrameShift;
+		int _endFrameShift;
+
 		//
 		// develop options
 		//

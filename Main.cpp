@@ -64,7 +64,7 @@ char _FULL_PATH_EXE[MAX_PATH];
 enum RUN_MODE {TEST, LIVE};
 
 int main(int nargs, char** argv)
-{
+{	
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
 	char videoFilename[MAXCHAR];
@@ -76,9 +76,8 @@ int main(int nargs, char** argv)
 
 	RUN_MODE RM;
 
-	//WaggleDanceOrientator
-	cv::Size videoFrameBufferExtractSize(20,20);
-	
+
+
 	//WaggleDanceExport
 	WaggleDanceExport::execRootExistChk();
 
@@ -116,7 +115,7 @@ int main(int nargs, char** argv)
 	bool wdd_write_signal_file = false;
 	int wdd_verbose = 1;
 
-	
+
 
 	cv::VideoCapture capture(0);
 	if (nargs == 1)
@@ -187,8 +186,7 @@ int main(int nargs, char** argv)
 	unsigned long long frame_counter_warmup = 0;
 
 	/* prepare videoFrameBuffer */
-	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_HEIGHT, FRAME_WIDTH));
-	videoFrameBuffer.setSequecenFrameSize(videoFrameBufferExtractSize);
+	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_WIDTH, FRAME_HEIGHT), cv::Size(20,20));	
 
 	/* prepare buffer to hold mono chromized input frame */
 	frame_input_monochrome =
@@ -206,7 +204,7 @@ int main(int nargs, char** argv)
 	printf("frame_rate: %d\n", FRAME_RATE);
 	printf("frame_red_fac: %d\n", FRAME_RED_FAC);
 	frame_target = cv::Mat(frame_target_height, frame_target_width, CV_8UC1);
-
+	
 	/*
 	* prepare DotDetectorLayer config vector
 	*/
@@ -435,11 +433,11 @@ int main(int nargs, char** argv)
 		}
 	}
 	capture.release();
-	
+
 	/*
 	unsigned __int64 avgUL = 0;
 	for(auto it=DotDetectorLayer::DDL_DEBUG_PERF.begin(); it!=DotDetectorLayer::DDL_DEBUG_PERF.end(); ++it)
-		avgUL += *it;
+	avgUL += *it;
 
 	std::cout<<"average perf ticks: "<<avgUL / (DotDetectorLayer::DDL_DEBUG_PERF.size())<<std::endl;
 	*/

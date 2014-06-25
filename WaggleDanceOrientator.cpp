@@ -12,7 +12,7 @@ namespace wdd
 	// WDO_IMAGE_RED_SCALE = 1/WDO_IMAGE_RED_FAC
 	double WaggleDanceOrientator::WDO_IMAGE_RED_SCALE = 1/WDO_IMAGE_RED_FAC;
 
-	bool WaggleDanceOrientator::WDO_VERBOSE = true;
+	bool WaggleDanceOrientator::WDO_VERBOSE = false;
 
 	// create a 5x5 double-precision kernel matrix adopted from MATLAB
 	cv::Mat WaggleDanceOrientator::gaussKernel = 

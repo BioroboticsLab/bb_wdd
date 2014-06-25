@@ -4,22 +4,17 @@ namespace wdd
 {
 	class VideoFrameBuffer
 	{
-		unsigned int MAX_FRAME_HISTORY;
-		unsigned int startFrameShift;
-		unsigned int endFrameShift;
-		unsigned int NEXT_CELL_ID;
+		unsigned int _BUFFER_POS;
+		unsigned long long _CURRENT_FRAME_NR;
 
-		cv::Mat * FRAME;
-		
-		unsigned long long CURRENT_FRAME_NR;
-		//debug only
-		unsigned long long * FRAME_NR;
+		cv::Size _cachedFrameSize;
+		cv::Size _extractFrameSize;
+		cv::Point _sequenceFramePointOffset;
 
-		cv::Size sequenceFrameSize;
-		cv::Point sequenceFramePointOffset;
+		cv::Mat _FRAME[VFB_MAX_FRAME_HISTORY];
 
 	public:
-		VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size size);
+		VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize);
 		~VideoFrameBuffer(void);
 
 		void setSequecenFrameSize(cv::Size size);

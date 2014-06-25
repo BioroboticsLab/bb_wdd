@@ -29,7 +29,9 @@ namespace wdd
 		):
 	WDD_VideoFrameBuffer_ptr(videoFrameBuffer_ptr),
 		WDD_WRITE_DANCE_FILE(wdd_write_dance_file),
-		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file)
+		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file),
+		_startFrameShift(cvRound(WDD_FBUFFER_SIZE/2.0)),
+		_endFrameShift(cvRound(WDD_FBUFFER_SIZE/2.0))
 	{	
 		WaggleDanceDetector::WDD_VERBOSE = wdd_verbose;
 
@@ -307,8 +309,8 @@ namespace wdd
 #ifdef WDD_EXTRACT_ORIENT
 		// restore needed original frames
 		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(
-			d.DANCE_FRAME_START
-			,d.DANCE_FRAME_END, 
+			d.DANCE_FRAME_START-_startFrameShift,
+			d.DANCE_FRAME_END-_endFrameShift, 
 			cv::Point_<int>(d.positions[0]), 
 			DotDetectorLayer::FRAME_REDFAC);
 

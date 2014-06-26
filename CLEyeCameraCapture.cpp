@@ -175,6 +175,14 @@ namespace wdd{
 			std::cerr<<"ERROR! Could not create camera instance!"<<std::endl;
 			return;
 		}
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_GAIN, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_GAIN = true!"<<std::endl;
+
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_EXPOSURE, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_EXPOSURE = true!"<<std::endl;
+
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_WHITEBALANCE, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_WHITEBALANCE = true!"<<std::endl;
 
 		PBYTE pCapBuffer = NULL;
 		// create the appropriate OpenCV image

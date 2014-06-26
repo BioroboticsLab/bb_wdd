@@ -113,8 +113,8 @@ int main(int nargs, char** argv)
 		{
 		case 'v':				printf("Toggle Visual\n");		pCam->setVisual(true);	break;
 					case 'V':	printf("Toggle Visual\n");		pCam->setVisual(false);	break;
-		case 'g':	case 'G':	printf("Parameter Gain\n");		param = CLEYE_GAIN;		break;
-		case 'e':	case 'E':	printf("Parameter Exposure\n");	param = CLEYE_EXPOSURE;	break;
+		//case 'g':	case 'G':	printf("Parameter Gain\n");		param = CLEYE_GAIN;		break;
+		//case 'e':	case 'E':	printf("Parameter Exposure\n");	param = CLEYE_EXPOSURE;	break;
 		case 'z':	case 'Z':	printf("Parameter Zoom\n");		param = CLEYE_ZOOM;		break;
 		case 'r':	case 'R':	printf("Parameter Rotation\n");	param = CLEYE_ROTATION;	break;
 		case '+':	if(cam)		cam->IncrementCameraParameter(param);					break;

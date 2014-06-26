@@ -73,7 +73,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>C:\opencv\build\include;C:\armadillo-4.300.2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\CL-Eye Platform SDK\Include;C:\opencv\build\include;C:\armadillo-4.300.2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnablePREfast>false</EnablePREfast>
       <BrowseInformation>true</BrowseInformation>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
@@ -92,8 +92,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ShLwApi.Lib;libopenblas.lib;opencv_core249.lib;opencv_highgui249.lib;opencv_imgproc249.lib;opencv_calib3d249.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Lib;C:\OpenBLAS-v0.2.8-x86-Win\lib;$(OPENCV_DIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>CLEyeMulticam.lib;ShLwApi.Lib;libopenblas.lib;opencv_core249.lib;opencv_highgui249.lib;opencv_imgproc249.lib;opencv_calib3d249.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\CL-Eye Platform SDK\Lib;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Lib;C:\OpenBLAS-v0.2.8-x86-Win\lib;$(OPENCV_DIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
@@ -109,6 +109,7 @@
     <ClInclude Include="DotDetector.h" />
     <ClInclude Include="DotDetectorLayer.h" />
     <ClInclude Include="InputVideoParameters.h" />
+    <ClInclude Include="CLEyeCameraCapture.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="TypeToString.h" />
@@ -123,6 +124,7 @@
     <ClCompile Include="DotDetector.cpp" />
     <ClCompile Include="DotDetectorLayer.cpp" />
     <ClCompile Include="InputVideoParameters.cpp" />
+    <ClCompile Include="CLEyeCameraCapture.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -51,6 +51,9 @@
     <ClInclude Include="WaggleDanceExport.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CLEyeCameraCapture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -87,6 +90,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="WaggleDanceExport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CLEyeCameraCapture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -41,9 +41,13 @@
 #include <array>
 #include <map>
 #include <limits>
+#include <list>
 #include <vector>
 
 #include <armadillo>
+#include "CLEyeMulticam.h"
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 #include <opencv2/opencv.hpp>
+
+enum RUN_MODE {TEST, LIVE};

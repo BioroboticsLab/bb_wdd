@@ -118,7 +118,7 @@ namespace wdd
 
 		for(auto it = d.positions.begin(); it!=d.positions.end(); ++it)
 		{
-			fprintf_s(CSV_ptr,"%.1f %1.f ", it->x, it->y);
+			fprintf_s(CSV_ptr,"%.1f %.1f ", it->x, it->y);
 		}
 		fprintf_s(CSV_ptr,"\n");
 		fclose(CSV_ptr);

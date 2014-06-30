@@ -59,6 +59,34 @@ bool dirExists(const char * dirPath)
 	return false;
 }
 
+void loadCamConfigFile()
+{
+	std::string line;
+	std::ifstream camconfigfile("cams.config");
+	if(camconfigfile.is_open())
+	{
+		while (getline(camconfigfile,line))
+		{
+			std::cout<<line<<std::endl;
+		}
+		camconfigfile.close();
+	}
+	else
+	{
+		std::cerr<<"Error! Can not open cams.config file!"<<std::endl;
+		exit(111);
+	}
+}
+inline std::string guidToString(GUID g){
+	char buff[64];
+	sprintf_s(buff, "[%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x]",
+		g.Data1, g.Data2, g.Data3,
+		g.Data4[0], g.Data4[1], g.Data4[2],
+		g.Data4[3], g.Data4[4], g.Data4[5],
+		g.Data4[6], g.Data4[7]);
+	return buff;
+}
+
 // saves to full path to executable
 char _FULL_PATH_EXE[MAX_PATH]; 
 
@@ -66,53 +94,83 @@ int main(int nargs, char** argv)
 {	
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
-	
+
 	//char videoFilename[MAXCHAR];
 	// WaggleDanceExport initialization
 	WaggleDanceExport::execRootExistChk();
 
 
-	CLEyeCameraCapture *cam = NULL;
+	CLEyeCameraCapture *pCam = NULL;
+	GUID * _guids;
+
 	// Query for number of connected cameras
 	int numCams = CLEyeGetCameraCount();
+
 	if(numCams == 0)
 	{
 		printf("Error No PS3Eye cameras detected\n");
-		return -1;
+		exit(-1);
 	}
+	else
+	{
+		_guids = new GUID [numCams];
+	}
+	printf("CamID    GUID                                   configured?\n");
+	printf("***********************************************************\n");
+	for(int i = 0; i < numCams; i++)
+	{
+		// Query & temporaly save unique camera uuid
+		_guids[i] = CLEyeGetCameraUUID(i);
+		printf("%d\t %s\tno\n", i, guidToString(_guids[i]));
+	}
+	printf("\n\n");
+	std::string in;
+	std::size_t camId;
+
+	while(true){
+		std::cout << " -> Please selet camera id to start:" <<std::endl;
+		std::getline(std::cin, in);
+
+		try {
+			int i_dec = std::stoi (in,nullptr);
+			if((0<= i_dec) && (i_dec <= numCams-1))
+			{
+				camId = static_cast<std::size_t>(i_dec);
+				break;
+			}
+		}
+		catch (const std::invalid_argument& ia) {
+			std::cerr << "Invalid argument: " << ia.what() << '\n';
+		}
+
+	}
+
 	char windowName[64];
-	// Query unique camera uuid
-	GUID guid = CLEyeGetCameraUUID(0);
-	printf("Camera GUID: [%08x-%04x-%04x-%02x%02x%02x%02x%02x%02x%02x%02x]\n", 
-		guid.Data1, guid.Data2, guid.Data3,
-		guid.Data4[0], guid.Data4[1], guid.Data4[2],
-		guid.Data4[3], guid.Data4[4], guid.Data4[5],
-		guid.Data4[6], guid.Data4[7]);
-	sprintf_s(windowName, "WaggleDanceDetector Window - CamID:");
-	// Create camera capture object
-	// Randomize resolution and color mode
+	sprintf_s(windowName, "WaggleDanceDetector - CamID: %d", camId);
+	pCam = new CLEyeCameraCapture(windowName, _guids[camId], CLEYE_MONO_RAW, CLEYE_QVGA, WDD_FRAME_RATE);
+	printf("Starting WaggleDanceDetector - CamID: %d\n", camId);
+	pCam->StartCapture();
 
-	cam = new CLEyeCameraCapture(windowName, guid, CLEYE_MONO_RAW, CLEYE_QVGA, WDD_FRAME_RATE);
-
-	printf("Starting capture\n");
-	cam->StartCapture();
-
+	/*
 	printf("Use the following keys to change camera parameters:\n"
-		"\t'g' - select gain parameter\n"
-		"\t'e' - select exposure parameter\n"
-		"\t'z' - select zoom parameter\n"
-		"\t'r' - select rotation parameter\n"
-		"\t'+' - increment selected parameter\n"
-		"\t'-' - decrement selected parameter\n");
+	"\t'g' - select gain parameter\n"
+	"\t'e' - select exposure parameter\n"
+	"\t'z' - select zoom parameter\n"
+	"\t'r' - select rotation parameter\n"
+	"\t'+' - increment selected parameter\n"
+	"\t'-' - decrement selected parameter\n");
 	// The <ESC> key will exit the program
 	CLEyeCameraCapture *pCam = NULL;
+	*/
 	int param = -1, key;
+
 	while((key = cvWaitKey(0)) != 0x1b)
 	{
+		/*
 		switch(key)
 		{
 		case 'v':				printf("Toggle Visual\n");		pCam->setVisual(true);	break;
-					case 'V':	printf("Toggle Visual\n");		pCam->setVisual(false);	break;
+		case 'V':	printf("Toggle Visual\n");		pCam->setVisual(false);	break;
 		//case 'g':	case 'G':	printf("Parameter Gain\n");		param = CLEYE_GAIN;		break;
 		//case 'e':	case 'E':	printf("Parameter Exposure\n");	param = CLEYE_EXPOSURE;	break;
 		case 'z':	case 'Z':	printf("Parameter Zoom\n");		param = CLEYE_ZOOM;		break;
@@ -120,8 +178,11 @@ int main(int nargs, char** argv)
 		case '+':	if(cam)		cam->IncrementCameraParameter(param);					break;
 		case '-':	if(cam)		cam->DecrementCameraParameter(param);					break;
 		}
+
+		*/
 	}
-	cam->StopCapture();
-	delete cam;
+	pCam->StopCapture();
+	delete pCam;
+	delete _guids;
 	return 0;
 }

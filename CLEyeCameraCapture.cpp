@@ -360,7 +360,7 @@ namespace wdd{
 			ddl_config,
 			wdd_config,
 			&videoFrameBuffer,
-			_CC.camId,
+			_CC,
 			wdd_write_signal_file,
 			wdd_write_dance_file,
 			wdd_verbose

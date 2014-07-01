@@ -21,6 +21,8 @@ namespace wdd
 	char buf_camID[32];
 	char buf_dirID[32];
 
+	std::array<cv::Point2f,4> auxArena;
+
 	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE d, std::size_t camID)
 	{
 		char _buf[MAX_PATH];
@@ -72,7 +74,7 @@ namespace wdd
 		//
 		// get dir <ID>
 		std::size_t dirID = countDirectories(relpath_YYYYMMDD_HHMM_camID);
-		
+
 		// convert camID to string
 		_itoa_s(dirID, buf_dirID, sizeof(buf_dirID), 10);
 
@@ -114,7 +116,12 @@ namespace wdd
 
 		fprintf_s(CSV_ptr,"%.1f %.1f %.1f\n", d.positions[0].x, d.positions[0].y, uvecToRad(d.orient_uvec));
 		fprintf_s(CSV_ptr,"%s %d\n", TIMESTMP, static_cast<int>(d.DANCE_FRAME_END-d.DANCE_FRAME_START+1));
-		fprintf_s(CSV_ptr,"<h_x0> <h_y0> <h_x1> <h_y1> <h_x2> <h_y2> <h_x3> <h_y3>\n");
+
+		for(unsigned i=0; i< 4; i++)
+		{
+			fprintf_s(CSV_ptr,"%.1f %.1f ", auxArena[i].x, auxArena[i].y);
+		}
+		fprintf_s(CSV_ptr,"\n");
 
 		for(auto it = d.positions.begin(); it!=d.positions.end(); ++it)
 		{
@@ -201,7 +208,9 @@ namespace wdd
 
 		return atan2(in.y,in.x);
 	}
-
+	void WaggleDanceExport::setArena(std::array<cv::Point2f,4> _auxArena){
+		auxArena = _auxArena;
+	}
 	void WaggleDanceExport::execRootExistChk()
 	{
 

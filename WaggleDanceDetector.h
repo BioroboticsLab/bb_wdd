@@ -88,7 +88,7 @@ namespace wdd
 		// if set to true, appends wdd signal to output file
 		bool WDD_WRITE_SIGNAL_FILE;
 
-		std::size_t WDD_CAM_ID;
+		CamConf auxCC;
 
 	public:
 		WaggleDanceDetector(			
@@ -97,7 +97,7 @@ namespace wdd
 			std::vector<double> ddl_config,
 			std::vector<double> wdd_dance_config,
 			VideoFrameBuffer * videoFrameBuffer_ptr,
-			std::size_t camId,
+			CamConf auxCC,
 			bool wdd_write_signal_file,
 			bool wdd_write_dance_file,
 			int wdd_verbose

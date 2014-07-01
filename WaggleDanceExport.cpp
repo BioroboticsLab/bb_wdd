@@ -9,7 +9,6 @@ namespace wdd
 
 	// save the incrementing IDs of detection per directory
 	std::size_t ID = 0;
-	std::tm timeinfo;
 
 	bool root_exist_chk = false;
 
@@ -27,15 +26,11 @@ namespace wdd
 	{
 		char _buf[MAX_PATH];
 
-		// convert timestamp of DANCE
-		localtime_s(&timeinfo, &d.rawtime);
-
-
 		//
 		// check <YYYYYMMDD> folder
 		//
-		// write YYYYYMMDD string & compare to last saved
-		strftime(_buf, sizeof(_buf), "%Y%m%d", &timeinfo);
+		// write YYYYYMMDD string & compare to last saved		
+		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d", d.rawtime.wYear, d.rawtime.wMonth, d.rawtime.wDay);
 
 		if(strcmp(_buf,buf_YYYYMMDD) != 0)
 		{
@@ -48,7 +43,11 @@ namespace wdd
 		// check <YYYYYMMDD_HHMM_CamID> folder
 		//
 		// write YYYYYMMDD_HHMM_ string
-		strftime(_buf, sizeof(_buf), "%Y%m%d_%H%M_", &timeinfo);
+		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d_%02d%02d_", 
+			d.rawtime.wYear, d.rawtime.wMonth, d.rawtime.wDay,
+			d.rawtime.wHour, d.rawtime.wMinute
+			);
+
 		// convert camID to string
 		_itoa_s(camID, buf_camID, sizeof(buf_camID), 10);
 		// append and finalize YYYYYMMDD_HHMM_camID string
@@ -111,8 +110,10 @@ namespace wdd
 		FILE * CSV_ptr;
 		fopen_s(&CSV_ptr, CSV_FILE,  "w");
 
-		char TIMESTMP[32];
-		strftime(TIMESTMP, sizeof(TIMESTMP), "%H:%M:%S", &timeinfo);
+		char TIMESTMP[32];		
+		sprintf_s(TIMESTMP, 32, "%02d:%02d:%02d:%03d", 
+			d.rawtime.wHour, d.rawtime.wMinute, d.rawtime.wSecond, d.rawtime.wMilliseconds 
+			);
 
 		fprintf_s(CSV_ptr,"%.1f %.1f %.1f\n", d.positions[0].x, d.positions[0].y, uvecToRad(d.orient_uvec));
 		fprintf_s(CSV_ptr,"%s %d\n", TIMESTMP, static_cast<int>(d.DANCE_FRAME_END-d.DANCE_FRAME_START+1));

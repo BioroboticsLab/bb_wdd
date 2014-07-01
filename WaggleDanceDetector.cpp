@@ -268,7 +268,7 @@ namespace wdd
 				d.DANCE_FRAME_START = WDD_SIGNAL_FRAME_NR;
 				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
 				d.positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
-				d.rawtime = time(0);
+				GetLocalTime(&d.rawtime);
 				WDD_UNIQ_DANCES.push_back(d);
 			}
 			else if(newPosition)

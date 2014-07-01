@@ -13,7 +13,7 @@ namespace wdd
 
 		cv::Point2d orient_uvec;
 
-		time_t rawtime;
+		SYSTEMTIME rawtime;
 	};
 
 	class WaggleDanceDetector

@@ -299,8 +299,7 @@ namespace wdd{
 		unsigned long long frame_counter_warmup = 0;
 
 		// prepare videoFrameBuffer
-		VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(_FRAME_WIDTH, _FRAME_HEIGHT), cv::Size(20,20));	
-
+		VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(_FRAME_WIDTH, _FRAME_HEIGHT), cv::Size(20,20), _CC);
 
 		// prepare buffer to hold mono chromized input frame
 		cv::Mat frame_input_monochrome = cv::Mat(_FRAME_HEIGHT, _FRAME_WIDTH, CV_8UC1);

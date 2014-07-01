@@ -51,3 +51,20 @@
 #include <opencv2/opencv.hpp>
 
 enum RUN_MODE {TEST, LIVE};
+
+struct CamConf {
+	std::size_t camId;
+	char guid_str[64];
+	std::array<cv::Point2f,4> arena;
+	bool configured;
+};
+
+struct _MouseInteraction
+{
+	// id der Ecke, die mit der Maus angehovert wurde
+	int cornerHovered;
+	// id der Ecke, die mit der Maus angeklickt wurde
+	int cornerSelected;
+
+	cv::Point lastPosition;
+}; 

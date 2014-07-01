@@ -23,11 +23,13 @@ namespace wdd
 		std::vector<double> ddl_config,
 		std::vector<double> wdd_config,
 		VideoFrameBuffer * videoFrameBuffer_ptr,
+		std::size_t camId,
 		bool wdd_write_signal_file,
 		bool wdd_write_dance_file,
 		int wdd_verbose
 		):
 	WDD_VideoFrameBuffer_ptr(videoFrameBuffer_ptr),
+		WDD_CAM_ID(camId),
 		WDD_WRITE_DANCE_FILE(wdd_write_dance_file),
 		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file),
 		_startFrameShift(cvRound(WDD_FBUFFER_SIZE/2.0)),
@@ -337,7 +339,7 @@ namespace wdd
 				d.orient_uvec.y);
 		}
 
-		WaggleDanceExport::write(seq, d, 0);
+		WaggleDanceExport::write(seq, d, WDD_CAM_ID);
 
 		WDD_DANCE_NUMBER++;
 	}

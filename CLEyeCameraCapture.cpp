@@ -4,16 +4,81 @@
 #include "WaggleDanceDetector.h"
 
 namespace wdd{
-	CLEyeCameraCapture::CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps) :
+
+	_MouseInteraction	_Mouse;
+	CamConf _CC;
+
+	void static findCornerPointNear(cv::Point p)
+	{
+		// we actually have a 4 point arena to work with
+		if (_CC.arena.size() != 4){
+			printf_s("WARNING! Unexpected number of corners for arena: %d - expect number = 4\n", _CC.arena.size());
+		}
+
+		// check if there is already a corner marked as hovered
+		if(_Mouse.cornerHovered > -1)
+		{
+			// revalidate distance
+			if (cv::norm(_CC.arena[_Mouse.cornerHovered] - cv::Point2f(p)) < 5 ){
+				// nothing to do, no GUI update needed
+				return;
+			}else{
+				// unset corner marked as hovered
+				_Mouse.cornerHovered = -1;				
+				// done
+				return;
+			}
+		}
+
+		//find the corner the mouse points at
+		// assertion Mouse.cornerHover = -1;
+		for (std::size_t i = 0; i < _CC.arena.size(); i++)
+			if ( cv::norm(_CC.arena[i] - cv::Point2f(p)) < 5 )
+			{
+				_Mouse.cornerHovered = i;				
+				break;
+			}
+	}
+	void static onMouseInput(int evnt, int x, int y, int flags, void* param)
+	{
+		cv::Point p(x, y);
+		_Mouse.lastPosition = p;
+
+		switch( evnt ){
+		case CV_EVENT_MOUSEMOVE:
+			// if a corner is selected, move the edge position
+			if(_Mouse.cornerSelected > -1){
+				_CC.arena[_Mouse.cornerSelected] = p;
+			}else{
+				// hover over corner point should trigger visual feedback
+				findCornerPointNear(p);
+			}
+			break;
+
+		case CV_EVENT_LBUTTONDOWN:
+			// implement toggle: if corner was already selected, deselect it
+			if(_Mouse.cornerSelected > -1)
+				_Mouse.cornerSelected = -1;
+			// else check if corner is hovered (=in range) and possibly select it
+			else
+				if (_Mouse.cornerHovered > -1)
+					_Mouse.cornerSelected = _Mouse.cornerHovered;
+			break;
+		}
+
+	}
+	CLEyeCameraCapture::CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps, CamConf CC) :
 		_cameraGUID(cameraGUID), _cam(NULL), _mode(mode), _resolution(resolution), _fps(fps), _running(false), _visual(true)
 	{
 		strcpy_s(_windowName, windowName);
 
+		// used for live monitoring (aka Run())
 		if(resolution == CLEYE_QVGA)
 		{
 			_FRAME_WIDTH = 320;
 			_FRAME_HEIGHT = 240;
 		}
+		// used for arena config (aka Setup())
 		else if(resolution == CLEYE_VGA)
 		{
 			_FRAME_WIDTH = 640;
@@ -24,11 +89,13 @@ namespace wdd{
 			std::cerr<<"ERROR! Unknown resolution format!"<<std::endl;
 			exit(-11);
 		}
+		_CC = CC;
+		_setupModeOn = !_CC.configured;
 	}
 	bool CLEyeCameraCapture::StartCapture()
 	{
 		_running = true;
-		
+
 		cvNamedWindow(_windowName, CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
 
 		// Start CLEye image capture thread
@@ -51,6 +118,41 @@ namespace wdd{
 	{
 		_visual = visual;
 	}
+	void CLEyeCameraCapture::setSetupModeOn(bool setupMode)
+	{
+		/*
+		// from no-to-yes setup -> arena * 4
+		if(!_setupModeOn && setupMode)
+		{
+		for(unsigned i=0; i< 4; i++)
+		{
+		cv::Point2f t = _CC.arena[i];
+		t.x = t.x * 4; t.y = t.y * 4;
+		_CC.arena[i] = t;
+
+		std::cout<<"Arena["<<i<<"]: "<<_CC.arena[i]<<std::endl;
+		}
+		}
+		// from yes-to-no setup -> arena / 4
+		else if(_setupModeOn && !setupMode)
+		{
+		for(unsigned i=0; i< 4; i++)
+		{
+		cv::Point2f t = _CC.arena[i];
+		t.x = t.x / 4; t.y = t.y / 4;
+		_CC.arena[i] = t;
+
+		std::cout<<"Arena["<<i<<"]: "<<_CC.arena[i]<<std::endl;
+		}
+		}
+		*/
+
+		_setupModeOn = setupMode;
+	}
+	const CamConf * CLEyeCameraCapture::getCamConfPtr()
+	{
+		return &_CC;
+	}
 	void CLEyeCameraCapture::IncrementCameraParameter(int param)
 	{
 		if(!_cam)	return;
@@ -60,6 +162,101 @@ namespace wdd{
 	{
 		if(!_cam)	return;
 		CLEyeSetCameraParameter(_cam, (CLEyeCameraParameter)param, CLEyeGetCameraParameter(_cam, (CLEyeCameraParameter)param)-10);
+	}
+	void CLEyeCameraCapture::Setup()
+	{
+		// listen for mouse interaction
+		cv::setMouseCallback(_windowName, onMouseInput);
+		// id der Ecke, die mit der Maus angehovert wurde
+		_Mouse.cornerHovered = -1;
+		// id der Ecke, die mit der Maus angeklickt wurde
+		_Mouse.cornerSelected = -1;
+
+		int w, h;
+		IplImage *pCapImage;
+		PBYTE pCapBuffer = NULL;
+		// Create camera instance
+		_cam = CLEyeCreateCamera(_cameraGUID, CLEYE_MONO_PROCESSED, CLEYE_VGA, 30);
+		if(_cam == NULL)
+		{
+			std::cerr<<"ERROR! Could not create camera instance!"<<std::endl;
+			return;
+		}
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_GAIN, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_GAIN = true!"<<std::endl;
+
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_EXPOSURE, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_EXPOSURE = true!"<<std::endl;
+
+		if(CLEyeSetCameraParameter(_cam, CLEYE_AUTO_WHITEBALANCE, true) == false)
+			std::cerr<<"WARNING! Could not set CLEYE_AUTO_WHITEBALANCE = true!"<<std::endl;
+
+		// Get camera frame dimensions
+		CLEyeCameraGetFrameDimensions(_cam, w, h);
+		// Depending on color mode chosen, create the appropriate OpenCV image
+		if(_mode == CLEYE_COLOR_PROCESSED || _mode == CLEYE_COLOR_RAW)
+			pCapImage = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 4);
+		else
+			pCapImage = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 1);
+
+		// Start capturing
+		CLEyeCameraStart(_cam);
+
+		IplImage* image = cvCreateImage(cvSize(pCapImage->width, pCapImage->height), IPL_DEPTH_8U, 3);
+		// image capturing loop
+		while(_running)
+		{
+			cvGetImageRawData(pCapImage, &pCapBuffer);
+			CLEyeCameraGetFrame(_cam, pCapBuffer);
+			cvConvertImage(pCapImage, image);
+			drawArena(cv::Mat(image));
+			cvShowImage(_windowName, image);
+		}
+		cvReleaseImage(&image);
+
+		// Stop camera capture
+		CLEyeCameraStop(_cam);
+		// Destroy camera object
+		CLEyeDestroyCamera(_cam);
+		// Destroy the allocated OpenCV image
+		cvReleaseImage(&pCapImage);
+		_cam = NULL;
+		// set CamConf to configured
+		_CC.configured = true;
+	}
+	void CLEyeCameraCapture::drawArena(cv::Mat &frame)
+	{
+		// we actually have a 4 point arena to work with
+		if (_CC.arena.size() != 4){
+			printf_s("WARNING! Unexpected number of corners for arena: %d - expect number = 4\n", _CC.arena.size());
+		}
+
+		int fac_red = NULL;
+		// setupModeOn -> expect 640x480
+		if(_setupModeOn)
+		{
+			for (std::size_t i = 0; i < _CC.arena.size(); i++)
+			{
+				cv::line(frame, _CC.arena[i], _CC.arena[(i+1) % _CC.arena.size()], CV_RGB(0, 255, 0));
+
+				if (_Mouse.cornerHovered > -1)
+					cv::circle(frame, _CC.arena[_Mouse.cornerHovered], 5, CV_RGB(0, 255, 0));
+
+				if (_Mouse.cornerSelected > -1)
+					cv::circle(frame, _CC.arena[_Mouse.cornerSelected], 5, CV_RGB(255, 255, 255));
+			}
+		}	
+		// else from 640x480 -> 180x120
+		else
+		{
+			float fac_red = 1.0/4.0;
+			for (std::size_t i = 0; i < _CC.arena.size(); i++)
+			{
+				cv::line(frame, 
+					cv::Point2f(_CC.arena[i].x *fac_red, _CC.arena[i].y *fac_red), 
+					cv::Point2f(_CC.arena[(i+1) % _CC.arena.size()].x * fac_red, _CC.arena[(i+1) % _CC.arena.size()].y * fac_red), CV_RGB(0, 0, 0));
+			}
+		}		
 	}
 	void CLEyeCameraCapture::Run()
 	{
@@ -95,7 +292,7 @@ namespace wdd{
 		bool visual = false;
 		bool wdd_write_dance_file = false;
 		bool wdd_write_signal_file = false;
-		int wdd_verbose = 1;
+		int wdd_verbose = 0;
 
 		// prepare frame_counter
 		unsigned long long frame_counter_global = 0;
@@ -163,6 +360,7 @@ namespace wdd{
 			ddl_config,
 			wdd_config,
 			&videoFrameBuffer,
+			_CC.camId,
 			wdd_write_signal_file,
 			wdd_write_dance_file,
 			wdd_verbose
@@ -188,13 +386,6 @@ namespace wdd{
 		// create the appropriate OpenCV image
 		IplImage *pCapImage = cvCreateImage(cvSize(_FRAME_WIDTH, _FRAME_HEIGHT), IPL_DEPTH_8U, 1);
 		IplImage frame_target_bc = frame_target;
-
-		// Get camera frame dimensions
-		CLEyeCameraGetFrameDimensions(_cam, _FRAME_WIDTH, _FRAME_HEIGHT);
-
-		// Set some camera parameters
-		CLEyeSetCameraParameter(_cam, CLEYE_GAIN, 10);
-		CLEyeSetCameraParameter(_cam, CLEYE_EXPOSURE, 511);
 
 		// Start capturing
 		CLEyeCameraStart(_cam);
@@ -223,8 +414,11 @@ namespace wdd{
 
 			// 
 			if(_visual)
+			{
+				drawArena(cv::Mat(&frame_target_bc));
 				cvShowImage(_windowName, &frame_target_bc);
-			
+			}
+
 			if(!WARMUP_DONE)
 			{
 				wdd.copyInitialFrame(frame_counter_global, false);
@@ -284,7 +478,10 @@ namespace wdd{
 			wdd.copyFrame(frame_counter_global);
 
 			if(_visual)
+			{
+				drawArena(cv::Mat(&frame_target_bc));
 				cvShowImage(_windowName, &frame_target_bc);
+			}
 
 #ifdef WDD_DDL_DEBUG_FULL
 			if(frame_counter_global >= WDD_FBUFFER_SIZE-1)
@@ -333,14 +530,19 @@ namespace wdd{
 		// Destroy the allocated OpenCV image
 		cvReleaseImage(&pCapImage);
 		_cam = NULL;
-	}
+	}	
 	DWORD WINAPI CLEyeCameraCapture::CaptureThread(LPVOID instance)
 	{
 		// seed the rng with current tick count and thread id
 		srand(GetTickCount() + GetCurrentThreadId());
 		// forward thread to Capture function
 		CLEyeCameraCapture *pThis = (CLEyeCameraCapture *)instance;
-		pThis->Run();
+
+		if(pThis->_setupModeOn)
+			pThis->Setup();
+		else
+			pThis->Run();
+
 		return 0;
 	}
 }

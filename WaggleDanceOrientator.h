@@ -10,6 +10,7 @@ namespace wdd
 		~WaggleDanceOrientator(void);
 
 		static cv::Point2d extractOrientationFromImageSequence(const std::vector<cv::Mat> seq_in, std::size_t unique_id);
+		static cv::Point2d extractOrientationFromPositions(std::vector<cv::Point2d> positions, cv::Point2d position_last);
 		static void extractBinaryImageFromTD(cv::Mat *td_ptr, cv::Mat *td_bin_ptr);
 		static void extractUnityOrientationsFromBinaryImage(cv::Mat * td_bin_mat_ptr, std::vector<cv::Vec2d> * unityOrientations_ptr);
 		static cv::Vec2d getMeanOrientationFromUnityOrientations(std::vector<cv::Vec2d> * unityOrientations_ptr);

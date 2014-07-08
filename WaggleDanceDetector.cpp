@@ -251,6 +251,8 @@ namespace wdd
 						if(dist > 0)
 							newPosition = true;
 
+						d_ptr->position_last = WDD_SIGNAL_ID2POINT_MAP[i];
+
 						(*it_dances).DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
 
 						if(WDD_VERBOSE>1)
@@ -268,12 +270,14 @@ namespace wdd
 				d.DANCE_FRAME_START = WDD_SIGNAL_FRAME_NR;
 				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
 				d.positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
+				d.position_last = WDD_SIGNAL_ID2POINT_MAP[i];
 				GetLocalTime(&d.rawtime);
 				WDD_UNIQ_DANCES.push_back(d);
 			}
 			else if(newPosition)
 			{
 				d_ptr->positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
+				d_ptr->position_last = WDD_SIGNAL_ID2POINT_MAP[i];
 			}
 		}
 
@@ -318,7 +322,7 @@ namespace wdd
 			cv::Point_<int>(d.positions[0]), 
 			DotDetectorLayer::FRAME_REDFAC);
 
-		cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromImageSequence(seq, d.DANCE_UNIQE_ID);
+		cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromPositions(d.positions, d.position_last);
 
 		d.orient_uvec = _orient_uvec;
 #else

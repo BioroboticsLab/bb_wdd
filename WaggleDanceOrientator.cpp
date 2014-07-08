@@ -179,6 +179,12 @@ namespace wdd
 
 		return orient;
 	}
+	cv::Point2d WaggleDanceOrientator::extractOrientationFromPositions(std::vector<cv::Point2d> positions, cv::Point2d position_last)
+	{
+		cv::Point2d orient_raw = position_last - positions[0];
+
+		return (orient_raw * (1.0 / cv::norm(orient_raw)));
+	}
 	/*
 	handles the problem that orientations are unaware of head/tail 
 	*/
@@ -400,7 +406,7 @@ namespace wdd
 
 		// draw the orientation line
 		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
-		
+
 		// create dynamic path_out string
 		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
 		strcat_s(BUFF_PATH, MAX_PATH, "\\orient.png");
@@ -446,7 +452,7 @@ namespace wdd
 		cv::line(blob_visual, CENT*_zoomFactor, HEAD*_zoomFactor, CV_RGB(0.,255.,0.),1,CV_AA);
 		cv::line(blob_visual, CENT*_zoomFactor, BOTT*_zoomFactor, CV_RGB(255.,0.,0.),1,CV_AA);
 
-		
+
 		// set blob file name
 		char BUFF_PATH[MAX_PATH];
 		char BUFF_UID[MAX_PATH];

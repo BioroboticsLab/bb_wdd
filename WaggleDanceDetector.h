@@ -10,6 +10,7 @@ namespace wdd
 		std::size_t DANCE_UNIQE_ID;
 
 		std::vector<cv::Point2d> positions;
+		cv::Point2d position_last;
 
 		cv::Point2d orient_uvec;
 

@@ -9,12 +9,7 @@ namespace wdd{
 		/*
 		members
 		*/
-		// save sampled target sinus and cosinus signals as n-by-m matrix of n =
-		// DD_FREQS_NUMBER with m = WDD_FBUFFER_SIZE sampled values
-		//static double ** DD_FREQS_COSSAMPLES;
-		//static double ** DD_FREQS_SINSAMPLES;
-		//static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_COSSAMPLES;
-		//static arma::Mat<float>::fixed<WDD_FRAME_RATE,WDD_FREQ_NUMBER> DD_FREQS_SINSAMPLES;
+		// save sampled target sinus and cosinus signals as array of SAMP
 		static SAMP SAMPLES[WDD_FRAME_RATE];
 
 		// saves positions of used DotDetectors
@@ -28,11 +23,11 @@ namespace wdd{
 		// matched against WDD_SIGNAL_DD_MIN_SCORE - their calculation is part of
 		// magic)
 		static double *	DD_POTENTIALS;
-		// saves signal of n = DD_POSITIONS_NUMBER DotDetectors (a DotDetecotor has
-		// a positive signal if DD_SIGNAL_POTENTIALS[i] > WDD_SIGNAL_DD_MIN_SCORE)
-		static bool * DD_SIGNALS;
-		// saves 
+		// saves number of positive DDs
 		static std::size_t DD_SIGNALS_NUMBER;
+		// saves ids of positive DDs (interface to WDD Layer 2)
+		//(a DotDetecotor has a positive signal if DD_SIGNAL_POTENTIALS[i] > WDD_SIGNAL_DD_MIN_SCORE)
+		static std::vector<unsigned int> DD_SIGNALS_IDs;
 
 		// defines detection frequency lower border
 		static double 	DD_FREQ_MIN;

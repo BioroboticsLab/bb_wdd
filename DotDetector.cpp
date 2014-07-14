@@ -94,7 +94,6 @@ namespace wdd {
 			if(_AMPLITUDE == 0)
 			{
 				DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = 0;
-				DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
 				return;
 			}
 
@@ -182,7 +181,6 @@ namespace wdd {
 		if(_AMPLITUDE < 13)
 		{
 			DotDetectorLayer::DD_POTENTIALS[_UNIQUE_ID] = 0;
-			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
 			_NEWMINMAX = true;
 #ifdef WDD_DDL_DEBUG_FULL
 			AUX_DD_POTENTIALS.fill(0);
@@ -477,12 +475,8 @@ namespace wdd {
 
 		if(potential > DotDetectorLayer::DD_MIN_POTENTIAL)
 		{
-			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = true;
 			DotDetectorLayer::DD_SIGNALS_NUMBER++;
-		}
-		else
-		{
-			DotDetectorLayer::DD_SIGNALS[_UNIQUE_ID] = false;
+			DotDetectorLayer::DD_SIGNALS_IDs.push_back(_UNIQUE_ID);
 		}
 
 #ifdef WDD_DDL_DEBUG_FULL

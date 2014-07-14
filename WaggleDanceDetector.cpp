@@ -184,7 +184,7 @@ namespace wdd
 		// Layer 1
 		//
 		DotDetectorLayer::copyFrameAndDetect();
-		if(DotDetectorLayer::DD_SIGNALS_NUMBER > 100)
+		if(DotDetectorLayer::DD_SIGNALS_NUMBER > WDD_LAYER2_MAX_POS_DDS)
 		{
 			printf("[WARNING] WDD LAYER 1 OVERFLOW! Drop frame %llu (DD_SIGNALS_NUMBER: %d)\n",
 				WaggleDanceDetector::WDD_SIGNAL_FRAME_NR,
@@ -374,13 +374,7 @@ namespace wdd
 		// get ids (=index in vector) of positive DDs
 		// WARNING! Heavly rely on fact that :
 		// - DD_ids are [0; DD_POSITIONS_NUMBER-1]
-		// - length(DD_SIGNAL_BOOL) == DD_POSITIONS_NUMBER
-		std::vector<unsigned int> pos_DD_Ids_wrap;
-		for(std::size_t i=0; i< DotDetectorLayer::DD_NUMBER; i++)
-			if(DotDetectorLayer::DD_SIGNALS[i])
-				pos_DD_Ids_wrap.push_back(i);
-
-		arma::Col<arma::uword> pos_DD_IDs(pos_DD_Ids_wrap);
+		arma::Col<arma::uword> pos_DD_IDs(DotDetectorLayer::DD_SIGNALS_IDs);
 
 		// init cluster ids for the positive DDs
 		arma::Col<arma::sword> pos_DD_CIDs(pos_DD_IDs.size());

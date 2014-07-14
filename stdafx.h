@@ -1,5 +1,6 @@
 #pragma once
 
+#define WDD_LAYER2_MAX_POS_DDS 100
 #define WDD_FBUFFER_SIZE 32
 #define WDD_FREQ_NUMBER 7
 #define WDD_FRAME_RATE 102

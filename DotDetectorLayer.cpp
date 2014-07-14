@@ -8,8 +8,8 @@ namespace wdd {
 	std::size_t					DotDetectorLayer::DD_NUMBER;
 	double						DotDetectorLayer::DD_MIN_POTENTIAL;
 	double *					DotDetectorLayer::DD_POTENTIALS;
-	bool *						DotDetectorLayer::DD_SIGNALS;
 	std::size_t					DotDetectorLayer::DD_SIGNALS_NUMBER;
+	std::vector<unsigned int>	DotDetectorLayer::DD_SIGNALS_IDs;
 	double 						DotDetectorLayer::DD_FREQ_MIN;
 	double 						DotDetectorLayer::DD_FREQ_MAX;
 	double 						DotDetectorLayer::DD_FREQ_STEP;
@@ -45,12 +45,11 @@ namespace wdd {
 
 		// allocate space for DotDetector potentials
 		DotDetectorLayer::DD_POTENTIALS = new double[DotDetectorLayer::DD_NUMBER];
-
-		// allocate space for DotDetector signals
-		DotDetectorLayer::DD_SIGNALS = new bool[DotDetectorLayer::DD_NUMBER];	
-
+		
 		// allocate DotDetector pointer array
 		DotDetectorLayer::_DotDetectors = new DotDetector * [DD_NUMBER];
+
+		DotDetectorLayer::DD_SIGNALS_IDs.reserve(WDD_LAYER2_MAX_POS_DDS);
 
 		// create DotDetectors, pass unique id and location of pixel
 		for(std::size_t i=0; i<DD_NUMBER; i++)
@@ -72,7 +71,6 @@ namespace wdd {
 
 		delete DotDetectorLayer::_DotDetectors;
 		delete DotDetectorLayer::DD_POTENTIALS;
-		delete DotDetectorLayer::DD_SIGNALS;
 	}
 
 	// expect to be used as initial function to fill buffer and have only one single call
@@ -88,7 +86,7 @@ namespace wdd {
 		}
 #endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
-
+		DotDetectorLayer::DD_SIGNALS_IDs.clear();
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
 		{
 			DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
@@ -147,7 +145,7 @@ namespace wdd {
 		DDL_DEBUG_DD_FIRING_ID_POTENTIALS.clear();DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE.clear();
 #endif
 		DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
-		
+		DotDetectorLayer::DD_SIGNALS_IDs.clear();
 		//unsigned __int64 t1 = GetRDTSC();
 
 		for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)

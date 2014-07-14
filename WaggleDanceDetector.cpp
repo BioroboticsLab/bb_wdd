@@ -219,45 +219,54 @@ namespace wdd
 		DANCE d;		
 
 		bool danceFound;
-		DANCE * d_ptr = NULL;
-		bool newPosition;
+		cv::Point2d wdd_signal_pos;
+		std::vector<cv::Point2d> * dance_position_ptr;
 
-		std::vector<cv::Point2d> * pos_vec_ptr;
-		// foreach WDD_SIGNAL
+		// foreach WDD_SIGNAL_ID2POINT_MAP
 		for(std::size_t i=0; i < WDD_SIGNAL_ID2POINT_MAP.size(); i++)
 		{
-			danceFound = false; newPosition=false;
+			danceFound = false; wdd_signal_pos = WDD_SIGNAL_ID2POINT_MAP[i];
+
 			// check distance against known Dances
 			for (auto it_dances=WDD_UNIQ_DANCES.begin();it_dances!=WDD_UNIQ_DANCES.end(); ++it_dances)
 			{
-				pos_vec_ptr = &(*it_dances).positions;
+				dance_position_ptr = &(it_dances->positions);
 
 				// ..and their associated points
-				for(auto it_pt=(*pos_vec_ptr).begin(); it_pt!=(*pos_vec_ptr).end(); ++it_pt)
+				for(auto it_dancepositions= dance_position_ptr->begin(); it_dancepositions!=dance_position_ptr->end(); ++it_dancepositions)
 				{
-					dist = cv::norm(WDD_SIGNAL_ID2POINT_MAP[i] - *it_pt);
+					dist = cv::norm(wdd_signal_pos - *it_dancepositions);
 
 					// wdd signal belongs to known dance
 					if( dist < WDD_DANCE_MAX_POS_DIST)
 					{
-						danceFound = true;
-						d_ptr = &(*it_dances);
+						// set flag i.o. to leave loops safely
+						danceFound = true;						
 
-						// update dance
-						// check if it is a new dance position - continue to calc distance for all positions, get MIN(dist)
-						for(auto it_pt2=it_pt+1; it_pt2!=(*pos_vec_ptr).end(); ++it_pt2)
-							dist = MIN(dist, cv::norm(WDD_SIGNAL_ID2POINT_MAP[i] - *it_pt2));
+						// check if position is linear or there is a gap
+						// if it is a consecutive detection, then frame_gap == 1
+						// else there is a gap inbetween layer 2 detections, therefore fill positions
+						unsigned int frame_gap = static_cast<unsigned int>(WDD_SIGNAL_FRAME_NR - it_dances->DANCE_FRAME_END);
+						while(frame_gap > 1)
+						{
+							it_dances->positions.push_back(cv::Point2d(-1.0,-1.0));
+							frame_gap--;
+						}
 
-						if(dist > 0)
-							newPosition = true;
+						// add current position - assertion: possible gap filled
+						it_dances->positions.push_back(wdd_signal_pos);
 
-						d_ptr->position_last = WDD_SIGNAL_ID2POINT_MAP[i];
+						// save current position as last position;
+						it_dances->position_last = wdd_signal_pos;
 
-						(*it_dances).DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
+						// save current frame as last frame
+						it_dances->DANCE_FRAME_END = WDD_SIGNAL_FRAME_NR;
 
 						if(WDD_VERBOSE>1)
-							std::cout<<WDD_SIGNAL_FRAME_NR<<" - UPD: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
-						// jump to WDD_SIGNAL loop
+							std::cout<<WDD_SIGNAL_FRAME_NR<<" - UPD: "<<it_dances->DANCE_UNIQE_ID
+								<<" ["<<it_dances->DANCE_FRAME_START<<","<<it_dances->DANCE_FRAME_END<<"]\n";
+
+						// jump to WDD_SIGNAL_ID2POINT_MAP loop
 						break;break;
 					}
 				}
@@ -269,19 +278,12 @@ namespace wdd
 				d.DANCE_UNIQE_ID = WDD_DANCE_ID++;
 				d.DANCE_FRAME_START = WDD_SIGNAL_FRAME_NR;
 				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
-				d.positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
-				d.position_last = WDD_SIGNAL_ID2POINT_MAP[i];
+				d.positions.push_back(wdd_signal_pos);
+				d.position_last = wdd_signal_pos;
 				GetLocalTime(&d.rawtime);
 				WDD_UNIQ_DANCES.push_back(d);
-			}
-			else if(newPosition)
-			{
-				d_ptr->positions.push_back(WDD_SIGNAL_ID2POINT_MAP[i]);
-				d_ptr->position_last = WDD_SIGNAL_ID2POINT_MAP[i];
-			}
+			}			
 		}
-
-
 	}
 	void WaggleDanceDetector::_execDetectionHousekeepWDDSignals()
 	{

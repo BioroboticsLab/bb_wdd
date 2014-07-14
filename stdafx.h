@@ -55,7 +55,8 @@ enum RUN_MODE {TEST, LIVE};
 struct CamConf {
 	std::size_t camId;
 	char guid_str[64];
-	std::array<cv::Point2f,4> arena;
+	std::array<cv::Point2i,4> arena;
+	std::array<cv::Point2i,4> arena_lowRes;
 	bool configured;
 };
 

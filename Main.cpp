@@ -76,7 +76,7 @@ void loadCamConfigFileReadLine(std::string line)
 
 	std::size_t camId = NULL;
 	char guid_str[64];
-	std::array<cv::Point2f,4> arena;
+	std::array<cv::Point2i,4> arena;
 
 	//copy & convert to char *
 	char * string1 = _strdup(line.c_str());
@@ -89,7 +89,7 @@ void loadCamConfigFileReadLine(std::string line)
 	int arenaPointNumber = 0;
 	while (token != NULL)
 	{
-		float px, py;
+		int px, py;
 
 		// camId
 		if(tokenNumber == 0)
@@ -109,14 +109,14 @@ void loadCamConfigFileReadLine(std::string line)
 			{
 				// arena.pi.x
 			case 0:
-				px = static_cast<float>(atof(token));
+				px = atoi(token);
 				std::cout<<"read px: "<<px<<std::endl;
 				break;
 				// arena.pi.y
 			case 1:
-				py = static_cast<float>(atof(token));
+				py = atoi(token);
 				std::cout<<"read py: "<<py<<std::endl;
-				arena[arenaPointNumber++] = cv::Point2f(px,py);
+				arena[arenaPointNumber++] = cv::Point2i(px,py);
 				break;
 			}
 
@@ -194,7 +194,7 @@ void saveCamConfigFile()
 		{
 			fprintf_s(camConfFile_ptr,"%d %s ",it->camId,it->guid_str);
 			for(unsigned i=0;i<4;i++)
-				fprintf_s(camConfFile_ptr,"%.1f %.1f ", it->arena[i].x, it->arena[i].y);
+				fprintf_s(camConfFile_ptr,"%d %d ", it->arena[i].x, it->arena[i].y);
 			fprintf_s(camConfFile_ptr,"\n");
 		}
 	}
@@ -280,10 +280,10 @@ int main(int nargs, char** argv)
 			c.camId = nextUniqueCamID++;
 			camIdsLaunch.push_back(c.camId);
 			strcpy_s(c.guid_str, guid_str_connectedCam);
-			c.arena[0] = cv::Point2f(0,0);
-			c.arena[1] = cv::Point2f(639,0);
-			c.arena[2] = cv::Point2f(639,479);
-			c.arena[3] = cv::Point2f(0,479);
+			c.arena[0] = cv::Point2i(0,0);
+			c.arena[1] = cv::Point2i(639,0);
+			c.arena[2] = cv::Point2i(639,479);
+			c.arena[3] = cv::Point2i(0,479);
 			c.configured = false;
 
 			camConfs.push_back(c);

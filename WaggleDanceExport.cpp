@@ -20,7 +20,7 @@ namespace wdd
 	char buf_camID[32];
 	char buf_dirID[32];
 
-	std::array<cv::Point2f,4> auxArena;
+	std::array<cv::Point2i,4> auxArena;
 
 	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE d, std::size_t camID)
 	{
@@ -120,7 +120,7 @@ namespace wdd
 
 		for(unsigned i=0; i< 4; i++)
 		{
-			fprintf_s(CSV_ptr,"%.1f %.1f ", auxArena[i].x, auxArena[i].y);
+			fprintf_s(CSV_ptr,"%d %d ", auxArena[i].x, auxArena[i].y);
 		}
 		fprintf_s(CSV_ptr,"\n");
 
@@ -209,7 +209,7 @@ namespace wdd
 
 		return atan2(in.y,in.x);
 	}
-	void WaggleDanceExport::setArena(std::array<cv::Point2f,4> _auxArena){
+	void WaggleDanceExport::setArena(std::array<cv::Point2i,4> _auxArena){
 		auxArena = _auxArena;
 	}
 	void WaggleDanceExport::execRootExistChk()

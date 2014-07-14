@@ -8,21 +8,22 @@ namespace wdd{
 	_MouseInteraction	_Mouse;
 	CamConf _CC;
 
-	void static findCornerPointNear(cv::Point p)
+	void static findCornerPointNear(cv::Point2i p)
 	{
 		// we actually have a 4 point arena to work with
-		if (_CC.arena.size() != 4){
+		if (_CC.arena.size() != 4)
 			printf_s("WARNING! Unexpected number of corners for arena: %d - expect number = 4\n", _CC.arena.size());
-		}
+
 
 		// check if there is already a corner marked as hovered
 		if(_Mouse.cornerHovered > -1)
 		{
 			// revalidate distance
-			if (cv::norm(_CC.arena[_Mouse.cornerHovered] - cv::Point2f(p)) < 5 ){
+			if (cv::norm(_CC.arena[_Mouse.cornerHovered] - cv::Point2i(p)) < 5 ){
 				// nothing to do, no GUI update needed
 				return;
-			}else{
+			}else
+			{
 				// unset corner marked as hovered
 				_Mouse.cornerHovered = -1;				
 				// done
@@ -33,15 +34,17 @@ namespace wdd{
 		//find the corner the mouse points at
 		// assertion Mouse.cornerHover = -1;
 		for (std::size_t i = 0; i < _CC.arena.size(); i++)
-			if ( cv::norm(_CC.arena[i] - cv::Point2f(p)) < 5 )
+		{
+			if ( cv::norm(_CC.arena[i] - cv::Point2i(p)) < 5 )
 			{
 				_Mouse.cornerHovered = i;				
 				break;
 			}
+		}
 	}
 	void static onMouseInput(int evnt, int x, int y, int flags, void* param)
 	{
-		cv::Point p(x, y);
+		cv::Point2i p(x, y);
 		_Mouse.lastPosition = p;
 
 		switch( evnt ){
@@ -120,33 +123,6 @@ namespace wdd{
 	}
 	void CLEyeCameraCapture::setSetupModeOn(bool setupMode)
 	{
-		/*
-		// from no-to-yes setup -> arena * 4
-		if(!_setupModeOn && setupMode)
-		{
-		for(unsigned i=0; i< 4; i++)
-		{
-		cv::Point2f t = _CC.arena[i];
-		t.x = t.x * 4; t.y = t.y * 4;
-		_CC.arena[i] = t;
-
-		std::cout<<"Arena["<<i<<"]: "<<_CC.arena[i]<<std::endl;
-		}
-		}
-		// from yes-to-no setup -> arena / 4
-		else if(_setupModeOn && !setupMode)
-		{
-		for(unsigned i=0; i< 4; i++)
-		{
-		cv::Point2f t = _CC.arena[i];
-		t.x = t.x / 4; t.y = t.y / 4;
-		_CC.arena[i] = t;
-
-		std::cout<<"Arena["<<i<<"]: "<<_CC.arena[i]<<std::endl;
-		}
-		}
-		*/
-
 		_setupModeOn = setupMode;
 	}
 	const CamConf * CLEyeCameraCapture::getCamConfPtr()
@@ -230,8 +206,6 @@ namespace wdd{
 		if (_CC.arena.size() != 4){
 			printf_s("WARNING! Unexpected number of corners for arena: %d - expect number = 4\n", _CC.arena.size());
 		}
-
-		int fac_red = NULL;
 		// setupModeOn -> expect 640x480
 		if(_setupModeOn)
 		{
@@ -249,14 +223,41 @@ namespace wdd{
 		// else from 640x480 -> 180x120
 		else
 		{
-			float fac_red = 1.0/4.0;
-			for (std::size_t i = 0; i < _CC.arena.size(); i++)
+			for (std::size_t i = 0; i < _CC.arena_lowRes.size(); i++)
 			{
 				cv::line(frame, 
-					cv::Point2f(_CC.arena[i].x *fac_red, _CC.arena[i].y *fac_red), 
-					cv::Point2f(_CC.arena[(i+1) % _CC.arena.size()].x * fac_red, _CC.arena[(i+1) % _CC.arena.size()].y * fac_red), CV_RGB(0, 0, 0));
+					_CC.arena_lowRes[i],  _CC.arena_lowRes[(i+1) % _CC.arena_lowRes.size()],
+					CV_RGB(0, 0, 0));
 			}
 		}		
+	}
+	//Adoption from stackoverflow
+	//http://stackoverflow.com/questions/13080515/rotatedrect-roi-in-opencv
+	//decide whether point p is in the ROI.
+	//The ROI is a RotatableBox whose 4 corners are stored in pt[] 
+	bool CLEyeCameraCapture::pointIsInArena(cv::Point p)
+	{		
+		double result[4];
+		for(int i=0; i<4; i++)
+		{
+			result[i] = computeProduct(p, _CC.arena_lowRes[i], _CC.arena_lowRes[(i+1)%4]);
+			// all have to be 1, exit on first negative encounter
+			if(result[i] < 0)
+				return false;
+		}
+		if(result[0]+result[1]+result[2]+result[3] == 4)
+			return true;
+		else
+			return false;
+	}
+	//Adoption from stackoverflow
+	//http://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
+	//Use the sign of the determinant of vectors (AB,AM), where M(X,Y) is the query point:
+	double CLEyeCameraCapture::computeProduct(const cv::Point p, const cv::Point2i a, const cv::Point2i b)
+	{
+		double x = ((b.x-a.x)*(p.y-a.y) - (b.y-a.y)*(p.x-a.x));
+
+		return (x >= 0) ? 1 : -1;
 	}
 	void CLEyeCameraCapture::Run()
 	{
@@ -329,13 +330,26 @@ namespace wdd{
 		ddl_config.push_back(FRAME_RED_FAC);
 		ddl_config.push_back(DD_MIN_POTENTIAL);
 
+		//
+		// select DotDetectors according to Arena
+		//
+
+		// assert: Setup() before Run() -> arena configured, 640x480 -> 180x120
+		for(int i=0; i<4; i++)
+		{
+			_CC.arena_lowRes[i].x = static_cast<int>(std::floor(_CC.arena[i].x * 0.25));
+			_CC.arena_lowRes[i].y = static_cast<int>(std::floor(_CC.arena[i].y * 0.25));
+		}
+
 		std::vector<cv::Point2i> dd_positions;
 		for(int i=0; i<frame_target_width; i++)
 		{
 			for(int j=0; j<frame_target_height; j++)
 			{
 				// x (width), y(height)
-				dd_positions.push_back(cv::Point2i(i,j));
+				cv::Point2i tmp(i,j);
+				if(pointIsInArena(tmp))
+					dd_positions.push_back(tmp);
 			}
 		}
 		printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f).\n", 
@@ -353,7 +367,7 @@ namespace wdd{
 		wdd_config.push_back(WDD_DANCE_MAX_FRAME_GAP);
 		wdd_config.push_back(WDD_DANCE_MIN_CONSFRAMES);
 
-		WaggleDanceDetector wdd(			
+		WaggleDanceDetector wdd(
 			dd_positions,
 			&frame_target,
 			ddl_config,
@@ -529,7 +543,7 @@ namespace wdd{
 		// Destroy the allocated OpenCV image
 		cvReleaseImage(&pCapImage);
 		_cam = NULL;
-	}	
+	}
 	DWORD WINAPI CLEyeCameraCapture::CaptureThread(LPVOID instance)
 	{
 		// seed the rng with current tick count and thread id

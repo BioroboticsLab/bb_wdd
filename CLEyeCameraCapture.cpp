@@ -2,6 +2,7 @@
 #include "CLEyeCameraCapture.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
+#include "DotDetectorLayer.h"
 
 namespace wdd{
 
@@ -231,6 +232,11 @@ namespace wdd{
 			}
 		}		
 	}
+	void CLEyeCameraCapture::drawPosDDs(cv::Mat &frame)
+	{
+		for(auto it=DotDetectorLayer::DD_SIGNALS_IDs.begin(); it!= DotDetectorLayer::DD_SIGNALS_IDs.end(); ++it)
+			cv::circle(frame, DotDetectorLayer::DD_POSITIONS.at(*it), 1, CV_RGB(0, 255, 0));
+	}
 	//Adoption from stackoverflow
 	//http://stackoverflow.com/questions/13080515/rotatedrect-roi-in-opencv
 	//decide whether point p is in the ROI.
@@ -304,6 +310,9 @@ namespace wdd{
 
 		// prepare buffer to hold mono chromized input frame
 		cv::Mat frame_input_monochrome = cv::Mat(_FRAME_HEIGHT, _FRAME_WIDTH, CV_8UC1);
+
+		// prepare buffer for possible output
+		cv::Mat frame_visual; IplImage frame_visual_ipl = frame_visual;
 
 		// prepare buffer to hold target frame
 		double resize_factor =  pow(2.0, FRAME_RED_FAC);
@@ -492,8 +501,11 @@ namespace wdd{
 
 			if(_visual)
 			{
-				drawArena(cv::Mat(&frame_target_bc));
-				cvShowImage(_windowName, &frame_target_bc);
+				cv::cvtColor(cv::Mat(&frame_target_bc), frame_visual, CV_GRAY2BGR);
+				drawArena(frame_visual);
+				drawPosDDs(frame_visual);
+				frame_visual_ipl = frame_visual;
+				cvShowImage(_windowName, &frame_visual_ipl);
 			}
 
 #ifdef WDD_DDL_DEBUG_FULL

@@ -34,6 +34,7 @@ namespace wdd{
 		void Run();
 
 		void drawArena(cv::Mat &frame);
+		void drawPosDDs(cv::Mat &frame);
 		bool pointIsInArena(cv::Point p);
 		double computeProduct(cv::Point p, cv::Point2i a, cv::Point2i b);
 		static DWORD WINAPI CaptureThread(LPVOID instance);

@@ -293,8 +293,10 @@ namespace wdd
 			// if Dance did not recieve new signal for over WDD_UNIQ_SIGID_MAX_GAP frames
 			if((WDD_SIGNAL_FRAME_NR - it_dances->DANCE_FRAME_END) > WDD_DANCE_MAX_FRAME_GAP)
 			{
-				// check for minimum number of consecutiv frames for a positive dance
-				if((it_dances->DANCE_FRAME_END - it_dances->DANCE_FRAME_START) > WDD_DANCE_MIN_CONSFRAMES)
+				// check for minimum number of consecutiv frames for a positive dance 
+				// and VFB_MAX_FRAME_HISTORY boundary
+				if(((it_dances->DANCE_FRAME_END - it_dances->DANCE_FRAME_START) > WDD_DANCE_MIN_CONSFRAMES) &&
+					((it_dances->DANCE_FRAME_END - it_dances->DANCE_FRAME_START) < VFB_MAX_FRAME_HISTORY))
 				{
 					if(WDD_VERBOSE>1)
 						std::cout<<WDD_SIGNAL_FRAME_NR<<" - EXEC: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;

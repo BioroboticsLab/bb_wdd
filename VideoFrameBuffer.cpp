@@ -161,7 +161,7 @@ namespace wdd
 
 	}
 
-	std::vector<cv::Mat> VideoFrameBuffer::loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
+	std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
 		//std::cout<<"VideoFrameBuffer::loadFrameSequenc::startFrame, endFrame: "<<startFrame<<", "<<endFrame<<std::endl;
 		//std::cout<<"VideoFrameBuffer::_cachedFrameSize.width, _cachedFrameSize.height: "<<_cachedFrameSize.width<<", "<<_cachedFrameSize.height<<std::endl;

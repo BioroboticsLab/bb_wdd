@@ -133,8 +133,8 @@ namespace wdd
 		void _execDetectionGetWDDSignals();
 		void _execDetectionConcatWDDSignals();
 		void _execDetectionHousekeepWDDSignals();
-		void _execDetectionFinalizeDance(DANCE d);
-		void _execDetectionWriteDanceFileLine(DANCE d);
+		void _execDetectionFinalizeDance(DANCE * d_ptr);
+		void _execDetectionWriteDanceFileLine(DANCE * d_ptr);
 		void _execDetectionWriteSignalFileLine();
 
 		arma::Col<arma::uword> getNeighbours(arma::Col<arma::uword> sourceIDs, arma::Col<arma::uword> N, arma::Col<arma::uword> set_DD_IDs);

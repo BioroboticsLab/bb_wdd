@@ -96,6 +96,7 @@
       <AdditionalLibraryDirectories>C:\CL-Eye Platform SDK\Lib;C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Lib;C:\OpenBLAS-v0.2.8-x86-Win\lib;$(OPENCV_DIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <Profile>true</Profile>
     </Link>
     <Bscmake>
       <PreserveSbr>true</PreserveSbr>

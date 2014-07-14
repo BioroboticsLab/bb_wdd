@@ -6,7 +6,7 @@ namespace wdd
 	{
 	public:
 
-		static void write(const std::vector<cv::Mat> seq, const DANCE d, std::size_t camID);
+		static void write(const std::vector<cv::Mat> seq, const DANCE * d_ptr, std::size_t camID);
 		static double uvecToRad(cv::Point2d in);
 		static void execRootExistChk();
 		static void setArena(std::array<cv::Point2i,4> auxArena);

@@ -25,7 +25,7 @@ namespace wdd
 		void saveFullFrame();
 		void drawArena(cv::Mat &frame);
 		cv::Mat * getFrameByNumber(unsigned long long frame_nr);
-		std::vector<cv::Mat> loadFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
+		std::vector<cv::Mat> loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
 	};
 } /* namespace WaggleDanceDetector */
 

@@ -22,7 +22,7 @@ namespace wdd
 
 	std::array<cv::Point2i,4> auxArena;
 
-	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE d, std::size_t camID)
+	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE * d_ptr, std::size_t camID)
 	{
 		char _buf[MAX_PATH];
 
@@ -30,7 +30,7 @@ namespace wdd
 		// check <YYYYYMMDD> folder
 		//
 		// write YYYYYMMDD string & compare to last saved		
-		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d", d.rawtime.wYear, d.rawtime.wMonth, d.rawtime.wDay);
+		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d", d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay);
 
 		if(strcmp(_buf,buf_YYYYMMDD) != 0)
 		{
@@ -44,8 +44,8 @@ namespace wdd
 		//
 		// write YYYYYMMDD_HHMM_ string
 		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d_%02d%02d_", 
-			d.rawtime.wYear, d.rawtime.wMonth, d.rawtime.wDay,
-			d.rawtime.wHour, d.rawtime.wMinute
+			d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay,
+			d_ptr->rawtime.wHour, d_ptr->rawtime.wMinute
 			);
 
 		// convert camID to string
@@ -112,11 +112,11 @@ namespace wdd
 
 		char TIMESTMP[32];		
 		sprintf_s(TIMESTMP, 32, "%02d:%02d:%02d:%03d", 
-			d.rawtime.wHour, d.rawtime.wMinute, d.rawtime.wSecond, d.rawtime.wMilliseconds 
+			d_ptr->rawtime.wHour, d_ptr->rawtime.wMinute, d_ptr->rawtime.wSecond, d_ptr->rawtime.wMilliseconds 
 			);
 
-		fprintf_s(CSV_ptr,"%.1f %.1f %.1f\n", d.positions[0].x, d.positions[0].y, uvecToRad(d.orient_uvec));
-		fprintf_s(CSV_ptr,"%s %d\n", TIMESTMP, static_cast<int>(d.DANCE_FRAME_END-d.DANCE_FRAME_START+1));
+		fprintf_s(CSV_ptr,"%.1f %.1f %.1f\n", d_ptr->positions[0].x, d_ptr->positions[0].y, uvecToRad(d_ptr->orient_uvec));
+		fprintf_s(CSV_ptr,"%s %d\n", TIMESTMP, static_cast<int>(d_ptr->DANCE_FRAME_END-d_ptr->DANCE_FRAME_START+1));
 
 		for(unsigned i=0; i< 4; i++)
 		{
@@ -124,7 +124,7 @@ namespace wdd
 		}
 		fprintf_s(CSV_ptr,"\n");
 
-		for(auto it = d.positions.begin(); it!=d.positions.end(); ++it)
+		for(auto it = d_ptr->positions.begin(); it!=d_ptr->positions.end(); ++it)
 		{
 			fprintf_s(CSV_ptr,"%.1f %.1f ", it->x, it->y);
 		}
@@ -145,7 +145,7 @@ namespace wdd
 
 		// get image orientation point
 		cv::Point2d HEADIN(CENTER);
-		HEADIN += d.orient_uvec*length;
+		HEADIN += d_ptr->orient_uvec*length;
 
 		// preallocate 3 channel image output buffer
 		cv::Mat image_out(size, CV_8UC3);

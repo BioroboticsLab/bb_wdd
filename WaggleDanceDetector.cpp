@@ -32,8 +32,8 @@ namespace wdd
 		auxCC(auxCC),
 		WDD_WRITE_DANCE_FILE(wdd_write_dance_file),
 		WDD_WRITE_SIGNAL_FILE(wdd_write_signal_file),
-		_startFrameShift(cvRound(WDD_FBUFFER_SIZE/2.0)),
-		_endFrameShift(cvRound(WDD_FBUFFER_SIZE/2.0))
+		_startFrameShift(WDD_FBUFFER_SIZE),
+		_endFrameShift(0)
 	{	
 		WaggleDanceDetector::WDD_VERBOSE = wdd_verbose;
 
@@ -291,14 +291,14 @@ namespace wdd
 		for (auto it_dances=WDD_UNIQ_DANCES.begin();it_dances!=WDD_UNIQ_DANCES.end(); )
 		{
 			// if Dance did not recieve new signal for over WDD_UNIQ_SIGID_MAX_GAP frames
-			if(WDD_SIGNAL_FRAME_NR - (*it_dances).DANCE_FRAME_END > WDD_DANCE_MAX_FRAME_GAP)
+			if((WDD_SIGNAL_FRAME_NR - it_dances->DANCE_FRAME_END) > WDD_DANCE_MAX_FRAME_GAP)
 			{
 				// check for minimum number of consecutiv frames for a positive dance
-				if(((*it_dances).DANCE_FRAME_END - (*it_dances).DANCE_FRAME_START +1 ) >= WDD_DANCE_MIN_CONSFRAMES)
+				if((it_dances->DANCE_FRAME_END - it_dances->DANCE_FRAME_START) > WDD_DANCE_MIN_CONSFRAMES)
 				{
 					if(WDD_VERBOSE>1)
 						std::cout<<WDD_SIGNAL_FRAME_NR<<" - EXEC: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
-					_execDetectionFinalizeDance(*it_dances);
+					_execDetectionFinalizeDance(&(*it_dances));
 				}
 				if(WDD_VERBOSE>1)
 					std::cout<<WDD_SIGNAL_FRAME_NR<<" - DEL: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
@@ -311,43 +311,41 @@ namespace wdd
 			}
 		}
 	}
-	void WaggleDanceDetector::_execDetectionFinalizeDance(DANCE d)
+	void WaggleDanceDetector::_execDetectionFinalizeDance(DANCE * d_ptr)
 	{
+		// set flag
 		WDD_DANCE = true;
-		//WDD_UNIQ_FINISH_DANCES.push_back(d);
-
+		
 #ifdef WDD_EXTRACT_ORIENT
-		// restore needed original frames
-		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadFrameSequenc(
-			d.DANCE_FRAME_START-_startFrameShift,
-			d.DANCE_FRAME_END-_endFrameShift, 
-			cv::Point_<int>(d.positions[0]), 
+		// retrieve original frames of detected dance
+		std::vector<cv::Mat> seq = WDD_VideoFrameBuffer_ptr->loadCroppedFrameSequenc(
+			d_ptr->DANCE_FRAME_START - _startFrameShift,
+			d_ptr->DANCE_FRAME_END - _endFrameShift, 
+			cv::Point_<int>(d_ptr->positions[0]), 
 			DotDetectorLayer::FRAME_REDFAC);
 
-		cv::Point2d _orient_uvec = WaggleDanceOrientator::extractOrientationFromPositions(d.positions, d.position_last);
-
-		d.orient_uvec = _orient_uvec;
+		d_ptr->orient_uvec = WaggleDanceOrientator::extractOrientationFromPositions(d_ptr->positions, d_ptr->position_last);
 #else
-		d.orient_uvec = cv::Point2i(0,0);
+		d_ptr->orient_uvec = cv::Point2i(0,0);
 #endif
 
 
 		if(WDD_WRITE_DANCE_FILE)
-			_execDetectionWriteDanceFileLine(d);
+			_execDetectionWriteDanceFileLine(d_ptr);
 
 		if(WDD_VERBOSE)
 		{
 			extern double uvecToDegree(cv::Point2d in);
 			printf("Waggle dance #%d at:\t %.1f %.1f with orient %.1f (uvec: %.1f,%.1f)\n",
 				WDD_DANCE_NUMBER,
-				d.positions[0].x*pow(2, DotDetectorLayer::FRAME_REDFAC), 
-				d.positions[0].y*pow(2, DotDetectorLayer::FRAME_REDFAC), 
-				uvecToDegree(d.orient_uvec), 
-				d.orient_uvec.x, 
-				d.orient_uvec.y);
+				d_ptr->positions[0].x*pow(2, DotDetectorLayer::FRAME_REDFAC),
+				d_ptr->positions[0].y*pow(2, DotDetectorLayer::FRAME_REDFAC),
+				uvecToDegree(d_ptr->orient_uvec),
+				d_ptr->orient_uvec.x,
+				d_ptr->orient_uvec.y);
 		}
 
-		WaggleDanceExport::write(seq, d, auxCC.camId);
+		WaggleDanceExport::write(seq, d_ptr, auxCC.camId);
 
 		WDD_DANCE_NUMBER++;
 	}
@@ -570,21 +568,19 @@ namespace wdd
 
 		return N;
 	}
-	void WaggleDanceDetector::_execDetectionWriteDanceFileLine(DANCE d)
+	void WaggleDanceDetector::_execDetectionWriteDanceFileLine(DANCE * d_ptr)
 	{
 		extern double uvecToDegree(cv::Point2d in);
 
-		fprintf(danceFile_ptr, "%I64u %I64u %lu %.2f", d.DANCE_FRAME_START, d.DANCE_FRAME_END, d.DANCE_UNIQE_ID, uvecToDegree(d.orient_uvec));
+		fprintf(danceFile_ptr, "%I64u %I64u %lu %.2f", d_ptr->DANCE_FRAME_START, d_ptr->DANCE_FRAME_END, d_ptr->DANCE_UNIQE_ID, uvecToDegree(d_ptr->orient_uvec));
 
-		for (auto it=d.positions.begin(); it!=d.positions.end(); ++it)
+		for (auto it=d_ptr->positions.begin(); it!=d_ptr->positions.end(); ++it)
 		{
 			fprintf(danceFile_ptr, " %.5f %.5f",
 				it->x*pow(2, DotDetectorLayer::FRAME_REDFAC), it->y*pow(2, DotDetectorLayer::FRAME_REDFAC));
 		}
 
 		fprintf(danceFile_ptr, "\n");
-
-
 	}
 
 	void WaggleDanceDetector::_execDetectionWriteSignalFileLine()

@@ -95,13 +95,11 @@ void loadCamConfigFileReadLine(std::string line)
 		if(tokenNumber == 0)
 		{
 			camId = atoi(token);
-			std::cout<<"read camId: "<<camId<<std::endl;
 		}
 		// guid
 		else if( tokenNumber == 1)
 		{
 			strcpy_s(guid_str, token);			
-			std::cout<<"read guid_str: "<<guid_str<<std::endl;
 		}
 		else
 		{
@@ -110,12 +108,10 @@ void loadCamConfigFileReadLine(std::string line)
 				// arena.pi.x
 			case 0:
 				px = atoi(token);
-				std::cout<<"read px: "<<px<<std::endl;
 				break;
 				// arena.pi.y
 			case 1:
 				py = atoi(token);
-				std::cout<<"read py: "<<py<<std::endl;
 				arena[arenaPointNumber++] = cv::Point2i(px,py);
 				break;
 			}
@@ -216,14 +212,16 @@ char _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {	
+
+	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
+			"1.1", "05.08.2014");
+
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
 
 	//char videoFilename[MAXCHAR];
 	// WaggleDanceExport initialization
 	WaggleDanceExport::execRootExistChk();
-
-
 
 	GUID * _guids;
 

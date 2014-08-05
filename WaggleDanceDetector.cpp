@@ -622,4 +622,13 @@ namespace wdd
 		printf("[WDD_DANCE_MAX_FRAME_GAP] %ul\n", WDD_DANCE_MAX_FRAME_GAP);
 		printf("[WDD_DANCE_MIN_CONSFRAMES] %ul\n", WDD_DANCE_MIN_CONSFRAMES);
 	}
+	std::size_t WaggleDanceDetector::getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE()
+	{
+		return WDD_SIGNAL_DD_MIN_CLUSTER_SIZE;
+	}
+	void WaggleDanceDetector::setWDD_SIGNAL_DD_MIN_CLUSTER_SIZE(std::size_t val)
+	{
+		if(val > 0)
+			WDD_SIGNAL_DD_MIN_CLUSTER_SIZE = val;
+	}
 } /* namespace WaggleDanceDetector */

@@ -24,7 +24,7 @@
 	*/
 
 #include "targetver.h"
-
+#include <atomic>
 #include <chrono>
 #include <iostream>
 #include <stdio.h>

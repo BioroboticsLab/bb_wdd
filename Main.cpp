@@ -212,9 +212,10 @@ char _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {	
-
+	char * version = "1.1";
+	char * compiletime = "05.08.2014";
 	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
-			"1.1", "05.08.2014");
+		version, compiletime);
 
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
@@ -393,7 +394,25 @@ int main(int nargs, char** argv)
 	int param = -1, key;
 
 	while((key = cvWaitKey(0)) != 0x1b)
-	{}
+	{
+		switch(key)
+		{
+		case 'p':	case 'P':	printf("Selected Parameter: Potential\n");		param = 0;		break;
+		case 'c':	case 'C':	printf("Selected Parameter: Cluster Number\n");	param = 1;		break;
+		case '+':	if(pCam)	pCam->IncrementCameraParameter(param);		break;
+		case '-':	if(pCam)	pCam->DecrementCameraParameter(param);		break;
+		case 'i': default:
+			printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
+				version, compiletime);
+			printf("Use the following keys to change camera parameters:\n"
+					"\t'p' - select Potential parameter\n"
+					"\t'c' - select min cluster number parameter\n"
+					"\t'+' - increment selected parameter\n"
+					"\t'-' - decrement selected parameter\n"
+					"\t'ESC' - terminates program\n");
+	
+		}
+	}
 
 	pCam->StopCapture();
 	/*

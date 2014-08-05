@@ -1,4 +1,6 @@
 #pragma once
+
+
 namespace wdd{	
 	class CLEyeCameraCapture
 	{
@@ -28,7 +30,7 @@ namespace wdd{
 		void IncrementCameraParameter(int param);
 
 		void DecrementCameraParameter(int param);
-
+		void handleParameterQueue();
 		void Setup();
 
 		void Run();

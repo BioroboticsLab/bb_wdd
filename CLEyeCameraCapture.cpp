@@ -9,6 +9,12 @@ namespace wdd{
 	_MouseInteraction	_Mouse;
 	CamConf _CC;
 
+	std::atomic_flag _lock = ATOMIC_FLAG_INIT;
+	// <parameter_id, increment ? true : false>
+	std::vector<std::pair<int, bool>> _setParaQueue;
+
+	WaggleDanceDetector * WDD_p = nullptr;
+
 	void static findCornerPointNear(cv::Point2i p)
 	{
 		// we actually have a 4 point arena to work with
@@ -100,7 +106,7 @@ namespace wdd{
 	{
 		_running = true;
 
-		cvNamedWindow(_windowName, CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
+		cvNamedWindow(_windowName, CV_WINDOW_NORMAL | CV_GUI_EXPANDED);
 
 		// Start CLEye image capture thread
 		_hThread = CreateThread(NULL, 0, &CLEyeCameraCapture::CaptureThread, this, 0, 0);
@@ -133,13 +139,89 @@ namespace wdd{
 	void CLEyeCameraCapture::IncrementCameraParameter(int param)
 	{
 		if(!_cam)	return;
-		CLEyeSetCameraParameter(_cam, (CLEyeCameraParameter)param, CLEyeGetCameraParameter(_cam, (CLEyeCameraParameter)param)+10);
+
+		if( param > 1)
+		{
+			std::cerr<<"Warning! Unknown parameter used for CamereaParameter!"<<std::endl;
+			return;
+		}
+
+		std::pair<int,bool> p;
+		p.first = param;
+		p.second = true;
+
+		// enter critical area
+		while (_lock.test_and_set()) {}
+
+		_setParaQueue.push_back(p);
+
+		// leave critival area
+		_lock.clear();
 	}
 	void CLEyeCameraCapture::DecrementCameraParameter(int param)
 	{
 		if(!_cam)	return;
-		CLEyeSetCameraParameter(_cam, (CLEyeCameraParameter)param, CLEyeGetCameraParameter(_cam, (CLEyeCameraParameter)param)-10);
+		if( param > 1)
+		{
+			std::cerr<<"Warning! Unknown parameter used for CamereaParameter!"<<std::endl;
+			return;
+		}
+
+		std::pair<int,bool> p;
+		p.first = param;
+		p.second = false;
+
+		// enter critical area
+		while (_lock.test_and_set()) {}
+
+		_setParaQueue.push_back(p);
+
+		// leave critival area
+		_lock.clear();
 	}
+	
+	void CLEyeCameraCapture::handleParameterQueue()
+	{
+		for (auto it= _setParaQueue.begin(); it!=_setParaQueue.end(); ++it)
+		{
+			switch(it->first)
+			{
+				// handle Potential 
+			case 0:
+				printf("Last DD_MIN_POTENTIAL: %.1f", DotDetectorLayer::DD_MIN_POTENTIAL);
+
+				//increase
+				if(it->second)
+					DotDetectorLayer::DD_MIN_POTENTIAL += 100;
+				//decrease
+				else
+					DotDetectorLayer::DD_MIN_POTENTIAL -= 100;
+
+				printf(" - new: %1.f\n", DotDetectorLayer::DD_MIN_POTENTIAL);
+				break;
+			case 1:
+				std::size_t val = WDD_p->getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE();
+
+				printf("Last WDD_SIGNAL_DD_MIN_CLUSTER_SIZE: %d", val);
+
+				//increase
+				if(it->second)
+					val++;
+				//decrease
+				else
+					val = val > 1 ? val-1 : 1;
+
+				WDD_p->setWDD_SIGNAL_DD_MIN_CLUSTER_SIZE(val);
+				std::size_t testVal = WDD_p->getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE();
+				printf(" - new: %d\n", testVal);
+				break;
+			}
+		}
+
+		_setParaQueue.clear();
+	}
+
+
 	void CLEyeCameraCapture::Setup()
 	{
 		// listen for mouse interaction
@@ -388,6 +470,8 @@ namespace wdd{
 			wdd_verbose
 			);
 
+		WDD_p = &wdd;
+
 		// Create camera instance
 		_cam = CLEyeCreateCamera(_cameraGUID, _mode, _resolution, _fps);
 		if(_cam == NULL)
@@ -532,7 +616,14 @@ namespace wdd{
 
 			if((frame_counter_global % 500) == 0)
 			{
-				printf("collected fps: ");
+				time_t     now = time(0);
+				struct tm  tstruct;
+				char       buf[80];
+				localtime_s(&tstruct, &now);
+				// Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+				// for more information about date/time format
+				strftime(buf, sizeof(buf), "%Y%m%d %X", &tstruct);
+				std::cout << "["<< buf << "] collected fps: ";
 				double avg = 0;
 				for(auto it=bench_res.begin(); it!=bench_res.end(); ++it)
 				{
@@ -542,6 +633,15 @@ namespace wdd{
 				printf("(avg: %.1f)\n", avg/bench_res.size());
 				bench_res.clear();
 			}
+
+			// check for dynamic paramter adjustmenr - enter critical area
+			while (_lock.test_and_set()) {}
+
+			if(_setParaQueue.size() > 0)
+				handleParameterQueue();
+
+			// leave critival area
+			_lock.clear();
 		}
 		//
 		// release objects

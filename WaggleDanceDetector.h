@@ -114,7 +114,8 @@ namespace wdd
 		const std::map<std::size_t,cv::Point2d> * getWDDSignalId2PointMap();
 		const std::vector<DANCE> * getWDDFinishedDancesVec();
 		void printWDDDanceConfig();
-
+		std::size_t getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE();
+		void setWDD_SIGNAL_DD_MIN_CLUSTER_SIZE(std::size_t val);
 		// defines if verbose execution mode
 		//TODO: check for remove as not used anymore
 		static int WDD_VERBOSE;

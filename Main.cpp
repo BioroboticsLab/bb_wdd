@@ -212,8 +212,8 @@ char _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {	
-	char * version = "1.1";
-	char * compiletime = "05.08.2014";
+	char * version = "1.1.1";
+	char * compiletime = "06.08.2014";
 	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 		version, compiletime);
 

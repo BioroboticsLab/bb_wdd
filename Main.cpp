@@ -393,7 +393,7 @@ int main(int nargs, char** argv)
 	pCam->StartCapture();
 	int param = -1, key;
 
-	while((key = cvWaitKey(0)) != 0x1b)
+	while(key = cvWaitKey(0))
 	{
 		switch(key)
 		{
@@ -408,8 +408,7 @@ int main(int nargs, char** argv)
 					"\t'p' - select Potential parameter\n"
 					"\t'c' - select min cluster number parameter\n"
 					"\t'+' - increment selected parameter\n"
-					"\t'-' - decrement selected parameter\n"
-					"\t'ESC' - terminates program\n");
+					"\t'-' - decrement selected parameter\n");
 	
 		}
 	}

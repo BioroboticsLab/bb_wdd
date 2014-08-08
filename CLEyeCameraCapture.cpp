@@ -77,8 +77,8 @@ namespace wdd{
 		}
 
 	}
-	CLEyeCameraCapture::CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps, CamConf CC) :
-		_cameraGUID(cameraGUID), _cam(NULL), _mode(mode), _resolution(resolution), _fps(fps), _running(false), _visual(true)
+	CLEyeCameraCapture::CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size) :
+		_cameraGUID(cameraGUID), _cam(NULL), _mode(mode), _resolution(resolution), _fps(fps), _running(false), _visual(true), aux_DD_MIN_POTENTIAL(dd_min_potential), aux_WDD_SIGNAL_MIN_CLUSTER_SIZE(wdd_signal_min_cluster_size)
 	{
 		strcpy_s(_windowName, windowName);
 
@@ -360,13 +360,13 @@ namespace wdd{
 		int DD_FREQ_MIN = 11;
 		int DD_FREQ_MAX = 17;
 		double DD_FREQ_STEP = 1;
-		double DD_MIN_POTENTIAL = 16444*2;
+		double DD_MIN_POTENTIAL = aux_DD_MIN_POTENTIAL;
 
 		//
 		//	Layer 2: Waggle SIGNAL Configuration
 		//
 		double WDD_SIGNAL_DD_MAXDISTANCE = 2.3;
-		int		WDD_SIGNAL_MIN_CLUSTER_SIZE = 6;
+		int		WDD_SIGNAL_MIN_CLUSTER_SIZE = aux_WDD_SIGNAL_MIN_CLUSTER_SIZE;
 
 		//
 		//	Layer 3: Waggle Dance Configuration
@@ -443,8 +443,8 @@ namespace wdd{
 					dd_positions.push_back(tmp);
 			}
 		}
-		printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f).\n", 
-			dd_positions.size(), DD_MIN_POTENTIAL);
+		printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f) (WDD_SIGNAL_MIN_CLUSTER_SIZE=%d).\n", 
+			dd_positions.size(), DD_MIN_POTENTIAL, WDD_SIGNAL_MIN_CLUSTER_SIZE);
 
 		//
 		// prepare WaggleDanceDetector config vector

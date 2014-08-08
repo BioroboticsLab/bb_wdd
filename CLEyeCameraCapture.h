@@ -17,8 +17,11 @@ namespace wdd{
 		int _FRAME_HEIGHT;
 		bool _visual;
 		bool _setupModeOn;
+
+		double aux_DD_MIN_POTENTIAL;
+		int	aux_WDD_SIGNAL_MIN_CLUSTER_SIZE;
 	public:
-		CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps, CamConf CC);
+		CLEyeCameraCapture(LPSTR windowName, GUID cameraGUID, CLEyeCameraColorMode mode, CLEyeCameraResolution resolution, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size);
 
 		bool StartCapture();
 		void StopCapture();

@@ -5,6 +5,7 @@
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 #include "WaggleDanceExport.h"
+#include <tclap/CmdLine.h>
 
 using namespace wdd;
 
@@ -212,10 +213,45 @@ char _FULL_PATH_EXE[MAX_PATH];
 
 int main(int nargs, char** argv)
 {	
-	char * version = "1.1.1";
-	char * compiletime = "06.08.2014";
+	char * version = "1.2.0";
+	char * compiletime = __TIMESTAMP__;
 	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 		version, compiletime);
+
+	// define values potentially set by command line
+	double dd_min_potential;
+	int wdd_signal_min_cluster_size;
+	bool autoStartUp;
+	try 
+	{
+		// Define the command line object.
+		TCLAP::CmdLine cmd("Command description message", ' ', version);
+
+		// Define a value argument and add it to the command line.
+		TCLAP::ValueArg<double> potArg("p", "potential", "Potential minimum value", false, 32888, "double");
+		cmd.add( potArg );
+
+		// Define a value argument and add it to the command line.
+		TCLAP::ValueArg<int> cluArg("c", "cluster", "Cluster minimum size", false, 6, "int");
+		cmd.add( cluArg );
+
+		// Define a switch and add it to the command line.
+		TCLAP::SwitchArg autoSwitch("a","auto","Selects automatically configured cam", false);
+		cmd.add( autoSwitch );
+
+		// Parse the args.
+		cmd.parse(nargs, argv);
+
+		// Get the value parsed by each arg. 
+		dd_min_potential = potArg.getValue();
+		wdd_signal_min_cluster_size = cluArg.getValue();
+		autoStartUp = autoSwitch.getValue();
+	}
+	catch (TCLAP::ArgException &e)
+	{
+		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
+	}
+
 
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
@@ -289,53 +325,73 @@ int main(int nargs, char** argv)
 		}
 	}
 
-	// for all camIds pushed to launch retrieve information and push to user prompt
-	printf("CamID    GUID                                   configured?\n");
-	printf("***********************************************************\n");
+	// if autoStartUp flag, iterate camIdsLaunch and select first configured camId
+	int camIdUserSelect = -1;
+	if(autoStartUp)
+	{
+		for(std::size_t i = 0; i < camIdsLaunch.size(); i++)
+		{
+			std::size_t _camId = camIdsLaunch[i];
+			CamConf * cc_ptr = NULL;
+			for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
+				if(it->camId == _camId)
+					if(it->configured)
+					{
+						camIdUserSelect = _camId;
+						break;break;
+					}
+		}
 
-	for(std::size_t i = 0; i < camIdsLaunch.size(); i++)
-	{				
-		std::size_t _camId = camIdsLaunch[i];
-		CamConf * cc_ptr = NULL;
-		for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-			if(it->camId == _camId)
-				cc_ptr = &(*it);
-
-		if(cc_ptr != NULL)
-			printf("%d\t %s\t%s\n", cc_ptr->camId, cc_ptr->guid_str, cc_ptr->configured ? "true" : "false");
+		if(camIdUserSelect < 0)
+			std::cout<<"\nWARNING! Could not autostart because no configrued camera present!\n\n";
 	}
-	printf("\n\n");
 
-	// retrieve users camId choice
-	std::string in;
-	std::size_t camIdUserSelect = NULL;
-	bool camId_isSelected = false;
-	CLEyeCameraCapture *pCam = NULL;
+	if(camIdUserSelect < 0)
+	{
+		// for all camIds pushed to launch retrieve information and push to user prompt
+		printf("CamID    GUID                                   configured?\n");
+		printf("***********************************************************\n");
 
-	while(!camId_isSelected){
-		std::cout << " -> Please selet camera id to start:" <<std::endl;
-		std::getline(std::cin, in);
+		for(std::size_t i = 0; i < camIdsLaunch.size(); i++)
+		{				
+			std::size_t _camId = camIdsLaunch[i];
+			CamConf * cc_ptr = NULL;
+			for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
+				if(it->camId == _camId)
+					cc_ptr = &(*it);
 
-		try {
-			std::size_t i_dec = static_cast<std::size_t>(std::stoi (in,nullptr));
-			for(auto it = camIdsLaunch.begin(); it!=camIdsLaunch.end(); ++it)
-			{
-				if(*it == i_dec)
+			if(cc_ptr != NULL)
+				printf("%d\t %s\t%s\n", cc_ptr->camId, cc_ptr->guid_str, cc_ptr->configured ? "true" : "false");
+		}
+		printf("\n\n");
+
+		// retrieve users camId choice
+		while(camIdUserSelect < 0){
+			std::string in;
+			std::cout << " -> Please selet camera id to start:" <<std::endl;
+			std::getline(std::cin, in);
+
+			try {
+				std::size_t i_dec = static_cast<std::size_t>(std::stoi (in,nullptr));
+				for(auto it = camIdsLaunch.begin(); it!=camIdsLaunch.end(); ++it)
 				{
-					std::cout<< " -> "<<i_dec<<" selected!"<<std::endl;
-					camIdUserSelect = i_dec;
-					camId_isSelected = true;
-				}else{
-					std::cout<<i_dec<<" unavailable!"<<std::endl;
+					if(*it == i_dec)
+					{
+						std::cout<< " -> "<<i_dec<<" selected!"<<std::endl;
+						camIdUserSelect = i_dec;
+					}else{
+						std::cout<<i_dec<<" unavailable!"<<std::endl;
+					}
 				}
 			}
-		}
-		catch (const std::invalid_argument& ia) {
-			std::cerr << "Invalid argument: " << ia.what() << '\n';
+			catch (const std::invalid_argument& ia) {
+				std::cerr << "Invalid argument: " << ia.what() << '\n';
+			}
 		}
 	}
 
 	// retrieve guid from camConfs according to camId
+	CLEyeCameraCapture *pCam = NULL;
 	char windowName[64];
 	for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
 	{
@@ -352,16 +408,15 @@ int main(int nargs, char** argv)
 				if(strcmp(guid_str_connectedCam, it->guid_str) == 0)
 				{
 					foundMatch = true;
-					pCam = new CLEyeCameraCapture(windowName, _guids[i], CLEYE_MONO_PROCESSED, CLEYE_QVGA, WDD_FRAME_RATE, *it);
+					pCam = new CLEyeCameraCapture(windowName, _guids[i], CLEYE_MONO_PROCESSED, CLEYE_QVGA, WDD_FRAME_RATE, *it, 
+													dd_min_potential, wdd_signal_min_cluster_size);
 					break;break;
 				}
 			}
-
-
 		}
 	}
-	printf("Starting WaggleDanceDetector - CamID: %d\n", camIdUserSelect);
 
+	printf("Starting WaggleDanceDetector - CamID: %d\n", camIdUserSelect);
 	const CamConf * cc_ptr = pCam->getCamConfPtr();
 
 	if(!cc_ptr->configured){
@@ -405,11 +460,11 @@ int main(int nargs, char** argv)
 			printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 				version, compiletime);
 			printf("Use the following keys to change camera parameters:\n"
-					"\t'p' - select Potential parameter\n"
-					"\t'c' - select min cluster number parameter\n"
-					"\t'+' - increment selected parameter\n"
-					"\t'-' - decrement selected parameter\n");
-	
+				"\t'p' - select Potential parameter\n"
+				"\t'c' - select min cluster number parameter\n"
+				"\t'+' - increment selected parameter\n"
+				"\t'-' - decrement selected parameter\n");
+
 		}
 	}
 

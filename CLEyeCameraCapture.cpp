@@ -9,10 +9,7 @@ namespace wdd{
 	_MouseInteraction	_Mouse;
 	CamConf _CC;
 
-	std::atomic_flag _lock = ATOMIC_FLAG_INIT;
-	// <parameter_id, increment ? true : false>
-	std::vector<std::pair<int, bool>> _setParaQueue;
-
+	
 	WaggleDanceDetector * WDD_p = nullptr;
 
 	void static findCornerPointNear(cv::Point2i p)
@@ -140,87 +137,11 @@ namespace wdd{
 	{
 		if(!_cam)	return;
 
-		if( param > 1)
-		{
-			std::cerr<<"Warning! Unknown parameter used for CamereaParameter!"<<std::endl;
-			return;
-		}
-
-		std::pair<int,bool> p;
-		p.first = param;
-		p.second = true;
-
-		// enter critical area
-		while (_lock.test_and_set()) {}
-
-		_setParaQueue.push_back(p);
-
-		// leave critival area
-		_lock.clear();
 	}
 	void CLEyeCameraCapture::DecrementCameraParameter(int param)
 	{
 		if(!_cam)	return;
-		if( param > 1)
-		{
-			std::cerr<<"Warning! Unknown parameter used for CamereaParameter!"<<std::endl;
-			return;
-		}
-
-		std::pair<int,bool> p;
-		p.first = param;
-		p.second = false;
-
-		// enter critical area
-		while (_lock.test_and_set()) {}
-
-		_setParaQueue.push_back(p);
-
-		// leave critival area
-		_lock.clear();
 	}
-
-	void CLEyeCameraCapture::handleParameterQueue()
-	{
-		for (auto it= _setParaQueue.begin(); it!=_setParaQueue.end(); ++it)
-		{
-			switch(it->first)
-			{
-				// handle Potential 
-			case 0:
-				printf("Last DD_MIN_POTENTIAL: %.1f", DotDetectorLayer::DD_MIN_POTENTIAL);
-
-				//increase
-				if(it->second)
-					DotDetectorLayer::DD_MIN_POTENTIAL += 100;
-				//decrease
-				else
-					DotDetectorLayer::DD_MIN_POTENTIAL -= 100;
-
-				printf(" - new: %1.f\n", DotDetectorLayer::DD_MIN_POTENTIAL);
-				break;
-			case 1:
-				std::size_t val = WDD_p->getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE();
-
-				printf("Last WDD_SIGNAL_DD_MIN_CLUSTER_SIZE: %d", val);
-
-				//increase
-				if(it->second)
-					val++;
-				//decrease
-				else
-					val = val > 1 ? val-1 : 1;
-
-				WDD_p->setWDD_SIGNAL_DD_MIN_CLUSTER_SIZE(val);
-				std::size_t testVal = WDD_p->getWDD_SIGNAL_DD_MIN_CLUSTER_SIZE();
-				printf(" - new: %d\n", testVal);
-				break;
-			}
-		}
-
-		_setParaQueue.clear();
-	}
-
 
 	void CLEyeCameraCapture::Setup()
 	{
@@ -657,15 +578,6 @@ namespace wdd{
 
 				makeHeartBeatFile();
 			}
-
-			// check for dynamic paramter adjustmenr - enter critical area
-			while (_lock.test_and_set()) {}
-
-			if(_setParaQueue.size() > 0)
-				handleParameterQueue();
-
-			// leave critival area
-			_lock.clear();
 		}
 		//
 		// release objects

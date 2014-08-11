@@ -179,7 +179,7 @@ namespace wdd{
 		// leave critival area
 		_lock.clear();
 	}
-	
+
 	void CLEyeCameraCapture::handleParameterQueue()
 	{
 		for (auto it= _setParaQueue.begin(); it!=_setParaQueue.end(); ++it)
@@ -319,6 +319,28 @@ namespace wdd{
 		for(auto it=DotDetectorLayer::DD_SIGNALS_IDs.begin(); it!= DotDetectorLayer::DD_SIGNALS_IDs.end(); ++it)
 			cv::circle(frame, DotDetectorLayer::DD_POSITIONS.at(*it), 1, CV_RGB(0, 255, 0));
 	}
+
+	char * hbf_extension = ".wtchdg";
+	void CLEyeCameraCapture::makeHeartBeatFile()
+	{
+		char path[MAX_PATH];
+		extern char _NAME_OF_EXE[MAX_PATH];
+		extern char _FULL_PATH_EXE[MAX_PATH];
+
+		strcpy_s(path, MAX_PATH, _FULL_PATH_EXE);
+		strcat_s(path, MAX_PATH, "\\");
+		strcat_s(path, MAX_PATH, _NAME_OF_EXE);
+		strcat_s(path, MAX_PATH, hbf_extension);
+
+		FILE * pFile;
+
+		pFile = fopen (path,"w");
+		if (pFile!=NULL)
+			fclose (pFile);
+		else
+			std::cerr<<"ERROR! Could not create heartbeat file: "<<path<<std::endl;		
+	}
+
 	//Adoption from stackoverflow
 	//http://stackoverflow.com/questions/13080515/rotatedrect-roi-in-opencv
 	//decide whether point p is in the ROI.
@@ -632,6 +654,8 @@ namespace wdd{
 				}
 				printf("(avg: %.1f)\n", avg/bench_res.size());
 				bench_res.clear();
+
+				makeHeartBeatFile();
 			}
 
 			// check for dynamic paramter adjustmenr - enter critical area

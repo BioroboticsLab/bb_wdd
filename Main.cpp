@@ -242,7 +242,7 @@ int main(int nargs, char** argv)
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
 
-	char * version = "1.2.1";
+	char * version = "1.2.2";
 	char * compiletime = __TIMESTAMP__;
 	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 		version, compiletime);

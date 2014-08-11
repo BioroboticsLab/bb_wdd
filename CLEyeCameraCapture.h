@@ -40,6 +40,7 @@ namespace wdd{
 
 		void drawArena(cv::Mat &frame);
 		void drawPosDDs(cv::Mat &frame);
+		void makeHeartBeatFile();
 		bool pointIsInArena(cv::Point p);
 		double computeProduct(cv::Point p, cv::Point2i a, cv::Point2i b);
 		static DWORD WINAPI CaptureThread(LPVOID instance);

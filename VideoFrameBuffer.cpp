@@ -163,6 +163,10 @@ namespace wdd
 
 	std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 	{
+		// fatal: if this is true, return empty vector
+		if( startFrame >= endFrame)
+			return std::vector<cv::Mat>();
+
 		//std::cout<<"VideoFrameBuffer::loadFrameSequenc::startFrame, endFrame: "<<startFrame<<", "<<endFrame<<std::endl;
 		//std::cout<<"VideoFrameBuffer::_cachedFrameSize.width, _cachedFrameSize.height: "<<_cachedFrameSize.width<<", "<<_cachedFrameSize.height<<std::endl;
 		//std::cout<<"VideoFrameBuffer::_extractFrameSize.width, _extractFrameSize.height: "<<_extractFrameSize.width<<", "<<_extractFrameSize.height<<std::endl;
@@ -192,14 +196,18 @@ namespace wdd
 		while(startFrame <=  endFrame)
 		{
 			frame_ptr = getFrameByNumber(startFrame);
-			if(!frame_ptr->empty())
+
+			// check the pointer is not null and cv::Mat not empty
+			if(frame_ptr && !frame_ptr->empty())
 			{
 				cv::Mat subframe_monochrome(*frame_ptr, roi_rec);
 				out.push_back(subframe_monochrome.clone());
 			}
 			else
+			{
 				std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc frame "<< startFrame<< " empty!"<<std::endl;
-
+				return std::vector<cv::Mat>();
+			}
 			startFrame++;
 		}
 

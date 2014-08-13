@@ -326,6 +326,11 @@ namespace wdd
 			cv::Point_<int>(d_ptr->positions[0]), 
 			DotDetectorLayer::FRAME_REDFAC);
 
+		//if number of cropped frames zero, just drop the detection cause something went terribly wrong
+		// regarding the frame numbers
+		if(seq.empty())
+			return;
+
 		d_ptr->orient_uvec = WaggleDanceOrientator::extractOrientationFromPositions(d_ptr->positions, d_ptr->position_last);
 #else
 		d_ptr->orient_uvec = cv::Point2i(0,0);

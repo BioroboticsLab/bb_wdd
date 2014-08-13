@@ -242,7 +242,7 @@ int main(int nargs, char** argv)
 	// get the full path to executable 
 	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
 
-	char * version = "1.2.3";
+	char * version = "1.2.4";
 	char * compiletime = __TIMESTAMP__;
 	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 		version, compiletime);
@@ -477,19 +477,22 @@ int main(int nargs, char** argv)
 	{
 		switch(key)
 		{
-		case 'p':	case 'P':	printf("Selected Parameter: Potential\n");		param = 0;		break;
-		case 'c':	case 'C':	printf("Selected Parameter: Cluster Number\n");	param = 1;		break;
-		case '+':	if(pCam)	pCam->IncrementCameraParameter(param);		break;
-		case '-':	if(pCam)	pCam->DecrementCameraParameter(param);		break;
+		//case 'p':	case 'P':	printf("Selected Parameter: Potential\n");		param = 0;		break;
+		//case 'c':	case 'C':	printf("Selected Parameter: Cluster Number\n");	param = 1;		break;
+		//case '+':	if(pCam)	pCam->IncrementCameraParameter(param);		break;
+		//case '-':	if(pCam)	pCam->DecrementCameraParameter(param);		break;
 		case 'i': default:
 			printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
 				version, compiletime);
+
+			printf("Currently dynamic parameter change is deactivated.\n");
+			/*
 			printf("Use the following keys to change camera parameters:\n"
 				"\t'p' - select Potential parameter\n"
 				"\t'c' - select min cluster number parameter\n"
 				"\t'+' - increment selected parameter\n"
 				"\t'-' - decrement selected parameter\n");
-
+				*/
 		}
 	}
 

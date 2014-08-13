@@ -255,7 +255,7 @@ namespace wdd{
 
 		FILE * pFile;
 
-		pFile = fopen (path,"w");
+		fopen_s (&pFile, path,"w");
 		if (pFile!=NULL)
 			fclose (pFile);
 		else

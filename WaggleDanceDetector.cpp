@@ -86,13 +86,14 @@ namespace wdd
 		{
 			// link full path from main.cpp
 			extern char _FULL_PATH_EXE[MAX_PATH];
+			extern std::string GLOB_WDD_DANCE_OUTPUT_PATH;
 			char BUFF[MAX_PATH];
 
 			if(WDD_WRITE_DANCE_FILE)
 			{
-				strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-				strcat_s(BUFF, MAX_PATH, danceFile_path);
-				fopen_s (&danceFile_ptr, BUFF, "a+");
+				//strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
+				//strcat_s(BUFF, MAX_PATH, danceFile_path);
+				fopen_s (&danceFile_ptr, GLOB_WDD_DANCE_OUTPUT_PATH.c_str(), "a+");
 			}
 			if(WDD_WRITE_SIGNAL_FILE)
 			{
@@ -300,6 +301,7 @@ namespace wdd
 				{
 					if(WDD_VERBOSE>1)
 						std::cout<<WDD_SIGNAL_FRAME_NR<<" - EXEC: "<<(*it_dances).DANCE_UNIQE_ID<<" ["<<(*it_dances).DANCE_FRAME_START<<","<<(*it_dances).DANCE_FRAME_END<<"]"<<std::endl;
+
 					_execDetectionFinalizeDance(&(*it_dances));
 				}
 				if(WDD_VERBOSE>1)
@@ -577,17 +579,33 @@ namespace wdd
 	}
 	void WaggleDanceDetector::_execDetectionWriteDanceFileLine(DANCE * d_ptr)
 	{
+		
 		extern double uvecToDegree(cv::Point2d in);
 
-		fprintf(danceFile_ptr, "%I64u %I64u %lu %.2f", d_ptr->DANCE_FRAME_START, d_ptr->DANCE_FRAME_END, d_ptr->DANCE_UNIQE_ID, uvecToDegree(d_ptr->orient_uvec));
+		int start = d_ptr->DANCE_FRAME_START;
+		int end = d_ptr->DANCE_FRAME_END;
 
-		for (auto it=d_ptr->positions.begin(); it!=d_ptr->positions.end(); ++it)
+		unsigned long long numFrames = end-start+1;
+
+		if(numFrames == d_ptr->positions.size())
 		{
-			fprintf(danceFile_ptr, " %.5f %.5f",
-				it->x*pow(2, DotDetectorLayer::FRAME_REDFAC), it->y*pow(2, DotDetectorLayer::FRAME_REDFAC));
+			auto it = d_ptr->positions.begin();
+			while(start<=end)
+			{
+				fprintf(danceFile_ptr, "%d %.2f %.2f %.1f\n", start, 
+					it->x*pow(2, DotDetectorLayer::FRAME_REDFAC), 
+					it->y*pow(2, DotDetectorLayer::FRAME_REDFAC),
+					uvecToDegree(d_ptr->orient_uvec));
+				start++;
+				++it;
+			}
 		}
+		else
+		{
+			printf("Warning! Dance Id %d (%d - %d) has corrupted position size: %d (not matching numFrames: %d)\n",
+				d_ptr->DANCE_UNIQE_ID, start, end, d_ptr->positions.size(), numFrames);
 
-		fprintf(danceFile_ptr, "\n");
+		}
 	}
 
 	void WaggleDanceDetector::_execDetectionWriteSignalFileLine()

@@ -1,9 +1,17 @@
 #pragma once
 
+#define TEST_MODE_ON
+
 #define WDD_LAYER2_MAX_POS_DDS 100
 #define WDD_FBUFFER_SIZE 32
 #define WDD_FREQ_NUMBER 7
-#define WDD_FRAME_RATE 102
+
+#if defined(TEST_MODE_ON)
+	#define WDD_FRAME_RATE 100
+#else
+	#define WDD_FRAME_RATE 102
+#endif
+
 #define VFB_MAX_FRAME_HISTORY 600
 
 #if !defined(ARMA_NO_DEBUG)

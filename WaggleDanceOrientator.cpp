@@ -183,7 +183,10 @@ namespace wdd
 	{
 		cv::Point2d orient_raw = position_last - positions[0];
 
-		return (orient_raw * (1.0 / cv::norm(orient_raw)));
+		if(cv::norm(orient_raw) > 0)
+			return (orient_raw * (1.0 / cv::norm(orient_raw)));
+		else
+			return cv::Point2d(1,1);
 	}
 	/*
 	handles the problem that orientations are unaware of head/tail 

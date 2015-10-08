@@ -334,11 +334,12 @@ namespace wdd
 			return;
 
 		d_ptr->orient_uvec = WaggleDanceOrientator::extractOrientationFromPositions(d_ptr->positions, d_ptr->position_last);
+		d_ptr->naive_orientation = WaggleDanceOrientator::extractNaiveness (d_ptr->positions, d_ptr->position_last);
 #else
 		d_ptr->orient_uvec = cv::Point2i(0,0);
 #endif
 
-
+		WDD_UNIQ_FINISH_DANCES.push_back(*d_ptr);
 		if(WDD_WRITE_DANCE_FILE)
 			_execDetectionWriteDanceFileLine(d_ptr);
 
@@ -504,7 +505,7 @@ namespace wdd
 			cv::Point2d center(0,0);
 			for(std::size_t j=0; j<idx.size(); j++)
 			{
-				center += static_cast<cv::Point_<double>>(DotDetectorLayer::DD_POSITIONS[pos_DD_IDs.at(idx.at(j))]);
+				center += static_cast<cv::Point_<double>>(DotDetectorLayer::positions[pos_DD_IDs.at(idx.at(j))]);
 			}
 
 			center *= 1/static_cast<double>(idx.size());
@@ -526,11 +527,11 @@ namespace wdd
 		// anchor case
 		if(sourceIDs.size() == 1)
 		{
-			cv::Point2i DD_pos = DotDetectorLayer::DD_POSITIONS[sourceIDs.at(0)];
+			cv::Point2i DD_pos = DotDetectorLayer::positions[sourceIDs.at(0)];
 
 			for(std::size_t i=0; i< set_DD_IDs.size(); i++)
 			{
-				cv::Point2i DD_pos_other = DotDetectorLayer::DD_POSITIONS[set_DD_IDs.at(i)];
+				cv::Point2i DD_pos_other = DotDetectorLayer::positions[set_DD_IDs.at(i)];
 
 				// if others DotDetectors distance is in bound, add its ID
 				if(std::sqrt(cv::norm(DD_pos-DD_pos_other)) < WDD_SIGNAL_DD_MAXDISTANCE)
@@ -579,11 +580,10 @@ namespace wdd
 	}
 	void WaggleDanceDetector::_execDetectionWriteDanceFileLine(DANCE * d_ptr)
 	{
-		
 		extern double uvecToDegree(cv::Point2d in);
 
-		int start = d_ptr->DANCE_FRAME_START;
-		int end = d_ptr->DANCE_FRAME_END;
+		unsigned long long start = d_ptr->DANCE_FRAME_START;
+		unsigned long long end = d_ptr->DANCE_FRAME_END;
 
 		unsigned long long numFrames = end-start+1;
 

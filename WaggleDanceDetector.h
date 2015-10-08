@@ -13,6 +13,7 @@ namespace wdd
 		cv::Point2d position_last;
 
 		cv::Point2d orient_uvec;
+		cv::Point2d naive_orientation;
 
 		SYSTEMTIME rawtime;
 	};

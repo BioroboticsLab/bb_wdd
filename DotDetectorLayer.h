@@ -1,5 +1,6 @@
 #pragma once
 #include "DotDetector.h"
+#include "DotDetectorMatrix.h"
 
 namespace wdd{
 
@@ -13,13 +14,13 @@ namespace wdd{
 		static SAMP SAMPLES[WDD_FRAME_RATE];
 
 		// saves positions of used DotDetectors
-		static std::vector<cv::Point2i> DD_POSITIONS;
-		// saves number n of DotDetectors in DD_POSITIONS
+		static std::vector<cv::Point2i> positions;
+		// saves number n of DotDetectors in positions
 		static std::size_t DD_NUMBER;
 		// defines the absolute score value a DD needs for signal
 		static double DD_MIN_POTENTIAL;
 
-		// saves potential of n = DD_POSITIONS_NUMBER DotDetectors (potentials are
+		// saves potential of n = positions_NUMBER DotDetectors (potentials are
 		// matched against WDD_SIGNAL_DD_MIN_SCORE - their calculation is part of
 		// magic)
 		static double *	DD_POTENTIALS;
@@ -45,23 +46,11 @@ namespace wdd{
 		// saves frame reduction factor
 		static double FRAME_REDFAC;
 
-		//static std::vector<unsigned __int64> DDL_DEBUG_PERF;
-#ifdef WDD_DDL_DEBUG_FULL
-		static arma::Mat<float> DDL_DEBUG_DD_POTENTIALS;
-		static arma::Mat<float> DDL_DEBUG_DD_FREQ_SCORE;
-		static arma::Mat<unsigned int> DDL_DEBUG_DD_RAW_PX_VAL;
-		
-		static std::vector<std::size_t> DDL_DEBUG_DD_FIRING_IDs;
-		static arma::Mat<float> DDL_DEBUG_DD_FIRING_ID_POTENTIALS;
-		static arma::Mat<float> DDL_DEBUG_DD_FIRING_ID_FREQ_SCORE;
-		static arma::Mat<unsigned int> DDL_DEBUG_DD_FIRING_ID_RAW_PX_VAL;
-		
-		static void debugWriteFiles();
-#endif
+		static cv::Mat* frame_ptr;
 		/*
 		functions
 		*/
-		static void init(std::vector<cv::Point2i> dd_positions, cv::Mat * aux_frame_ptr, 
+		static void init(std::vector<cv::Point2i> positions, cv::Mat * aux_frame_ptr, 
 			std::vector<double> ddl_config);
 
 		static void release();
@@ -76,7 +65,8 @@ namespace wdd{
 		/*
 		members
 		*/
-		static DotDetector ** _DotDetectors;
+		//static DotDetector ** _DotDetectors;
+		static DotDetectorM _dotDetector;
 		/*
 		functions
 		*/

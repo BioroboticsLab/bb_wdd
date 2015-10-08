@@ -238,7 +238,7 @@ namespace wdd{
 	void CLEyeCameraCapture::drawPosDDs(cv::Mat &frame)
 	{
 		for(auto it=DotDetectorLayer::DD_SIGNALS_IDs.begin(); it!= DotDetectorLayer::DD_SIGNALS_IDs.end(); ++it)
-			cv::circle(frame, DotDetectorLayer::DD_POSITIONS.at(*it), 1, CV_RGB(0, 255, 0));
+			cv::circle(frame, DotDetectorLayer::positions.at(*it), 1, CV_RGB(0, 255, 0));
 	}
 
 	char * hbf_extension = ".wtchdg";
@@ -316,12 +316,13 @@ namespace wdd{
 		//
 		double	WDD_DANCE_MAX_POSITION_DISTANCEE = sqrt(2);
 		int		WDD_DANCE_MAX_FRAME_GAP = 3;
+		//TODO ORIGINAL 20
 		int		WDD_DANCE_MIN_CONSFRAMES = 20;
 
 		//
 		//	Develop: Waggle Dance Configuration
 		//
-		bool visual = false;
+		bool visual = true;
 		bool wdd_write_dance_file = false;
 		bool wdd_write_signal_file = false;
 		int wdd_verbose = 0;
@@ -416,6 +417,7 @@ namespace wdd{
 		WDD_p = &wdd;
 
 		// Create camera instance
+		std::cerr << ((_resolution==CLEYE_QVGA) ? "QVGA" : "Not Qvga") << std::endl;
 		_cam = CLEyeCreateCamera(_cameraGUID, _mode, _resolution, _fps);
 		if(_cam == NULL)
 		{
@@ -459,7 +461,7 @@ namespace wdd{
 
 			// subsample
 			cv::resize(frame_input_monochrome, frame_target, frame_target.size(),
-				0, 0, cv::INTER_AREA);			
+					0, 0, cv::INTER_AREA);
 
 			// 
 			if(_visual)

@@ -563,7 +563,6 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	}
 
 	cv::VideoCapture capture(0);
-
 	if(!capture.open(videoFilename))
 	{
 		std::cerr << "Error! Video input stream broken - check openCV install "
@@ -574,7 +573,8 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	//
 	//	Global: video configuration
 	//
-	int FRAME_RED_FAC = 4;
+	//TODO
+	int FRAME_RED_FAC = 4;//4 -> 1/16 -> 320 ?= x * 1/16 -> 
 
 	//
 	//	Layer 1: DotDetector Configuration
@@ -619,11 +619,11 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	c.camId = nextUniqueCamID++;	
 	strcpy_s(c.guid_str, "virtual-cam-config");
 	c.arena[0] = cv::Point2i(0,0);
-	c.arena[1] = cv::Point2i(639,0);
-	c.arena[2] = cv::Point2i(639,479);
-	c.arena[3] = cv::Point2i(0,479);
+	c.arena[1] = cv::Point2i(320-1,0);
+	c.arena[2] = cv::Point2i(320-1,240-1);
+	c.arena[3] = cv::Point2i(0,240-1);
 	// prepare videoFrameBuffer
-	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_WIDTH, FRAME_HEIGHT), cv::Size(200,200), c);
+	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_WIDTH, FRAME_HEIGHT), cv::Size(20,20), c);
 
 	cv::Mat frame_input;
 	cv::Mat frame_input_monochrome;
@@ -712,9 +712,9 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 
 
 	int Cir_radius = 3;
-	cv::Scalar Cir_color_yel = cv::Scalar(0,255,255);
-	cv::Scalar Cir_color_gre = cv::Scalar(128,255,0);
-	cv::Scalar Cir_color_som = cv::Scalar(128,255,255);
+	cv::Scalar Cir_color_yel = cv::Scalar(255,255,0);
+	cv::Scalar Cir_color_gre = cv::Scalar(0,255,0);
+	cv::Scalar Cir_color_som = cv::Scalar(0,0,255);
 	//make the circle filled with value < 0
 	int Cir_thikness = -1;
 
@@ -757,7 +757,7 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 			if(DotDetectorLayer::DD_SIGNALS_NUMBER>0)
 			{
 				for(auto it=DotDetectorLayer::DD_SIGNALS_IDs.begin(); it!= DotDetectorLayer::DD_SIGNALS_IDs.end(); ++it)
-					cv::circle(frame_input, DotDetectorLayer::DD_POSITIONS.at(*it)*std::pow(2,FRAME_RED_FAC), 2, Cir_color_som, Cir_thikness);
+					cv::circle(frame_input, DotDetectorLayer::positions.at(*it)*std::pow(2, FRAME_RED_FAC), 2, Cir_color_som, Cir_thikness);
 			}
 			//check for WDD Signal
 			if(wdd.isWDDSignal())
@@ -768,6 +768,7 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 						Cir_radius, Cir_color_yel, Cir_thikness);
 				}
 			}
+			bool waitLongerThanEver = false;
 			if(wdd.isWDDDance())
 			{
 
@@ -777,12 +778,17 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 					{
 						cv::circle(frame_input, (*it).positions[0]*std::pow(2,FRAME_RED_FAC),
 							Cir_radius, Cir_color_gre, Cir_thikness);
+						cv::line(frame_input, (*it).positions[0] * std::pow(2, FRAME_RED_FAC), (*it).positions[0] * std::pow(2, FRAME_RED_FAC) - (*it).orient_uvec *1000* std::pow(2, FRAME_RED_FAC), Cir_color_yel);
+						cv::line(frame_input, (*it).positions[0] * std::pow(2, FRAME_RED_FAC), (*it).positions[0] * std::pow(2, FRAME_RED_FAC) + (*it).naive_orientation * 1000 * std::pow(2, FRAME_RED_FAC), Cir_color_gre);
+						waitLongerThanEver = true;
 					}
 				}
 			}
 
 			cv::imshow("Video", frame_input);
 			cv::waitKey(10);
+			if (waitLongerThanEver)
+				Sleep(1000);
 		}
 #ifdef WDD_DDL_DEBUG_FULL
 		if(frame_counter >= WDD_FBUFFER_SIZE-1)

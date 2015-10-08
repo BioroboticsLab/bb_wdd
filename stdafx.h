@@ -1,4 +1,5 @@
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
 
 #define TEST_MODE_ON
 
@@ -7,7 +8,7 @@
 #define WDD_FREQ_NUMBER 7
 
 #if defined(TEST_MODE_ON)
-	#define WDD_FRAME_RATE 100
+	#define WDD_FRAME_RATE 102
 #else
 	#define WDD_FRAME_RATE 102
 #endif

@@ -181,13 +181,49 @@ namespace wdd
 	}
 	cv::Point2d WaggleDanceOrientator::extractOrientationFromPositions(std::vector<cv::Point2d> positions, cv::Point2d position_last)
 	{
-		cv::Point2d orient_raw = position_last - positions[0];
+		printf("extracting orientation\n");
+		printf("size of positions: %d\n", (int)positions.size());
+		cv::Vec4f direction;
+		std::vector<cv::Point2f> positionsF;
+		cv::Mat(positions).copyTo(positionsF);
+		//cv::Mat X(positions);
 
+		//cv::Mat X(positions.size(), 2, CV_32F);
+		//cv::Mat X2 = cv::Mat(positions, true).reshape(1);
+		//X2.convertTo(X, CV_32F);
+		//cv::Mat X (positions.size(), 2, CV_32FC1);
+		//int i = 0;
+
+		//for (auto &p : positions) {
+		//	X.row(i) = cv::Mat();
+		//	++i;
+		//}
+		cv::fitLine(positionsF, direction, CV_DIST_L2, 0, 0.01, 0.01);
+		//std::cout << X << std::endl;
+		cv::Point2d orient_raw = cv::Point2d(direction[0], direction[1]);
+		printf("orientation by fitline: %f\n", atan2(orient_raw.y, orient_raw.x) * 180. / 3.14259);
+
+		cv::Point2d orient_raw_naive = position_last - positions[0];
+
+		printf("orientation by naive: %f\n", atan2(orient_raw_naive.y, orient_raw_naive.x) * 180. / 3.14259);
 		if(cv::norm(orient_raw) > 0)
 			return (orient_raw * (1.0 / cv::norm(orient_raw)));
 		else
 			return cv::Point2d(1,1);
 	}
+
+
+	cv::Point2d WaggleDanceOrientator::extractNaiveness(std::vector<cv::Point2d> positions, cv::Point2d position_last)
+	{
+
+		cv::Point2d orient_raw = position_last - positions[0];
+		if (cv::norm(orient_raw) > 0)
+			return (orient_raw * (1.0 / cv::norm(orient_raw)));
+		else
+			return cv::Point2d(1, 1);
+	}
+
+
 	/*
 	handles the problem that orientations are unaware of head/tail 
 	*/

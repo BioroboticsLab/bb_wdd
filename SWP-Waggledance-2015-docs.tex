@@ -1,0 +1,79 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[bottom=2.3cm,top=2.3cm,left=2cm,right=2cm]{geometry}
+\usepackage{ngerman}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{ae}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[pdftex]{graphicx}
+\usepackage{float}
+\usepackage{kpfonts,baskervald}
+\usepackage{listings}
+\renewcommand{\labelenumi}{\alph{enumi})}
+\renewcommand{\labelenumii}{\roman{enumii})}
+\newcommand{\Veranstaltung}[0]{Softwareprojekt Algorithmen der Computervision\\
+	                           \large{Waggledance Detection}}
+\newcommand{\Autoren}[0]{Roman Schulte-Sasse, Simon Auch, Johannes Sauer}
+
+\lstset{language=C++}
+
+%Titel, Autoren
+\title{\Veranstaltung}
+\author{\Autoren}
+\date{\today}
+\begin{document}
+\maketitle
+
+%% Beispiel für Codelisting, zum Testen aukommentieren:
+
+%\begin{lstlisting}
+%#include <stdio.h>
+%#define N 10
+%/* Block
+% * comment */
+%
+%int main()
+%{
+%	int i;
+%
+% 	// Line comment.
+% 	puts("Hello world!");
+%
+% 	for (i = 0; i < N; i++)
+% 	{
+%		puts("LaTeX is also great for programmers!");
+% 	}
+%
+% 	return 0;
+%}
+%\end{lstlisting}
+
+\section{Hardwaresetup}% Johannes
+
+\subsection{Kameramount}% Johannes
+\subsection{Objektive}% Johannes
+
+
+\section{Dotdetector}% Simon
+
+\subsection{Fehler der FFT-Berechnung}% Simon
+\subsection{Neues Feature zur Bewertung der Dots}% Simon
+\subsection{Parallelisierung der Dotdetection}% Johannes
+\subsection{Dotdetector mit Matrizen}% Roman
+
+\section{Winkelanalyse}% Roman
+
+\subsection{Fitline (Lineare Regression)}% Roman
+\subsection{Darstellung in Videos}% Roman
+
+
+\section{Python Prototyp}% Simon
+
+\subsection{Auswertung der gefundenen Waggles}% Simon
+\subsection{Visualisierung mittels Gnuplot}% Simon
+
+\section{Korrektur des Sanitychecks}
+
+\end{document}

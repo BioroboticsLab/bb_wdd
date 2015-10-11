@@ -11,6 +11,7 @@
 \usepackage{float}
 \usepackage{kpfonts,baskervald}
 \usepackage{listings}
+\usepackage{hyperref}
 \renewcommand{\labelenumi}{\alph{enumi})}
 \renewcommand{\labelenumii}{\roman{enumii})}
 \newcommand{\Veranstaltung}[0]{Softwareprojekt Algorithmen der Computervision\\
@@ -52,9 +53,38 @@
 
 \section{Hardwaresetup}% Johannes
 
+Bevor wir überhaupt mit dem algorithmischen Teil des Projekts, der Verbesserung bei der Erkennung der Schwänzeltänze,
+anfangen konnten, war es zunächst notwendig die passende Hardware zu beschaffen.
+Die verwendete Kamera stammte aus dem PlayStation Eye System und wurde schon vor unserem Projektstart ausgewählt um 
+die Tänze zu detektieren, da sie eine außergewöhnliche hohe Aufzeichnungsrate von 100 Hz bei gleichzeitig niedrigem Preis bietet.
+
+Leider ist das Objektiv dieser Kamera nicht auf die Maße der Aufbauten um den Bienenstock ausgerichtet.
+Bei dem Setup zur Zeit unseres Projekts war geplant die Kamera ca. 70 bis 90 cm von dem Stock entfernt zu installieren.
+Für diese Objektweite wurde ein Objektiv mit anderer Brennweite notwendig.
+Da bei der PS Eye Kamera kein Austausch von Objektiven vorgesehen ist, musste der Aufbau über dem Sensor mit dem ursprünglichen
+Objektiv zusammen entfernt werden und durch einen Neuen ersetzt werden.
+
 \subsection{Kameramount}% Johannes
+
+Da die PS Eye Kamera allgemein bei Bastlern beliebt ist, waren schon Mehrere vor uns auf die Idee gekommen das Kameragehäuse auszutauschen.
+Deswegen sind CAD-Modelle zum 3D-Drucken für solche Gehäuse öffentlich verfügbar.
+Bei unserem Projekt verwendeten wir ein \href{http://www.thingiverse.com/thing:83754}{Gehäuse für M12-Objektive}.
+Wir konnten das Gehäuse mit dem 3D-Drucker der AG Secure Identity ausdrucken, der Druck selbst war problemlos.
+Allerdings stellten wir später bei der Verwendung der modifizierten Kamera fest, dass das Schmelzschichtverfahren bei dem Druck
+etwas an Genauigkeit zu wünschen übrig liess.
+Das Objektiv hatte deshalb in dem Gewinde etwas zu viel Spiel und musste ab und zu nachjustiert werden, wenn das Licht nicht richtig
+auf den Sensor fokussiert wurde.
+Alles in allem war die Qualität des Gehäuses für unsere Zwecke jedoch ausreichend.
+
 \subsection{Objektive}% Johannes
 
+Die Wahl unserer Objektive war zum einen durch den schon beschriebenen Abstand zum Bienenstock und den M12-Mount beschränkt.
+Da der Stock Ausmaße von ca. 30 cm $\times$ 40 cm hatte, ergab sich eine Brennweite von ca. 6 bis 7 mm.
+Außerdem sollte das Objektiv das Bild möglichst wenig verzerren und keinen IR-Filter besitzen.
+Da die Kombination dieser Eigenschaften etwas speziell ist hatten wir einige Zeit benötigt um eine gute Auswahl zu finden.
+Letztendlich wurden wir von dem Versandhändler \href{http://www.lensation.de/}{Lensation} gut beraten und bekamen sogar mehrere Objektive
+zum Testen ausgeliehen.
+Eins davon passte gut zu den Anforderungen und wurde deswegen gekauft.
 
 \section{Dotdetector}% Simon
 Nachdem wir uns das erste mal in den Code und die Arbeit eingearbeitet und profiled haben wurde uns schnell klar, dass:
@@ -121,6 +151,15 @@ Die einfachste möglichkeit dieses Problem zu lösen, welche sehr zuverlässig f
 Jedoch glauben wir auch dass es ansonsten keine Triviale möglichkeit gibt dieses ventilieren und das tanzen auf dieser Ebene zu unterscheiden, da beides auf die gleichen Frequenzen fällt (bzw. vielfache davon). Eine mögliche Lösung in der Nachbearbeitung währe womöglich die örtlichen Abstände erkannter Waggles zu messen, da sich die Bienen während des ventilierens nicht bewegen und die erkannten Waggles entprechend immer an genau der gleichen Stelle sind. Um an dieser Stelle anzusetzen existiert bereits ein Python Prototyp, siehe Python Prototyp.
 
 \subsection{Parallelisierung der Dotdetection}% Johannes
+
+Während der Laufzeitanalyse des bestehenden Codes ist uns aufgefallen, dass die große Verarbeitungsdauer des Dotdetectorlayers schon bei kleineren Abweichung von den üblichen Parametern (z.B. bei einer höheren Auflösung)
+zu Problemen führen kann, insbesondere weil dadurch Videoframes verloren werden, was die Erkennung von Tänzen verfälschen kann.
+Um diesen Fehler zu beheben versuchten wir zunächst kleinere, lokale Änderungen einzuführen um zu sehen ob sich das Problem ohne aufwendiges Refactoring beheben liess.
+Nach mehrern Profilingdurchgängen war uns aufgefallen, dass vor allem die Dotdetection zeitraubend ist, da für jedes Bildfeld, das einen Dot repräsentiert bei der Detektion ein Schleifendurchlauf nötig ist.
+Um diesen Teil des Codes zu beschleunigen, parallelisierten wir diese Schleife.
+Hierzu verwendeten wir eine {\tt parallel\_for} Schleife; die kritischen Programmteile innerhalb der Schleife wurden durch Locks geschützt.
+Diese Verbesserung war zwar sehr schnell durchgeführt und änderte nichts an der Funktionsweise des Programms, leider war der Geschwindigkeitszugewinn jedoch zu klein um das Problem zu lösen.
+
 \subsection{Dotdetector mit Matrizen}% Roman
 
 \section{Winkelanalyse}% Roman

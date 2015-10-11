@@ -21,7 +21,7 @@ namespace wdd {
 		static void init(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
 
 	private:
-		static void executeDetection(cv::MatExpr &_projectedSin, cv::MatExpr &_projectedCos, uint16_t _id);
+		static void executeDetection(cv::Mat &_projectedSin, cv::Mat& _projectedCos, uint16_t _id);
 		//void createCosSinMatrices(arma::mat &sinMatrix, arma::mat &cosMatrix);
 		//void projectPotentials(arma::mat const &sinMatrix, arma::mat const &cosMatrix);
 
@@ -29,6 +29,7 @@ namespace wdd {
 		Holds the video to be analysed as ring buffer. Any operations
 		can then be efficiently done on the armadillo cube.
 		*/
+		//static arma::mat videoBuffer;
 		static cv::Mat videoBuffer;
 
 		/*

@@ -27,7 +27,7 @@
 \begin{document}
 \maketitle
 
-%% Beispiel für Codelisting, zum Testen aukommentieren:
+% Beispiel für Codelisting, zum Testen aukommentieren:
 
 %\begin{lstlisting}
 %#include <stdio.h>
@@ -162,11 +162,59 @@ Diese Verbesserung war zwar sehr schnell durchgeführt und änderte nichts an de
 
 \subsection{Dotdetector mit Matrizen}% Roman
 
+Der Dot-Detector-Layer ist der mit Abstand teuerste Teil der kompletten Waggle-Detection, denn er konsumiert ca. 90 Prozent der gesamten Zeit pro Frame.
+Dieser Zeitverbrauch liegt vor Allem an der sehr aufwändigen Projektion jedes einzelnen Pixels auf die Sinus bzw. Cosinus-Funktion.
+Der bisherige Ansatz zur Lösung dieses Problems bestand aus einem Objekt pro Pixel, in welches die Helligkeitswerte, die dieser Pixel besaß, kopiert wurden.
+Für einen neuen Frame wurden also zunächst die Werte aktualisiert und anschließend wurde für jeden einzelnen Pixel die Projektion vorgenommen und entschieden, ob ein Schwellwert überschritten wurde.
+Da die Bienen meist in nur 3-4 Frequenzen tanzen, muss dementsprechend jeder Pixel achtmal projeziert (Sinus und Cosinus) und anschließend evaluiert werden.
+
+Um diesen Prozess effizienter zu gestalten, wollten wir diesen Ansatz ändern. Anstatt eines Dot-Detectors pro Pixel sollte die gesamten Bildinformationen über die Zeit in einer Matrix gespeichert werden.
+Die Projektion der gesamten Pixel auf einen Sinus oder Cosinus entspricht damit einer Matrix-Multiplikation.
+Die Projektion der einzelnen Bildpunkte auf Cosinus/Sinus lässt sich also folgendermaßen formulieren:
+
+\begin{align}
+D \cdot F_{sin} &= p_{sin} \\
+D \cdot F_{cos} &= p_{cos} \\
+\end{align}
+wobei
+\begin{align*}
+D &\in (resX \cdot resY) \times bufferSize \\
+F_{sin/cos} &\in bufferSize \times freqNumber
+\end{align*}
+Dabei steht \textit{resX} die Auflösung des Bildes in horizontaler Richtung, \textit{resY} die Auflösung in vertikaler Richtung und \textit{bufferSize} die Anzahl der im Ringbuffer enthaltenen Bilder. \textit{freqNumber} bezeichnet die Anzahl der Frequenzen, auf die projeziert werden soll.
+
+Für alle Frequenzen sind damit nur noch zwei Matrix-Multiplikationen nötig. Dies bietet zwar keine Änderung in der Anzahl der Berechnungen, allerdings sind die modernen Bibliotheken für Lineare Algebra sehr stark optimiert, so dass die Berechnung mittels Matrizen deutlich schneller geht, als eine selbst implementierte Variante.
+Je nach Prozessor ist der Grad der Optimierung auch unterschiedlich, allerdings sind mittels Armadillo Beschleunigungen im 10-100 fachen erwartbar, da SSE Register und spezielle Makro-Befehle genutzt werden können.
+Weiterhin bietet diese Form der Berechnung der Projektion eine Möglichkeit auch in der Zukunft weiter zu optimieren, beispielsweise durch Auslagerung der Rechnungen auf eine GPU.
+In Performance-Tests war die Implementierung mit Matrix-Multiplikation ca. ein Drittel schneller, als die auf den Zweck hochoptimierte alte Variante des Dot-Detectors.
+
+Zukünftig könnten auch die Sinus- bzw. Cosinus Matrizen einmal vorberechnet werden, anstatt wie momentan jeden Frame neu. Dadurch ließe sich ein weiterer Speedup der Berechnungen erreichen.
+
 \section{Winkelanalyse}% Roman
 
-\subsection{Fitline (Lineare Regression)}% Roman
+Der dritte Layer der \textit{Waggle Detection} beschäftigt sich mit der Extraktion von Winkel und Länge des Tanzes.
+In der bisherigen Implementierung wurde dafür der Winkel des letzten und ersten erkannten Punktes, welcher zum Tanz gehört, berechnet. Für die Länge wurde ebenso die euklidische Distanz dieser beiden Punkte zueinander berechnet.
+Mathematisch lässt sich die alte Winkelextraktion folgendermaßen aufschreiben:
+\begin{align}
+\theta &= atan2((last.y-first.x), (last.x-first.x)) \\
+r &= \sqrt{(last.x-first.x)^2 + (last.y-first.y)^2}
+\end{align}
+Dieser Ansatz ist zwar mathematisch korrekt, allerdings gegenüber Ausreißern in der Detektion der Pixel nicht robust.
+Weiterhin kann es durchaus sein, dass sich eine Biene immer noch tanzt, während sie bereits dabei ist, sich umzudrehen. In diesem Fall wäre zwar die Richtung des Großteils des Tanzes in einer Richtung, allerdings könnten diese letzten Punkte die extrahierte Richtung sehr stark beeinflussen.
+
+Aus diesem Grund haben wir uns entschieden, auch hier Verbesserungen vorzunehmen, um die endgültige Extraktion der Positionen der Nahrungsquellen für die Bienen zu verbessern.
+
+\subsection{Fitline und Lineare Regression}% Roman
+Um die Winkel-Extraktion zu verbessern, haben wir zunächst einen klassischen Algorithmus aus der Mustererkennung verwendet. Die \textit{lineare Regression} berechnet aus verschiedenen Datenpunkten eine Ausgleichsgerade (im $\mathbf{R}^2$). Diese ist zwar nicht sehr robust gegenüber Ausreißern, allerdings schon deutlich besser, als die einfache Extraktion via erstem und letztem Punkt.
+Bei der linearen Regression wird der quadratische Fehler einer Gerade durch die Datenpunkte minimiert, was zu einer Gerade führt, die den tatsächlichen Verlauf des Tanzes sehr viel besser approximiert, als der bisherige Algorithmus.
+
+Da allerdings auch dieses Verfahren aus oben genannten Gründen nicht völlig zufriedenstellend war, haben wir mittels der Fitline-Funktion von OpenCV versucht, bessere Ergebnisse zu bekommen.
+Diese Funktion basiert auf einer Klasse von Schätzern, sog. \textit{M-Estimators} und verwendet zur Approximation der Linie einen \textit{RANSAC}-ähnlichen Algorithmus.
+Durch die Verwendung dieser Funktion ließ sich der Winkel deutlich besser extrahieren als in der Vorgänger-Funktion.
+
 \subsection{Darstellung in Videos}% Roman
 
+Um die 
 
 \section{Python Prototyp}% Simon
 Gegen Ende des Projektes haben wir noch an einem kleinen Python-Skript gearbeitet, um die gefundenen Waggles zu visualisieren und anhand von Bedingungen (z.B. der maximale/minimale zeitliche und örtliche Abstand von einzelnen Waggles) zu Clustern. Die Visualisierung erfolgt hierbei mithilfe von gnuplot. Zu beachten ist, dass das Skript zur Zeit noch \emph{alle} Waggles die es im angegebenen Ordner findet lädt, dies kann bei vielen Waggles entsprechend lange dauern.

@@ -57,9 +57,69 @@
 
 
 \section{Dotdetector}% Simon
+Nachdem wir uns das erste mal in den Code und die Arbeit eingearbeitet und profiled haben wurde uns schnell klar, dass:
+\begin{enumerate}
+\item  Der Dotdetector einen Fehler hat
+\item eine Formel genutzt wird welche sehr unintuitiv ist 
+\item 90\% der Ausführungszeit auf den Dotdetector fällt
+\item Die restlichen Layers das tun was Sie sollen\\
+\end{enumerate}
+Aufgrund dieser zwei Punkte haben wir uns entschlossen uns hauptsächlich auf den Dotdetector zu konzentrieren.
 
-\subsection{Fehler der FFT-Berechnung}% Simon
+\subsection{Fehler der Frequenzanalyse-Berechnung}% Simon
+Die Berechnung der Frequenzanalyse geschieht mit folgender Formel:
+\begin{center}
+\begin{equation} 
+score(\bar{B}_j^n, r) = \sum_{1\le m\le b} (\bar{B}_j^n(m) * sin_r^m)^2+(\bar{B}_j^n(m) * cos_r^m)^2
+\end{equation}
+\begin{equation} 
+score(\bar{B}_j^n, r) = \sum_{1\le m\le b} (\bar{B}_j^n(m)) ^2 * (sin_r^m) ^2+(\bar{B}_j^n(m)) ^2 * (cos_r^m) ^2
+\end{equation}
+\begin{equation} 
+score(\bar{B}_j^n, r) = \sum_{1\le m\le b} (\bar{B}_j^n(m)) ^2 * ((sin_r^m) ^2+ (cos_r^m) ^2)
+\end{equation}
+\begin{equation} 
+score(\bar{B}_j^n, r) = \sum_{1\le m\le b} (\bar{B}_j^n(m)) ^2
+\end{equation}
+\end{center}
+
+Das diese Formel keine Frequenzanalyse darstellt dürfte einleuchtend sein, weswegen wir die Formel folgendermaßen korrigieren:
+\begin{center}
+\begin{equation} 
+score(\bar{B}_j^n, r) = \big(\sum_{1\le m\le b} \bar{B}_j^n(m) * sin_r^m\big)^2 +  \big(\sum_{1\le m\le b} \bar{B}_j^n(m) * cos_r^m\big)^2
+\end{equation}
+\end{center}
+
+Durch diese einfache Änderung stellten wir bereits eine deutlich reduzierte Erkennungsrate von Pixel fest, welche in dem betrachteten Zeitraum \emph{nur} eine große Amplitude hatten (z.B. dunkle Biene auf hellem Holz).
+
 \subsection{Neues Feature zur Bewertung der Dots}% Simon
+Da die Formel zur Bewertung eines Pixel mit all seinen berechneten Frequenzen sehr unintuitiv ist, dachten wir uns vielleicht das man hier eine einfachere und womöglich auch bessere Formel finden können sollte.\\
+Die alte Formel:
+\begin{center}
+\begin{equation} 
+potential(D_j)=A^n_j*\sum_{r\in FREQS}w(score(\bar{B}_j^n, r)) * score(\bar{B}_j^n,r)
+\end{equation}
+\end{center}
+
+Wobei die Funktion $w$ angibt, wieviele Scores kleiner sind, d.h. höhere Scores werden stärker, niedrigere schwächer bewertet. Da in keiner Stelle der Arbeit darauf eingegangen wird, wieso diese Formel an dieser Stelle ihren zweck erfüllt haben wir uns etwas einfacheres ausgedacht.
+
+Als erstes haben wir uns entschieden die Amplitude aus dieser Rechnung zu entfernen, da Sie bereits genutzt wird um zu entscheiden ob der Pixel überhaupt als Dot in betracht gezogen wird. Die zweite Überlegung war, dass wir einfach schauen könnten ob ein Score größer als $x$ ist oder nicht.
+
+\begin{center}
+\begin{equation} 
+\exists r\in FREQS : x\le score(\bar{B}_j^n, r)
+\end{equation}
+\end{center}
+
+Da diese Funktion schon sehr vielversprechend arbeitete, jedoch nicht immer alle Waggles erkannt hat, haben wir uns entschieden über jeweils zwei benachbarte Frequenzen die entsprechenden Scores zu summieren und für diese testen ob Sie größer $x$ sind. Diese Änderung hatte den Effekt, das nun auch die Bienen erkannt werden welche genau zwischen zwei Frequenzen tanzen.
+
+\subsection{Probleme des neuen Features und der Frequenanalyse}
+Das einzige gravierende Problem welches wir mit dem neuen Feature und der korrigierten Frequenanalyse festgestellt haben ist, dass bei ungünstiger Beleuchtung die Bienen beim sogenannten ventilieren erkannt werden, da der Wechsel von reflektiertem Licht und dunkler Wabe auch in den betrachten Frequenzbereich fällt (bzw. ein vielfachens davon).
+
+Die einfachste möglichkeit dieses Problem zu lösen, welche sehr zuverlässig funktionierte, war die Beleuchtung zu ändern. Als Ideal hat sich diffuse Beleuchtung (z.B. Raumbeleuchtung mit Leuchtröhren) herausgestellt.
+
+Jedoch glauben wir auch dass es ansonsten keine Triviale möglichkeit gibt dieses ventilieren und das tanzen auf dieser Ebene zu unterscheiden, da beides auf die gleichen Frequenzen fällt (bzw. vielfache davon). Eine mögliche Lösung in der Nachbearbeitung währe womöglich die örtlichen Abstände erkannter Waggles zu messen, da sich die Bienen während des ventilierens nicht bewegen und die erkannten Waggles entprechend immer an genau der gleichen Stelle sind. Um an dieser Stelle anzusetzen existiert bereits ein Python Prototyp, siehe Python Prototyp.
+
 \subsection{Parallelisierung der Dotdetection}% Johannes
 \subsection{Dotdetector mit Matrizen}% Roman
 
@@ -70,10 +130,20 @@
 
 
 \section{Python Prototyp}% Simon
+Gegen Ende des Projektes haben wir noch an einem kleinen Python-Skript gearbeitet, um die gefundenen Waggles zu visualisieren und anhand von Bedingungen (z.B. der maximale/minimale zeitliche und örtliche Abstand von einzelnen Waggles) zu Clustern. Die Visualisierung erfolgt hierbei mithilfe von gnuplot. Zu beachten ist, dass das Skript zur Zeit noch \emph{alle} Waggles die es im angegebenen Ordner findet lädt, dies kann bei vielen Waggles entsprechend lange dauern.
 
-\subsection{Auswertung der gefundenen Waggles}% Simon
-\subsection{Visualisierung mittels Gnuplot}% Simon
+Dieses Projekt ist vermutlich eine gute Stelle um Probleme wie die des neuen Features zur Dotdetection mit ungünstigen Lichverhältnissen in der nachbearbeitung zu lösen.
+\subsection{Funktionsübersicht}% Simon
+\begin{enumerate}
+\item eine Klasse Waggle, welche alle Informationen zu einzelnen Waggles speichert
+\item laden aller gefundener Waggles des WDD
+\item Clustern der gefunden Waggles anhand von bedingungen (siehe getAllClusters.py, Funktion match)
+\item Ausgabe aller gefundenen Waggles/Cluster in eine .csv
+\item Visualisierung von Waggles/Clustern\\
+\end{enumerate}
 
 \section{Korrektur des Sanitychecks}
+Während einigen Tests ist uns aufgefallen, dass man nicht auf der kompletten auflösung von Videos arbeiten konnte da ein Fehlerhafter Sanitycheck auf eine Reduzierung auf mindestens 1/4 bestanden hat.
+
 
 \end{document}

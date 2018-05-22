@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Config.h"
 #include "InputVideoParameters.h"
 #include "TypeToString.h"
 

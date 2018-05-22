@@ -1,11 +1,12 @@
-#include "stdafx.h"
+#include "Config.h"
+#include "opencv2/opencv.hpp"
 #include "WaggleDanceExport.h"
 #include "WaggleDanceOrientator.h"
 
 namespace wdd
 {
 	char root_path[] = "\\output";
-	char root_fullpath[MAX_PATH];
+    char root_fullpath[FILENAME_MAX];
 
 	// save the incrementing IDs of detection per directory
 	std::size_t ID = 0;
@@ -13,10 +14,10 @@ namespace wdd
 	bool root_exist_chk = false;
 
 	// save the current day
-	char buf_YYYYMMDD[MAX_PATH];
+    char buf_YYYYMMDD[FILENAME_MAX];
 	// save the current hour:minute and CamID 0-9
-	char buf_YYYYMMDD_HHMM_camID[MAX_PATH];
-	char relpath_YYYYMMDD_HHMM_camID[MAX_PATH];
+    char buf_YYYYMMDD_HHMM_camID[FILENAME_MAX];
+    char relpath_YYYYMMDD_HHMM_camID[FILENAME_MAX];
 	char buf_camID[32];
 	char buf_dirID[32];
 
@@ -24,13 +25,14 @@ namespace wdd
 
 	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE * d_ptr, std::size_t camID)
 	{
-		char _buf[MAX_PATH];
+        /*
+        char _buf[FILENAME_MAX];
 
 		//
 		// check <YYYYYMMDD> folder
 		//
 		// write YYYYYMMDD string & compare to last saved		
-		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d", d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay);
+        sprintf_s(_buf, FILENAME_MAX, "%04d%02d%02d", d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay);
 
 		if(strcmp(_buf,buf_YYYYMMDD) != 0)
 		{
@@ -43,7 +45,7 @@ namespace wdd
 		// check <YYYYYMMDD_HHMM_CamID> folder
 		//
 		// write YYYYYMMDD_HHMM_ string
-		sprintf_s(_buf, MAX_PATH, "%04d%02d%02d_%02d%02d_", 
+        sprintf_s(_buf, FILENAME_MAX, "%04d%02d%02d_%02d%02d_",
 			d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay,
 			d_ptr->rawtime.wHour, d_ptr->rawtime.wMinute
 			);
@@ -89,16 +91,16 @@ namespace wdd
 		// write CSV file
 		//
 		// link full path from main.cpp
-		extern char _FULL_PATH_EXE[MAX_PATH];
+        extern char _FULL_PATH_EXE[FILENAME_MAX];
 
-		char CSV_FILE[MAX_PATH];
+        char CSV_FILE[FILENAME_MAX];
 
-		strcpy_s(CSV_FILE, MAX_PATH, _FULL_PATH_EXE);
+        strcpy_s(CSV_FILE, FILENAME_MAX, _FULL_PATH_EXE);
 		strcat_s(CSV_FILE, root_path);
 		strcat_s(CSV_FILE, "\\");
 
-		strcat_s(CSV_FILE, MAX_PATH, _buf);
-		strcat_s(CSV_FILE, MAX_PATH, "\\");
+        strcat_s(CSV_FILE, FILENAME_MAX, _buf);
+        strcat_s(CSV_FILE, FILENAME_MAX, "\\");
 		strcat_s(CSV_FILE, buf_YYYYMMDD_HHMM_camID);
 		strcat_s(CSV_FILE, "_");
 		strcat_s(CSV_FILE, buf_dirID);
@@ -151,8 +153,8 @@ namespace wdd
 		cv::Mat image_out(size, CV_8UC3);
 
 		// set image file name buffer
-		char BUFF_PATH[MAX_PATH];
-		char BUFF_UID[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
+        char BUFF_UID[FILENAME_MAX];
 
 		std::size_t i=0;
 		for (auto it=seq.begin(); it!=seq.end(); ++it)
@@ -161,18 +163,18 @@ namespace wdd
 			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
 			// create dynamic path_out string
-			strcpy_s(BUFF_PATH, MAX_PATH, _FULL_PATH_EXE);
+            strcpy_s(BUFF_PATH, FILENAME_MAX, _FULL_PATH_EXE);
 			strcat_s(BUFF_PATH, root_path);
 			strcat_s(BUFF_PATH, "\\");
-			strcat_s(BUFF_PATH, MAX_PATH, _buf);
-			strcat_s(BUFF_PATH, MAX_PATH, "\\image_");
+            strcat_s(BUFF_PATH, FILENAME_MAX, _buf);
+            strcat_s(BUFF_PATH, FILENAME_MAX, "\\image_");
 
 			// convert picID=[0;seq_in_ptr->size()-1]
-			sprintf_s(BUFF_UID, MAX_PATH, "%03d", i);
+            sprintf_s(BUFF_UID, FILENAME_MAX, "%03d", i);
 
 			// append 
-			strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
-			strcat_s(BUFF_PATH, MAX_PATH, ".png");
+            strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
+            strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
 
 			//cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
 
@@ -181,8 +183,8 @@ namespace wdd
 			i++;
 
 			//clear buffers
-			memset(BUFF_PATH,0,MAX_PATH*sizeof(char));
-			memset(BUFF_UID,0,MAX_PATH*sizeof(char));
+            memset(BUFF_PATH,0,FILENAME_MAX*sizeof(char));
+            memset(BUFF_UID,0,FILENAME_MAX*sizeof(char));
 		}
 
 		//finally draw detected orientation
@@ -193,18 +195,20 @@ namespace wdd
 		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
 
 		// create dynamic path_out string
-		strcpy_s(BUFF_PATH, MAX_PATH, _FULL_PATH_EXE);
+        strcpy_s(BUFF_PATH, FILENAME_MAX, _FULL_PATH_EXE);
 		strcat_s(BUFF_PATH, root_path);
 		strcat_s(BUFF_PATH, "\\");
-		strcat_s(BUFF_PATH, MAX_PATH, _buf);
-		strcat_s(BUFF_PATH, MAX_PATH, "\\orient.png");
+        strcat_s(BUFF_PATH, FILENAME_MAX, _buf);
+        strcat_s(BUFF_PATH, FILENAME_MAX, "\\orient.png");
 
 		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
+        */
+        // TODO BEN: FIX
 	}
 
 	double WaggleDanceExport::uvecToRad(cv::Point2d in)
 	{
-		if(_isnan(in.x) | _isnan(in.y))
+        if(std::isnan(in.x) | std::isnan(in.y))
 			return std::numeric_limits<double>::quiet_NaN();
 
 		return atan2(in.y,in.x);
@@ -220,12 +224,13 @@ namespace wdd
 
 	void WaggleDanceExport::createGenericFolder(char dir_rel[])
 	{
+        /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
-		extern char _FULL_PATH_EXE[MAX_PATH];
+        extern char _FULL_PATH_EXE[FILENAME_MAX];
 
-		char BUFF_PATH[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
 
 		// create path to .
 		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
@@ -242,17 +247,19 @@ namespace wdd
 				exit(-19);
 			}
 		}
-
+        */
+        // TODO BEN: FIX
 	}
 
 	int WaggleDanceExport::countDirectories(char dir_rel[])
 	{
+        /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
-		extern char _FULL_PATH_EXE[MAX_PATH];
+        extern char _FULL_PATH_EXE[FILENAME_MAX];
 
-		char BUFF_PATH[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
 
 		// create path to .
 		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
@@ -263,7 +270,7 @@ namespace wdd
 		WIN32_FIND_DATA ffd;
 		HANDLE hFind = INVALID_HANDLE_VALUE;
 
-		if (strlen(BUFF_PATH) > (MAX_PATH - 3))
+        if (strlen(BUFF_PATH) > (FILENAME_MAX - 3))
 		{
 			printf("WARNING! Directory path is too long: %s\n", BUFF_PATH);
 			return -1;
@@ -290,5 +297,7 @@ namespace wdd
 
 		// .. and . count as "2"		
 		return count -2 ;
+        */
+        // TODO BEN: FIX
 	}
 }

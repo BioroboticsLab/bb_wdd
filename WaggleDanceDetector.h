@@ -1,6 +1,8 @@
 #pragma once
 #include "VideoFrameBuffer.h"
 
+#include <armadillo>
+
 namespace wdd
 {
 	struct DANCE{
@@ -15,7 +17,8 @@ namespace wdd
 		cv::Point2d orient_uvec;
 		cv::Point2d naive_orientation;
 
-		SYSTEMTIME rawtime;
+        // TODO BEN: FIX
+        // SYSTEMTIME rawtime;
 	};
 
 	class WaggleDanceDetector

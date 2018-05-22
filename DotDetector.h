@@ -1,5 +1,9 @@
 #pragma once
 
+#include <memory>
+
+#include "Config.h"
+
 namespace wdd {
 	struct SAMP {
 		float cosines[WDD_FREQ_NUMBER];

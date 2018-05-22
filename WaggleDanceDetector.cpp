@@ -1,9 +1,8 @@
-#include "stdafx.h"
-
 #include "VideoFrameBuffer.h"
 #include "DotDetectorLayer.h"
 #include "WaggleDanceOrientator.h"
 #include "WaggleDanceExport.h"
+#include "Util.h"
 
 #include "WaggleDanceDetector.h"
 
@@ -82,26 +81,29 @@ namespace wdd
 	*/
 	void WaggleDanceDetector::_initOutPutFiles()
 	{		
+        /*
 		if(WDD_WRITE_DANCE_FILE || WDD_WRITE_SIGNAL_FILE)
 		{
 			// link full path from main.cpp
-			extern char _FULL_PATH_EXE[MAX_PATH];
+            extern char _FULL_PATH_EXE[FILENAME_MAX];
 			extern std::string GLOB_WDD_DANCE_OUTPUT_PATH;
-			char BUFF[MAX_PATH];
+            char BUFF[FILENAME_MAX];
 
 			if(WDD_WRITE_DANCE_FILE)
 			{
-				//strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-				//strcat_s(BUFF, MAX_PATH, danceFile_path);
+                //strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
+                //strcat_s(BUFF, FILENAME_MAX, danceFile_path);
 				fopen_s (&danceFile_ptr, GLOB_WDD_DANCE_OUTPUT_PATH.c_str(), "a+");
 			}
 			if(WDD_WRITE_SIGNAL_FILE)
 			{
-				strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-				strcat_s(BUFF, MAX_PATH, signalFile_path);
+                strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
+                strcat_s(BUFF, FILENAME_MAX, signalFile_path);
 				fopen_s (&signalFile_ptr, BUFF, "a+");
 			}
 		}
+        */
+        // TODO BEN: FIX
 	}
 	void WaggleDanceDetector::_setWDDConfig(std::vector<double> wdd_config)
 	{
@@ -281,7 +283,8 @@ namespace wdd
 				d.DANCE_FRAME_END =  WDD_SIGNAL_FRAME_NR;
 				d.positions.push_back(wdd_signal_pos);
 				d.position_last = wdd_signal_pos;
-				GetLocalTime(&d.rawtime);
+                // TODO BEN: FIX
+                //GetLocalTime(&d.rawtime);
 				WDD_UNIQ_DANCES.push_back(d);
 			}			
 		}
@@ -345,7 +348,6 @@ namespace wdd
 
 		if(WDD_VERBOSE)
 		{
-			extern double uvecToDegree(cv::Point2d in);
 			printf("Waggle dance #%d at:\t %.1f %.1f with orient %.1f (uvec: %.1f,%.1f)\n",
 				WDD_DANCE_NUMBER,
 				d_ptr->positions[0].x*pow(2, DotDetectorLayer::FRAME_REDFAC),
@@ -580,8 +582,6 @@ namespace wdd
 	}
 	void WaggleDanceDetector::_execDetectionWriteDanceFileLine(DANCE * d_ptr)
 	{
-		extern double uvecToDegree(cv::Point2d in);
-
 		unsigned long long start = d_ptr->DANCE_FRAME_START;
 		unsigned long long end = d_ptr->DANCE_FRAME_END;
 

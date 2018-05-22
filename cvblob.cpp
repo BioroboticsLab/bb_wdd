@@ -17,7 +17,7 @@
 // along with cvBlob.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "stdafx.h"
+#include "Config.h"
 #include "cvblob.h"
 
 using namespace std;

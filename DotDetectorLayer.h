@@ -28,7 +28,7 @@ namespace wdd{
 		static std::size_t DD_SIGNALS_NUMBER;
 		// saves ids of positive DDs (interface to WDD Layer 2)
 		//(a DotDetecotor has a positive signal if DD_SIGNAL_POTENTIALS[i] > WDD_SIGNAL_DD_MIN_SCORE)
-		static std::vector<unsigned int> DD_SIGNALS_IDs;
+        static std::vector<unsigned long long> DD_SIGNALS_IDs;
 
 		// defines detection frequency lower border
 		static double 	DD_FREQ_MIN;

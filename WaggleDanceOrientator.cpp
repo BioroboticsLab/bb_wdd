@@ -1,7 +1,7 @@
-#include "stdafx.h"
 #include "WaggleDanceOrientator.h"
-
 #include "cvblob.h"
+#include "Config.h"
+#include "opencv2/opencv.hpp"
 
 namespace wdd
 {
@@ -26,14 +26,15 @@ namespace wdd
 	char * WaggleDanceOrientator::path_out_root = "\\verbose\\wdo";
 	char * WaggleDanceOrientator::blobDirName = "\\blobs";
 	char * WaggleDanceOrientator::file_blobs_detail = "\\blobs_detail.txt";
-	char WaggleDanceOrientator::path_out_root_img[MAX_PATH];
-	char WaggleDanceOrientator::path_out_root_img_blob[MAX_PATH];
+    char WaggleDanceOrientator::path_out_root_img[FILENAME_MAX];
+    char WaggleDanceOrientator::path_out_root_img_blob[FILENAME_MAX];
 
 	/*
 	* static functions
 	*/
 	cv::Point2d WaggleDanceOrientator::extractOrientationFromImageSequence(std::vector<cv::Mat> seq_in, std::size_t unique_id)
 	{
+        /*
 		WaggleDanceOrientator::picID = 0;
 		WaggleDanceOrientator::blobID = 0;
 
@@ -43,14 +44,14 @@ namespace wdd
 			// link to help functionin main.cpp
 			extern bool dirExists(const char * dirPath);
 			// link full path from main.cpp
-			extern char _FULL_PATH_EXE[MAX_PATH];
+            extern char _FULL_PATH_EXE[FILENAME_MAX];
 
-			char BUFF_PATH[MAX_PATH];
-			char BUFF_UID[MAX_PATH];
+            char BUFF_PATH[FILENAME_MAX];
+            char BUFF_UID[FILENAME_MAX];
 
 			// create path to .\verbose
-			strcpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
-			strcat_s(BUFF_PATH, MAX_PATH, path_out);
+            strcpy_s(BUFF_PATH ,FILENAME_MAX, _FULL_PATH_EXE);
+            strcat_s(BUFF_PATH, FILENAME_MAX, path_out);
 
 			// check for path_out folder
 			if(!dirExists(BUFF_PATH))
@@ -60,8 +61,8 @@ namespace wdd
 			}
 
 			// create path to .\verbose\wdo
-			strcpy_s(BUFF_PATH ,MAX_PATH, _FULL_PATH_EXE);
-			strcat_s(BUFF_PATH, MAX_PATH, path_out_root);
+            strcpy_s(BUFF_PATH ,FILENAME_MAX, _FULL_PATH_EXE);
+            strcat_s(BUFF_PATH, FILENAME_MAX, path_out_root);
 
 			// check for path_out folder
 			if(!dirExists(BUFF_PATH))
@@ -71,13 +72,13 @@ namespace wdd
 			}
 
 			// create dynamic path_out string
-			strcat_s(BUFF_PATH, MAX_PATH, "\\");
+            strcat_s(BUFF_PATH, FILENAME_MAX, "\\");
 
 			// convert unique id
-			_itoa_s(unique_id, BUFF_UID, MAX_PATH, 10);
+            _itoa_s(unique_id, BUFF_UID, FILENAME_MAX, 10);
 
 			// append 
-			strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+            strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
 
 			if(!dirExists(BUFF_PATH))
 			{
@@ -86,10 +87,10 @@ namespace wdd
 					printf("\nCouldn't create %s directory.\n", BUFF_PATH);
 			}
 			// save path_out_root_img
-			strcpy_s(path_out_root_img, MAX_PATH, BUFF_PATH);
+            strcpy_s(path_out_root_img, FILENAME_MAX, BUFF_PATH);
 
 			// create dynamic path 
-			strcat_s(BUFF_PATH, MAX_PATH, blobDirName);
+            strcat_s(BUFF_PATH, FILENAME_MAX, blobDirName);
 
 			if(!dirExists(BUFF_PATH))
 			{
@@ -98,7 +99,7 @@ namespace wdd
 					printf("\nCouldn't create %s directory.\n", BUFF_PATH);
 			}
 			// save path_out_root_img_blob
-			strcpy_s(path_out_root_img_blob, MAX_PATH, BUFF_PATH);
+            strcpy_s(path_out_root_img_blob, FILENAME_MAX, BUFF_PATH);
 		}
 
 		std::vector<cv::Vec2d> unityOrientations;
@@ -176,6 +177,9 @@ namespace wdd
 		if(WDO_VERBOSE)
 			WaggleDanceOrientator::saveDetectedOrientationImages(&seq_in, &orient);
 
+        */
+        cv::Point2d orient;
+        // TODO BEN: FIX
 
 		return orient;
 	}
@@ -340,15 +344,15 @@ namespace wdd
 		double _TD_AREA_LIMIT = (*td_bw_mat_ptr).rows * (*td_bw_mat_ptr).cols * 0.02;
 
 		//convert Mat* to Iplimage* 
-		IplImage *td_bw_ipl_ptr = &(*td_bw_mat_ptr).operator IplImage(); 
+        IplImage td_bw_ipl = *td_bw_mat_ptr;
+        IplImage *labelImg_ptr = cvCreateImage(cvGetSize(&td_bw_ipl), IPL_DEPTH_LABEL, 1);
 
-		IplImage *labelImg_ptr = cvCreateImage(cvGetSize(td_bw_ipl_ptr), IPL_DEPTH_LABEL, 1);
 		cvb::CvBlobs blobs;
 
 		// run blob extraction
-		cvb::cvLabel(td_bw_ipl_ptr, labelImg_ptr, blobs);
+        cvb::cvLabel(&td_bw_ipl, labelImg_ptr, blobs);
 
-		cv::Mat labels(labelImg_ptr);
+        cv::Mat labels = cv::cvarrToMat(labelImg_ptr);
 
 		// outer loop allocation
 		double angle;
@@ -391,6 +395,7 @@ namespace wdd
 	}
 	void WaggleDanceOrientator::saveDetectedOrientationImages(const std::vector<cv::Mat> *seq_in_ptr, const cv::Point2d *orient_ptr)
 	{
+        /*
 		// get image dimensions
 		cv::Size size = (*seq_in_ptr)[0].size();
 
@@ -408,8 +413,8 @@ namespace wdd
 		cv::Mat image_out(size, CV_8UC3);
 
 		// set image file name buffer
-		char BUFF_PATH[MAX_PATH];
-		char BUFF_UID[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
+        char BUFF_UID[FILENAME_MAX];
 
 		std::size_t i=0;
 		for (auto it=seq_in_ptr->begin(); it!=seq_in_ptr->end(); ++it)
@@ -418,15 +423,15 @@ namespace wdd
 			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
 			// create dynamic path_out string
-			strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-			strcat_s(BUFF_PATH, MAX_PATH, "\\image_");
+            strcpy_s(BUFF_PATH, FILENAME_MAX, path_out_root_img);
+            strcat_s(BUFF_PATH, FILENAME_MAX, "\\image_");
 
 			// convert picID=[0;seq_in_ptr->size()-1]
-			sprintf_s(BUFF_UID, MAX_PATH, "%03d", i);
+            sprintf_s(BUFF_UID, FILENAME_MAX, "%03d", i);
 
 			// append 
-			strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
-			strcat_s(BUFF_PATH, MAX_PATH, ".png");
+            strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
+            strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
 
 			//cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
 
@@ -435,8 +440,8 @@ namespace wdd
 			i++;
 
 			//clear buffers
-			memset(BUFF_PATH,0,MAX_PATH*sizeof(char));
-			memset(BUFF_UID,0,MAX_PATH*sizeof(char));
+            memset(BUFF_PATH,0,FILENAME_MAX*sizeof(char));
+            memset(BUFF_UID,0,FILENAME_MAX*sizeof(char));
 		}
 
 		//finally draw detected orientation
@@ -447,13 +452,16 @@ namespace wdd
 		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
 
 		// create dynamic path_out string
-		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-		strcat_s(BUFF_PATH, MAX_PATH, "\\orient.png");
+        strcpy_s(BUFF_PATH, FILENAME_MAX, path_out_root_img);
+        strcat_s(BUFF_PATH, FILENAME_MAX, "\\orient.png");
 
 		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
+        */
+        // TODO BEN: FIX
 	}
 	void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Mat * labels_ptr, std::vector<double> * majMinAxisLenghts_ptr)
 	{	
+        /*
 		double _zoomFactor = 4;
 		std::stringstream ss;
 
@@ -482,7 +490,7 @@ namespace wdd
 		cv::Point2d HEAD(blob_ptr->centroid.x+lengthLine*cos(angle), blob_ptr->centroid.y+lengthLine*sin(angle));
 		cv::Point2d CENT(blob_ptr->centroid.x, blob_ptr->centroid.y);
 
-		// define Minor axis, + 90° to Major, relative line length according to axis lengths
+		// define Minor axis, + 90ï¿½ to Major, relative line length according to axis lengths
 		double angle_minor = angle + 0.5 * CV_PI;
 		lengthLine *= (*majMinAxisLenghts_ptr)[1] / (*majMinAxisLenghts_ptr)[0];
 		cv::Point2d BOTT(blob_ptr->centroid.x+lengthLine*cos(angle_minor), blob_ptr->centroid.y+lengthLine*sin(angle_minor));
@@ -493,39 +501,42 @@ namespace wdd
 
 
 		// set blob file name
-		char BUFF_PATH[MAX_PATH];
-		char BUFF_UID[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
+        char BUFF_UID[FILENAME_MAX];
 		// create dynamic path_out string
-		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img_blob);
-		strcat_s(BUFF_PATH, MAX_PATH, "\\image_");
+        strcpy_s(BUFF_PATH, FILENAME_MAX, path_out_root_img_blob);
+        strcat_s(BUFF_PATH, FILENAME_MAX, "\\image_");
 
 		// convert picID
-		sprintf_s(BUFF_UID, MAX_PATH, "%03d", picID);
+        sprintf_s(BUFF_UID, FILENAME_MAX, "%03d", picID);
 		//append
-		strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+        strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
 
 		//append
-		strcat_s(BUFF_PATH, MAX_PATH, "_blob_");
+        strcat_s(BUFF_PATH, FILENAME_MAX, "_blob_");
 
 		// convert unique id
-		_itoa_s(blobID, BUFF_UID, MAX_PATH, 10);
+        _itoa_s(blobID, BUFF_UID, FILENAME_MAX, 10);
 		//append
-		strcat_s(BUFF_PATH, MAX_PATH, BUFF_UID);
+        strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
 
 		// append 
-		strcat_s(BUFF_PATH, MAX_PATH, ".png");
+        strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
 
 
 		WaggleDanceOrientator::saveImage(&blob_visual, BUFF_PATH);
 		WaggleDanceOrientator::writeBlobsDetailLine(angle, majMinAxisLenghts_ptr);
+        */
+        // TODO BEN: FIX
 	}
 	void WaggleDanceOrientator::writeBlobsDetailLine(double angle, std::vector<double> * majMinAxisLenghts_ptr)
 	{
+        /*
 		FILE * file_blobs_detail_ptr;
 
-		char BUFF_PATH[MAX_PATH];
-		strcpy_s(BUFF_PATH, MAX_PATH, path_out_root_img);
-		strcat_s(BUFF_PATH, MAX_PATH, file_blobs_detail);
+        char BUFF_PATH[FILENAME_MAX];
+        strcpy_s(BUFF_PATH, FILENAME_MAX, path_out_root_img);
+        strcat_s(BUFF_PATH, FILENAME_MAX, file_blobs_detail);
 
 
 		fopen_s (&file_blobs_detail_ptr, BUFF_PATH, "a+");
@@ -542,6 +553,8 @@ namespace wdd
 		{
 			std::cerr <<"Warning! Could not write blob detail file!"<<std::endl;
 		}
+        */
+        // TODO BEN: FIX
 	}
 
 	/* stretches the values of a td image to be inbetween [0;1] 
@@ -730,6 +743,7 @@ namespace wdd
 	*/
 	void WaggleDanceOrientator::exportImage(const cv::Mat *img_ptr, const std::string path_ptr)
 	{
+        /*
 		FILE * fid;
 		fopen_s(&fid, path_ptr.c_str(), "w");
 
@@ -752,5 +766,7 @@ namespace wdd
 		}
 
 		fclose(fid);
+        */
+        // TODO BEN: FIX
 	}
 } /* namespace WaggleDanceDetector */

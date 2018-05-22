@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "Config.h"
 #include "DotDetectorMatrix.h"
 #include "DotDetectorLayer.h"
 
@@ -93,7 +93,10 @@ void DotDetectorM::detectDots() {
 	//std::cout << "resultCos: " << resultCos.rows << ", " << resultCos.cols << std::endl;
 
 	for (int i(0); i < videoBuffer.cols; ++i) {
+        /*
 		executeDetection(resultSin.row(i), resultCos.row(i), i);
+        */
+        // TODO BEN: FIX
 	}
 	//cv::Mat_<float> potentials(resolutionX, resolutionY);
 	//for (unsigned int i(0); i < resolutionX; ++i) {

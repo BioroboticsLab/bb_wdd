@@ -1,25 +1,17 @@
-#include "stdafx.h"
-#include "CLEyeCameraCapture.h"
 #include "DotDetectorLayer.h"
 #include "InputVideoParameters.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 #include "WaggleDanceExport.h"
 #include <tclap/CmdLine.h>
+#include "Config.h"
+#include "opencv2/opencv.hpp"
 
 using namespace wdd;
 
-double uvecToDegree(cv::Point2d in)
-{
-	if(_isnan(in.x) | _isnan(in.y))
-		return std::numeric_limits<double>::quiet_NaN();
-
-	// flip y-axis to match unit-circle-axis with image-matrice-axis
-	double theta = atan2(-in.y,in.x);
-	return theta * 180/CV_PI;
-}
 void getNameOfExe(char * out, std::size_t size, char * argv0)
 {
+    /*
 	std::string argv0_str(argv0);
 	std::string exeName;
 
@@ -37,11 +29,14 @@ void getNameOfExe(char * out, std::size_t size, char * argv0)
 		exeName += ".exe";
 
 	strcpy_s(out, size, exeName.c_str());
+    */
+    // TODO BEN: FIX
 }
 void getExeFullPath(char * out, std::size_t size)
 {
-	char BUFF[MAX_PATH];
-	extern char _NAME_OF_EXE[MAX_PATH];
+    /*
+    char BUFF[FILENAME_MAX];
+    extern char _NAME_OF_EXE[FILENAME_MAX];
 	HMODULE hModule = GetModuleHandle(NULL);
 	if (hModule != NULL)
 	{
@@ -54,22 +49,32 @@ void getExeFullPath(char * out, std::size_t size)
 		std::cerr << "Error! Module handle is NULL - can not retrive exe path!" << std::endl ;
 		exit(-2);
 	}
+    */
+    // TODO BEN: FIX
 }
 
 bool fileExists (const std::string& file_name)
 {
+    /*
 	struct stat buffer;
 	return (stat (file_name.c_str(), &buffer) == 0);
+    */
+    // TODO BEN: FIX
+    return false;
 }
 
 bool dirExists(const char * dirPath)
 {
+    /*
 	int result = PathIsDirectory((LPCTSTR)dirPath);
 
 	if (result & FILE_ATTRIBUTE_DIRECTORY)
 		return true;
 
 	return false;
+    */
+    // TODO BEN: FIX
+    return false;
 }
 
 // saves loaded, modified camera configs
@@ -82,6 +87,7 @@ std::size_t nextUniqueCamID = 0;
 // <camId> <GUID> <Arena.p1> <Arena.p2> <Arena.p3> <Arena.p4>
 void loadCamConfigFileReadLine(std::string line)
 {
+    /*
 	char * delimiter = " ";
 	std::size_t pos = 0;
 
@@ -152,14 +158,17 @@ void loadCamConfigFileReadLine(std::string line)
 	// keep track of loaded camIds and alter nextUniqueCamID accordingly
 	if(camId >= nextUniqueCamID)
 		nextUniqueCamID = camId + 1;
+    */
+    // TODO BEN: FIX
 }
 char camConfPath[] = "\\cams.config";
 void loadCamConfigFile()
 {
-	extern char _FULL_PATH_EXE[MAX_PATH];
-	char BUFF[MAX_PATH];
-	strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-	strcat_s(BUFF, MAX_PATH, camConfPath);
+    /*
+    extern char _FULL_PATH_EXE[FILENAME_MAX];
+    char BUFF[FILENAME_MAX];
+    strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
+    strcat_s(BUFF, FILENAME_MAX, camConfPath);
 
 	if(!fileExists(BUFF))
 	{
@@ -187,13 +196,16 @@ void loadCamConfigFile()
 		std::cerr<<"Error! Can not open cams.config file!"<<std::endl;
 		exit(111);
 	}
+    */
+    // TODO BEN: FIX
 }
 void saveCamConfigFile()
 {	
-	extern char _FULL_PATH_EXE[MAX_PATH];
-	char BUFF[MAX_PATH];
-	strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-	strcat_s(BUFF, MAX_PATH, camConfPath);
+    /*
+    extern char _FULL_PATH_EXE[FILENAME_MAX];
+    char BUFF[FILENAME_MAX];
+    strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
+    strcat_s(BUFF, FILENAME_MAX, camConfPath);
 	FILE * camConfFile_ptr;
 	fopen_s (&camConfFile_ptr, BUFF, "w+");
 
@@ -208,7 +220,10 @@ void saveCamConfigFile()
 		}
 	}
 	fclose(camConfFile_ptr);
+    */
+    // TODO BEN: FIX
 }
+/*
 inline void guidToString(GUID g, char * buf){
 	char _buf[64];
 	sprintf_s(_buf, "[%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x]",
@@ -219,12 +234,14 @@ inline void guidToString(GUID g, char * buf){
 
 	strcpy_s(buf,64,_buf);	
 }
+*/
+// TODO BEN: FIX
 
 // save executable name
-char _NAME_OF_EXE[MAX_PATH];
+char _NAME_OF_EXE[FILENAME_MAX];
 
 // save full path to executable
-char _FULL_PATH_EXE[MAX_PATH];
+char _FULL_PATH_EXE[FILENAME_MAX];
 
 
 void runTestMode(std::string videoFilename, double aux_dd_min_potential, int aux_wdd_signal_min_cluster_size, bool noGui);
@@ -292,19 +309,22 @@ int main(int nargs, char** argv)
 		noGui = noGUISwitch.getValue();
 		dancePath = outputArg.getValue();
 
+        /*
 		if(dancePath.size())
 		{
 			char BUFF[MAXCHAR];
-			strcpy_s(BUFF ,MAX_PATH, dancePath.c_str());
+            strcpy_s(BUFF ,FILENAME_MAX, dancePath.c_str());
 			GLOB_WDD_DANCE_OUTPUT_PATH = std::string(BUFF);
 		}
 		else 
 		{
 			char BUFF[MAXCHAR];
-			strcpy_s(BUFF ,MAX_PATH, _FULL_PATH_EXE);
-			strcat_s(BUFF, MAX_PATH, "\\dance.txt");
+            strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
+            strcat_s(BUFF, FILENAME_MAX, "\\dance.txt");
 			GLOB_WDD_DANCE_OUTPUT_PATH = std::string(BUFF);
 		}
+        */
+        // TODO BEN: FIX
 	}
 	catch (TCLAP::ArgException &e)
 	{
@@ -323,6 +343,8 @@ int main(int nargs, char** argv)
 	// WaggleDanceExport initialization
 	WaggleDanceExport::execRootExistChk();
 
+    // TODO BEN: FIX
+    /*
 	GUID * _guids;
 
 	// Query for number of connected cameras
@@ -343,6 +365,7 @@ int main(int nargs, char** argv)
 	{
 		_guids[i] = CLEyeGetCameraUUID(i);
 	}
+    */
 
 	// Load & store cams.config file
 	loadCamConfigFile();
@@ -354,6 +377,7 @@ int main(int nargs, char** argv)
 	// compare guids connected to guids loaded from file 
 	// - if match, camera has camId and arena properties -> configured=true
 	// - else it gets new camId -> configured=false
+    /*
 	for(int i = 0; i < numCams; i++)
 	{		
 		char guid_str_connectedCam[64];
@@ -387,6 +411,8 @@ int main(int nargs, char** argv)
 			camConfs.push_back(c);
 		}
 	}
+    */
+    // TODO BEN: FIX
 
 	// if autoStartUp flag, iterate camIdsLaunch and select first configured camId
 	int camIdUserSelect = -1;
@@ -454,6 +480,8 @@ int main(int nargs, char** argv)
 	}
 
 	// retrieve guid from camConfs according to camId
+    // TODO BEN: FIX
+    /*
 	CLEyeCameraCapture *pCam = NULL;
 	char windowName[64];
 	for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
@@ -478,7 +506,9 @@ int main(int nargs, char** argv)
 			}
 		}
 	}
+    */
 
+    /*
 	printf("Starting WaggleDanceDetector - CamID: %d\n", camIdUserSelect);
 	const CamConf * cc_ptr = pCam->getCamConfPtr();
 
@@ -510,7 +540,10 @@ int main(int nargs, char** argv)
 
 	pCam->StartCapture();
 	int param = -1, key;
+    */
+    // TODO BEN: FIX
 
+    /*
 	while(key = cvWaitKey(0))
 	{
 		switch(key)
@@ -524,18 +557,15 @@ int main(int nargs, char** argv)
 				version, compiletime);
 
 			printf("Currently dynamic parameter change is deactivated.\n");
-			/*
 			printf("Use the following keys to change camera parameters:\n"
 			"\t'p' - select Potential parameter\n"
 			"\t'c' - select min cluster number parameter\n"
 			"\t'+' - increment selected parameter\n"
 			"\t'-' - decrement selected parameter\n");
-			*/
 		}
 	}
 
 	pCam->StopCapture();
-	/*
 	printf("Use the following keys to change camera parameters:\n"
 	"\t'g' - select gain parameter\n"
 	"\t'e' - select exposure parameter\n"
@@ -545,11 +575,12 @@ int main(int nargs, char** argv)
 	"\t'-' - decrement selected parameter\n");
 	// The <ESC> key will exit the program
 	CLEyeCameraCapture *pCam = NULL;
-	*/
 
 	delete pCam;
 	delete _guids;
 	return 0;
+    */
+    // TODO BEN: FIX
 }
 
 void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux_WDD_SIGNAL_MIN_CLUSTER_SIZE, bool noGui)
@@ -615,6 +646,7 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	int FRAME_HEIGHT = vp.getFrameHeight();
 	int FRAME_RATE = 100;
 
+    /*
 	struct CamConf c;
 	c.camId = nextUniqueCamID++;	
 	strcpy_s(c.guid_str, "virtual-cam-config");
@@ -624,6 +656,8 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	c.arena[3] = cv::Point2i(0,240-1);
 	// prepare videoFrameBuffer
 	VideoFrameBuffer videoFrameBuffer(frame_counter_global, cv::Size(FRAME_WIDTH, FRAME_HEIGHT), cv::Size(20,20), c);
+    */
+    // TODO BEN: FIX
 
 	cv::Mat frame_input;
 	cv::Mat frame_input_monochrome;
@@ -692,7 +726,9 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 	wdd_config.push_back(WDD_DANCE_MIN_CONSFRAMES);
 
 
-	WaggleDanceDetector wdd(
+    // TODO BEN: FIX
+    /*
+    WaggleDanceDetector wdd(
 		dd_positions,
 		&frame_target,
 		ddl_config,
@@ -703,10 +739,14 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 		wdd_write_dance_file,
 		wdd_verbose
 		);
+        */
 
 
+    /*
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
 	const std::vector<DANCE> * WDDFinishedDances = wdd.getWDDFinishedDancesVec();
+    */
+    // TODO BEN: FIX
 
 	const std::map<std::size_t,cv::Point2d>  WDDDance2PointMap;
 
@@ -726,6 +766,7 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 
 	while(capture.read(frame_input))
 	{
+        /*
 
 		//convert BGR -> Gray
 		cv::cvtColor(frame_input,frame_input_monochrome, CV_BGR2GRAY);
@@ -815,7 +856,9 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 
 			start = std::chrono::steady_clock::now();
 		}
-	}
+    */
+        // TODO BEN: FIX
+    }
 
 	capture.release();
 }

@@ -1,11 +1,11 @@
-#include "stdafx.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceOrientator.h"
+#include "Config.h"
 
 namespace wdd
 {
 	char vfb_root_path[] = "\\fullframes";
-	char vfb_root_fullpath[MAX_PATH];
+    char vfb_root_fullpath[FILENAME_MAX];
 
 	VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC):
 		_BUFFER_POS(0),
@@ -40,6 +40,8 @@ namespace wdd
 
 		if(_CURRENT_FRAME_NR > 1000)
 		{
+            // TODO BEN: FIX
+            /*
 			GetLocalTime(&st);
 
 			int curent_hour = st.wHour;
@@ -50,6 +52,7 @@ namespace wdd
 				_last_hour = curent_hour;
 				saveFullFrame();
 			}
+            */
 		}
 		_BUFFER_POS = (++_BUFFER_POS) < VFB_MAX_FRAME_HISTORY ? _BUFFER_POS : 0;
 
@@ -61,12 +64,14 @@ namespace wdd
 	}
 	void VideoFrameBuffer::saveFullFrame()
 	{
+        // TODO BEN: FIX
+        /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
-		extern char _FULL_PATH_EXE[MAX_PATH];
+        extern char _FULL_PATH_EXE[FILENAME_MAX];
 
-		char BUFF_PATH[MAX_PATH];
+        char BUFF_PATH[FILENAME_MAX];
 
 		// create path to .
 		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
@@ -89,8 +94,8 @@ namespace wdd
 		char buf_camID[10];
 		_itoa_s(_CC.camId, buf_camID, sizeof(buf_camID), 10);
 
-		strcat_s(BUFF_PATH, MAX_PATH, "\\");
-		strcat_s(BUFF_PATH, MAX_PATH, buf_camID);
+        strcat_s(BUFF_PATH, FILENAME_MAX, "\\");
+        strcat_s(BUFF_PATH, FILENAME_MAX, buf_camID);
 
 		// check for path_out//id folder
 		if(!dirExists(BUFF_PATH))
@@ -107,9 +112,9 @@ namespace wdd
 		sprintf_s(TIMESTMP, 64, "\\%04d%02d%02d_%02d%02d_", 
 			st.wYear, st.wMonth, st.wDay,st.wHour, st.wMinute);
 
-		strcat_s(BUFF_PATH, MAX_PATH, TIMESTMP);		
-		strcat_s(BUFF_PATH, MAX_PATH, buf_camID);
-		strcat_s(BUFF_PATH, MAX_PATH, ".png");
+        strcat_s(BUFF_PATH, FILENAME_MAX, TIMESTMP);
+        strcat_s(BUFF_PATH, FILENAME_MAX, buf_camID);
+        strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
 
 		cv::Mat _tmp = _FRAME[_BUFFER_POS].clone();
 
@@ -117,6 +122,7 @@ namespace wdd
 		drawArena(_tmp);
 
 		WaggleDanceOrientator::saveImage(&_tmp, BUFF_PATH);
+        */
 	}
 	void VideoFrameBuffer::drawArena(cv::Mat &frame)
 	{

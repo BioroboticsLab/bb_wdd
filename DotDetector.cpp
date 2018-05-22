@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "Config.h"
+#include "opencv2/opencv.hpp"
 #include "DotDetector.h"
 #include "DotDetectorLayer.h"
 //#include "WaggleDanceDetector.h"

@@ -1,7 +1,7 @@
-#include "stdafx.h"
+#include "Config.h"
+#include "opencv2/opencv.hpp"
 #include "DotDetectorLayer.h"
 #include "WaggleDanceDetector.h"
-#include "ppl.h"
 
 namespace wdd {
 	// is this how c++ works? -> Not really!
@@ -10,7 +10,7 @@ namespace wdd {
 	double						DotDetectorLayer::DD_MIN_POTENTIAL;
 	double *					DotDetectorLayer::DD_POTENTIALS;
 	std::size_t					DotDetectorLayer::DD_SIGNALS_NUMBER;
-	std::vector<unsigned int>	DotDetectorLayer::DD_SIGNALS_IDs;
+    std::vector<unsigned long long>	DotDetectorLayer::DD_SIGNALS_IDs;
 	double 						DotDetectorLayer::DD_FREQ_MIN;
 	double 						DotDetectorLayer::DD_FREQ_MAX;
 	double 						DotDetectorLayer::DD_FREQ_STEP;

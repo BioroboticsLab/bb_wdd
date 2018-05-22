@@ -1,5 +1,8 @@
 #pragma once
-#include "CLEyeCameraCapture.h"
+
+#include <opencv2/opencv.hpp>
+
+#include "Config.h"
 
 namespace wdd
 {
@@ -13,11 +16,11 @@ namespace wdd
 		cv::Point _sequenceFramePointOffset;
 
 		cv::Mat _FRAME[VFB_MAX_FRAME_HISTORY];
-		SYSTEMTIME st;
+        //SYSTEMTIME st;
 		int _last_hour;
 		CamConf _CC;
 	public:
-		VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC);
+        VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC);
 		~VideoFrameBuffer(void);
 
 		void setSequecenFrameSize(cv::Size size);

@@ -1,15 +1,15 @@
+#include "Config.h"
 #include "DotDetectorLayer.h"
 #include "InputVideoParameters.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 #include "WaggleDanceExport.h"
-#include <tclap/CmdLine.h>
-#include "Config.h"
 #include "opencv2/opencv.hpp"
+#include <tclap/CmdLine.h>
 
 using namespace wdd;
 
-void getNameOfExe(char * out, std::size_t size, char * argv0)
+void getNameOfExe(char* out, std::size_t size, char* argv0)
 {
     /*
 	std::string argv0_str(argv0);
@@ -32,7 +32,7 @@ void getNameOfExe(char * out, std::size_t size, char * argv0)
     */
     // TODO BEN: FIX
 }
-void getExeFullPath(char * out, std::size_t size)
+void getExeFullPath(char* out, std::size_t size)
 {
     /*
     char BUFF[FILENAME_MAX];
@@ -53,7 +53,7 @@ void getExeFullPath(char * out, std::size_t size)
     // TODO BEN: FIX
 }
 
-bool fileExists (const std::string& file_name)
+bool fileExists(const std::string& file_name)
 {
     /*
 	struct stat buffer;
@@ -63,7 +63,7 @@ bool fileExists (const std::string& file_name)
     return false;
 }
 
-bool dirExists(const char * dirPath)
+bool dirExists(const char* dirPath)
 {
     /*
 	int result = PathIsDirectory((LPCTSTR)dirPath);
@@ -200,7 +200,7 @@ void loadCamConfigFile()
     // TODO BEN: FIX
 }
 void saveCamConfigFile()
-{	
+{
     /*
     extern char _FULL_PATH_EXE[FILENAME_MAX];
     char BUFF[FILENAME_MAX];
@@ -243,71 +243,69 @@ char _NAME_OF_EXE[FILENAME_MAX];
 // save full path to executable
 char _FULL_PATH_EXE[FILENAME_MAX];
 
-
 void runTestMode(std::string videoFilename, double aux_dd_min_potential, int aux_wdd_signal_min_cluster_size, bool noGui);
 
 std::string GLOB_WDD_DANCE_OUTPUT_PATH;
 
 int main(int nargs, char** argv)
-{	
-	// get full name of executable
-	getNameOfExe(_NAME_OF_EXE, sizeof(_NAME_OF_EXE), argv[0]);
+{
+    // get full name of executable
+    getNameOfExe(_NAME_OF_EXE, sizeof(_NAME_OF_EXE), argv[0]);
 
-	// get the full path to executable 
-	getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
+    // get the full path to executable
+    getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
 
-	char * version = "1.2.5";
-	char * compiletime = __TIMESTAMP__;
-	printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
-		version, compiletime);
+    char* version = "1.2.5";
+    char* compiletime = __TIMESTAMP__;
+    printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
+        version, compiletime);
 
-	// define values potentially set by command line
-	double dd_min_potential;
-	int wdd_signal_min_cluster_size;
-	bool autoStartUp;
-	std::string videofile;
-	bool noGui;
-	std::string dancePath;
-	try 
-	{
-		// Define the command line object.
-		TCLAP::CmdLine cmd("Command description message", ' ', version);
+    // define values potentially set by command line
+    double dd_min_potential;
+    int wdd_signal_min_cluster_size;
+    bool autoStartUp;
+    std::string videofile;
+    bool noGui;
+    std::string dancePath;
+    try {
+        // Define the command line object.
+        TCLAP::CmdLine cmd("Command description message", ' ', version);
 
-		// Define a value argument and add it to the command line.
-		TCLAP::ValueArg<double> potArg("p", "potential", "Potential minimum value", false, 32888, "double");
-		cmd.add( potArg );
+        // Define a value argument and add it to the command line.
+        TCLAP::ValueArg<double> potArg("p", "potential", "Potential minimum value", false, 32888, "double");
+        cmd.add(potArg);
 
-		// Define a value argument and add it to the command line.
-		TCLAP::ValueArg<int> cluArg("c", "cluster", "Cluster minimum size", false, 6, "int");
-		cmd.add( cluArg );
+        // Define a value argument and add it to the command line.
+        TCLAP::ValueArg<int> cluArg("c", "cluster", "Cluster minimum size", false, 6, "int");
+        cmd.add(cluArg);
 
-		// Define a switch and add it to the command line.
-		TCLAP::SwitchArg autoSwitch("a","auto","Selects automatically configured cam", false);
-		cmd.add( autoSwitch );
+        // Define a switch and add it to the command line.
+        TCLAP::SwitchArg autoSwitch("a", "auto", "Selects automatically configured cam", false);
+        cmd.add(autoSwitch);
 
 #if defined(TEST_MODE_ON)
-		// path to test video input file
-		TCLAP::ValueArg<std::string> testVidArg("t", "video", "path to video file", true, "", "string");
-		cmd.add( testVidArg );
+        // path to test video input file
+        TCLAP::ValueArg<std::string> testVidArg("t", "video", "path to video file", true, "", "string");
+        cmd.add(testVidArg);
 
-		// path to output of dance detection file
-		TCLAP::ValueArg<std::string> outputArg("o", "output", "path to result file", false, "", "string");
-		cmd.add( outputArg );
+        // path to output of dance detection file
+        TCLAP::ValueArg<std::string> outputArg("o", "output", "path to result file", false, "", "string");
+        cmd.add(outputArg);
 
-		// switch to turn off GUI/Video output
-		TCLAP::SwitchArg noGUISwitch("n", "no-gui", "disable gui (video output)", false);
-		cmd.add( noGUISwitch );
+        // switch to turn off GUI/Video output
+        TCLAP::SwitchArg noGUISwitch("n", "no-gui", "disable gui (video output)", false);
+        cmd.add(noGUISwitch);
 #endif
-		// Parse the args.
-		cmd.parse(nargs, argv);
+        // Parse the args.
+        cmd.parse(nargs, argv);
 
-		// Get the value parsed by each arg. 
-		dd_min_potential = potArg.getValue();
-		wdd_signal_min_cluster_size = cluArg.getValue();
-		autoStartUp = autoSwitch.getValue();
-		videofile = testVidArg.getValue();
-		noGui = noGUISwitch.getValue();
-		dancePath = outputArg.getValue();
+        // Get the value parsed by each arg.
+        dd_min_potential = potArg.getValue();
+        wdd_signal_min_cluster_size = cluArg.getValue();
+        autoStartUp = autoSwitch.getValue();
+        videofile = testVidArg.getValue();
+        noGui = noGUISwitch.getValue();
+        dancePath = outputArg.getValue();
 
         /*
 		if(dancePath.size())
@@ -325,23 +323,19 @@ int main(int nargs, char** argv)
 		}
         */
         // TODO BEN: FIX
-	}
-	catch (TCLAP::ArgException &e)
-	{
-		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
-	}
+    } catch (TCLAP::ArgException& e) {
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+    }
 
-	// call in test env
-	if(videofile.size())
-	{
-		runTestMode(videofile, dd_min_potential, wdd_signal_min_cluster_size, noGui);
-		exit(0);
-	}
+    // call in test env
+    if (videofile.size()) {
+        runTestMode(videofile, dd_min_potential, wdd_signal_min_cluster_size, noGui);
+        exit(0);
+    }
 
-
-	//char videoFilename[MAXCHAR];
-	// WaggleDanceExport initialization
-	WaggleDanceExport::execRootExistChk();
+    //char videoFilename[MAXCHAR];
+    // WaggleDanceExport initialization
+    WaggleDanceExport::execRootExistChk();
 
     // TODO BEN: FIX
     /*
@@ -367,16 +361,16 @@ int main(int nargs, char** argv)
 	}
     */
 
-	// Load & store cams.config file
-	loadCamConfigFile();
+    // Load & store cams.config file
+    loadCamConfigFile();
 
-	// prepare container for camIds
-	std::vector<std::size_t> camIdsLaunch;
+    // prepare container for camIds
+    std::vector<std::size_t> camIdsLaunch;
 
-	// merge data from file and current connected cameras
-	// compare guids connected to guids loaded from file 
-	// - if match, camera has camId and arena properties -> configured=true
-	// - else it gets new camId -> configured=false
+    // merge data from file and current connected cameras
+    // compare guids connected to guids loaded from file
+    // - if match, camera has camId and arena properties -> configured=true
+    // - else it gets new camId -> configured=false
     /*
 	for(int i = 0; i < numCams; i++)
 	{		
@@ -414,72 +408,65 @@ int main(int nargs, char** argv)
     */
     // TODO BEN: FIX
 
-	// if autoStartUp flag, iterate camIdsLaunch and select first configured camId
-	int camIdUserSelect = -1;
-	if(autoStartUp)
-	{
-		for(std::size_t i = 0; i < camIdsLaunch.size(); i++)
-		{
-			std::size_t _camId = camIdsLaunch[i];
-			CamConf * cc_ptr = NULL;
-			for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-				if(it->camId == _camId)
-					if(it->configured)
-					{
-						camIdUserSelect = _camId;
-						break;break;
-					}
-		}
+    // if autoStartUp flag, iterate camIdsLaunch and select first configured camId
+    int camIdUserSelect = -1;
+    if (autoStartUp) {
+        for (std::size_t i = 0; i < camIdsLaunch.size(); i++) {
+            std::size_t _camId = camIdsLaunch[i];
+            CamConf* cc_ptr = NULL;
+            for (auto it = camConfs.begin(); it != camConfs.end(); ++it)
+                if (it->camId == _camId)
+                    if (it->configured) {
+                        camIdUserSelect = _camId;
+                        break;
+                        break;
+                    }
+        }
 
-		if(camIdUserSelect < 0)
-			std::cout<<"\nWARNING! Could not autostart because no configrued camera present!\n\n";
-	}
+        if (camIdUserSelect < 0)
+            std::cout << "\nWARNING! Could not autostart because no configrued camera present!\n\n";
+    }
 
-	if(camIdUserSelect < 0)
-	{
-		// for all camIds pushed to launch retrieve information and push to user prompt
-		printf("CamID    GUID                                   configured?\n");
-		printf("***********************************************************\n");
+    if (camIdUserSelect < 0) {
+        // for all camIds pushed to launch retrieve information and push to user prompt
+        printf("CamID    GUID                                   configured?\n");
+        printf("***********************************************************\n");
 
-		for(std::size_t i = 0; i < camIdsLaunch.size(); i++)
-		{				
-			std::size_t _camId = camIdsLaunch[i];
-			CamConf * cc_ptr = NULL;
-			for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-				if(it->camId == _camId)
-					cc_ptr = &(*it);
+        for (std::size_t i = 0; i < camIdsLaunch.size(); i++) {
+            std::size_t _camId = camIdsLaunch[i];
+            CamConf* cc_ptr = NULL;
+            for (auto it = camConfs.begin(); it != camConfs.end(); ++it)
+                if (it->camId == _camId)
+                    cc_ptr = &(*it);
 
-			if(cc_ptr != NULL)
-				printf("%d\t %s\t%s\n", cc_ptr->camId, cc_ptr->guid_str, cc_ptr->configured ? "true" : "false");
-		}
-		printf("\n\n");
+            if (cc_ptr != NULL)
+                printf("%d\t %s\t%s\n", cc_ptr->camId, cc_ptr->guid_str, cc_ptr->configured ? "true" : "false");
+        }
+        printf("\n\n");
 
-		// retrieve users camId choice
-		while(camIdUserSelect < 0){
-			std::string in;
-			std::cout << " -> Please selet camera id to start:" <<std::endl;
-			std::getline(std::cin, in);
+        // retrieve users camId choice
+        while (camIdUserSelect < 0) {
+            std::string in;
+            std::cout << " -> Please selet camera id to start:" << std::endl;
+            std::getline(std::cin, in);
 
-			try {
-				std::size_t i_dec = static_cast<std::size_t>(std::stoi (in,nullptr));
-				for(auto it = camIdsLaunch.begin(); it!=camIdsLaunch.end(); ++it)
-				{
-					if(*it == i_dec)
-					{
-						std::cout<< " -> "<<i_dec<<" selected!"<<std::endl;
-						camIdUserSelect = i_dec;
-					}else{
-						std::cout<<i_dec<<" unavailable!"<<std::endl;
-					}
-				}
-			}
-			catch (const std::invalid_argument& ia) {
-				std::cerr << "Invalid argument: " << ia.what() << '\n';
-			}
-		}
-	}
+            try {
+                std::size_t i_dec = static_cast<std::size_t>(std::stoi(in, nullptr));
+                for (auto it = camIdsLaunch.begin(); it != camIdsLaunch.end(); ++it) {
+                    if (*it == i_dec) {
+                        std::cout << " -> " << i_dec << " selected!" << std::endl;
+                        camIdUserSelect = i_dec;
+                    } else {
+                        std::cout << i_dec << " unavailable!" << std::endl;
+                    }
+                }
+            } catch (const std::invalid_argument& ia) {
+                std::cerr << "Invalid argument: " << ia.what() << '\n';
+            }
+        }
+    }
 
-	// retrieve guid from camConfs according to camId
+    // retrieve guid from camConfs according to camId
     // TODO BEN: FIX
     /*
 	CLEyeCameraCapture *pCam = NULL;
@@ -586,65 +573,62 @@ int main(int nargs, char** argv)
 void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux_WDD_SIGNAL_MIN_CLUSTER_SIZE, bool noGui)
 {
 
-	std::cout<<"************** Run started in test mode **************\n";
-	if(!fileExists(videoFilename))
-	{
-		std::cerr<<"Error! Wrong video path!\n";
-		exit(-201);
-	}
+    std::cout << "************** Run started in test mode **************\n";
+    if (!fileExists(videoFilename)) {
+        std::cerr << "Error! Wrong video path!\n";
+        exit(-201);
+    }
 
-	cv::VideoCapture capture(0);
-	if(!capture.open(videoFilename))
-	{
-		std::cerr << "Error! Video input stream broken - check openCV install "
-			"(https://help.ubuntu.com/community/OpenCV)\n";
-		capture.release();
-		exit(-202);
-	}
-	//
-	//	Global: video configuration
-	//
-	//TODO
-	int FRAME_RED_FAC = 4;//4 -> 1/16 -> 320 ?= x * 1/16 -> 
+    cv::VideoCapture capture(0);
+    if (!capture.open(videoFilename)) {
+        std::cerr << "Error! Video input stream broken - check openCV install "
+                     "(https://help.ubuntu.com/community/OpenCV)\n";
+        capture.release();
+        exit(-202);
+    }
+    //
+    //	Global: video configuration
+    //
+    //TODO
+    int FRAME_RED_FAC = 4; //4 -> 1/16 -> 320 ?= x * 1/16 ->
 
-	//
-	//	Layer 1: DotDetector Configuration
-	//
-	int DD_FREQ_MIN = 11;
-	int DD_FREQ_MAX = 17;
-	double DD_FREQ_STEP = 1;
-	double DD_MIN_POTENTIAL = aux_DD_MIN_POTENTIAL;
+    //
+    //	Layer 1: DotDetector Configuration
+    //
+    int DD_FREQ_MIN = 11;
+    int DD_FREQ_MAX = 17;
+    double DD_FREQ_STEP = 1;
+    double DD_MIN_POTENTIAL = aux_DD_MIN_POTENTIAL;
 
-	//
-	//	Layer 2: Waggle SIGNAL Configuration
-	//
-	double WDD_SIGNAL_DD_MAXDISTANCE = 2.3;
-	int		WDD_SIGNAL_MIN_CLUSTER_SIZE = aux_WDD_SIGNAL_MIN_CLUSTER_SIZE;
+    //
+    //	Layer 2: Waggle SIGNAL Configuration
+    //
+    double WDD_SIGNAL_DD_MAXDISTANCE = 2.3;
+    int WDD_SIGNAL_MIN_CLUSTER_SIZE = aux_WDD_SIGNAL_MIN_CLUSTER_SIZE;
 
-	//
-	//	Layer 3: Waggle Dance Configuration
-	//
-	double	WDD_DANCE_MAX_POSITION_DISTANCEE = sqrt(2);
-	int		WDD_DANCE_MAX_FRAME_GAP = 3;
-	int		WDD_DANCE_MIN_CONSFRAMES = 20;
+    //
+    //	Layer 3: Waggle Dance Configuration
+    //
+    double WDD_DANCE_MAX_POSITION_DISTANCEE = sqrt(2);
+    int WDD_DANCE_MAX_FRAME_GAP = 3;
+    int WDD_DANCE_MIN_CONSFRAMES = 20;
 
-	//
-	//	Develop: Waggle Dance Configuration
-	//
-	bool visual = !noGui;
-	bool wdd_write_dance_file = true;
-	bool wdd_write_signal_file = false;
-	int wdd_verbose = 0;
+    //
+    //	Develop: Waggle Dance Configuration
+    //
+    bool visual = !noGui;
+    bool wdd_write_dance_file = true;
+    bool wdd_write_signal_file = false;
+    int wdd_verbose = 0;
 
-	// prepare frame_counter
-	unsigned long long frame_counter_global = 0;
-	unsigned long long frame_counter_warmup = 0;
+    // prepare frame_counter
+    unsigned long long frame_counter_global = 0;
+    unsigned long long frame_counter_warmup = 0;
 
-
-	InputVideoParameters vp(&capture);
-	int FRAME_WIDTH= vp.getFrameWidth();
-	int FRAME_HEIGHT = vp.getFrameHeight();
-	int FRAME_RATE = 100;
+    InputVideoParameters vp(&capture);
+    int FRAME_WIDTH = vp.getFrameWidth();
+    int FRAME_HEIGHT = vp.getFrameHeight();
+    int FRAME_RATE = 100;
 
     /*
 	struct CamConf c;
@@ -659,72 +643,64 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
     */
     // TODO BEN: FIX
 
-	cv::Mat frame_input;
-	cv::Mat frame_input_monochrome;
-	cv::Mat frame_target;
+    cv::Mat frame_input;
+    cv::Mat frame_input_monochrome;
+    cv::Mat frame_target;
 
+    if (!noGui)
+        cv::namedWindow("Video");
 
-	if(!noGui)
-		cv::namedWindow("Video");
+    /* prepare frame_counter */
+    unsigned long long frame_counter = 0;
 
+    /* prepare buffer to hold mono chromized input frame */
+    frame_input_monochrome = cv::Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1);
 
-	/* prepare frame_counter */
-	unsigned long long frame_counter = 0;
+    /* prepare buffer to hold target frame */
+    double resize_factor = pow(2.0, FRAME_RED_FAC);
 
+    int frame_target_width = cvRound(FRAME_WIDTH / resize_factor);
+    int frame_target_height = cvRound(FRAME_HEIGHT / resize_factor);
 
+    std::cout << "Printing WaggleDanceDetector frame parameter:" << std::endl;
+    printf("frame_height: %d\n", frame_target_height);
+    printf("frame_width: %d\n", frame_target_width);
+    printf("frame_rate: %d\n", FRAME_RATE);
+    printf("frame_red_fac: %d\n", FRAME_RED_FAC);
+    frame_target = cv::Mat(frame_target_height, frame_target_width, CV_8UC1);
 
-	/* prepare buffer to hold mono chromized input frame */
-	frame_input_monochrome =
-		cv::Mat(FRAME_HEIGHT, FRAME_WIDTH, CV_8UC1);
-
-	/* prepare buffer to hold target frame */
-	double resize_factor =  pow(2.0, FRAME_RED_FAC);
-
-	int frame_target_width = cvRound(FRAME_WIDTH/resize_factor);
-	int frame_target_height = cvRound(FRAME_HEIGHT/resize_factor);
-
-	std::cout<<"Printing WaggleDanceDetector frame parameter:"<<std::endl;
-	printf("frame_height: %d\n", frame_target_height);
-	printf("frame_width: %d\n", frame_target_width);
-	printf("frame_rate: %d\n", FRAME_RATE);
-	printf("frame_red_fac: %d\n", FRAME_RED_FAC);
-	frame_target = cv::Mat(frame_target_height, frame_target_width, CV_8UC1);
-
-	/*
+    /*
 	* prepare DotDetectorLayer config vector
 	*/
-	std::vector<double> ddl_config;
-	ddl_config.push_back(DD_FREQ_MIN);
-	ddl_config.push_back(DD_FREQ_MAX);
-	ddl_config.push_back(DD_FREQ_STEP);
-	ddl_config.push_back(FRAME_RATE);
-	ddl_config.push_back(FRAME_RED_FAC);
-	ddl_config.push_back(DD_MIN_POTENTIAL);
+    std::vector<double> ddl_config;
+    ddl_config.push_back(DD_FREQ_MIN);
+    ddl_config.push_back(DD_FREQ_MAX);
+    ddl_config.push_back(DD_FREQ_STEP);
+    ddl_config.push_back(FRAME_RATE);
+    ddl_config.push_back(FRAME_RED_FAC);
+    ddl_config.push_back(DD_MIN_POTENTIAL);
 
-	std::vector<cv::Point2i> dd_positions;
-	for(int i=0; i<frame_target_width; i++)
-	{
-		for(int j=0; j<frame_target_height; j++)
-		{
-			// x (width), y(height)
-			dd_positions.push_back(cv::Point2i(i,j));
-		}
-	}
-	printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f).\n", 
-		dd_positions.size(), DD_MIN_POTENTIAL);
+    std::vector<cv::Point2i> dd_positions;
+    for (int i = 0; i < frame_target_width; i++) {
+        for (int j = 0; j < frame_target_height; j++) {
+            // x (width), y(height)
+            dd_positions.push_back(cv::Point2i(i, j));
+        }
+    }
+    printf("Initialize with %d DotDetectors (DD_MIN_POTENTIAL=%.1f).\n",
+        dd_positions.size(), DD_MIN_POTENTIAL);
 
-	/*
+    /*
 	* prepare WaggleDanceDetector config vector
 	*/
-	std::vector<double> wdd_config;
-	// Layer 2
-	wdd_config.push_back(WDD_SIGNAL_DD_MAXDISTANCE);
-	wdd_config.push_back(WDD_SIGNAL_MIN_CLUSTER_SIZE);
-	// Layer 3
-	wdd_config.push_back(WDD_DANCE_MAX_POSITION_DISTANCEE);
-	wdd_config.push_back(WDD_DANCE_MAX_FRAME_GAP);
-	wdd_config.push_back(WDD_DANCE_MIN_CONSFRAMES);
-
+    std::vector<double> wdd_config;
+    // Layer 2
+    wdd_config.push_back(WDD_SIGNAL_DD_MAXDISTANCE);
+    wdd_config.push_back(WDD_SIGNAL_MIN_CLUSTER_SIZE);
+    // Layer 3
+    wdd_config.push_back(WDD_DANCE_MAX_POSITION_DISTANCEE);
+    wdd_config.push_back(WDD_DANCE_MAX_FRAME_GAP);
+    wdd_config.push_back(WDD_DANCE_MIN_CONSFRAMES);
 
     // TODO BEN: FIX
     /*
@@ -741,31 +717,28 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
 		);
         */
 
-
     /*
 	const std::map<std::size_t,cv::Point2d> * WDDSignalId2PointMap = wdd.getWDDSignalId2PointMap();
 	const std::vector<DANCE> * WDDFinishedDances = wdd.getWDDFinishedDancesVec();
     */
     // TODO BEN: FIX
 
-	const std::map<std::size_t,cv::Point2d>  WDDDance2PointMap;
+    const std::map<std::size_t, cv::Point2d> WDDDance2PointMap;
 
+    int Cir_radius = 3;
+    cv::Scalar Cir_color_yel = cv::Scalar(255, 255, 0);
+    cv::Scalar Cir_color_gre = cv::Scalar(0, 255, 0);
+    cv::Scalar Cir_color_som = cv::Scalar(0, 0, 255);
+    //make the circle filled with value < 0
+    int Cir_thikness = -1;
 
-	int Cir_radius = 3;
-	cv::Scalar Cir_color_yel = cv::Scalar(255,255,0);
-	cv::Scalar Cir_color_gre = cv::Scalar(0,255,0);
-	cv::Scalar Cir_color_som = cv::Scalar(0,0,255);
-	//make the circle filled with value < 0
-	int Cir_thikness = -1;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
-	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::vector<double> bench_res;
+    //loop_bench_res_sing.reserve(dd_positions.size());
+    //loop_bench_avg.reserve(1000);
 
-	std::vector<double> bench_res;
-	//loop_bench_res_sing.reserve(dd_positions.size());
-	//loop_bench_avg.reserve(1000);
-
-	while(capture.read(frame_input))
-	{
+    while (capture.read(frame_input)) {
         /*
 
 		//convert BGR -> Gray
@@ -860,5 +833,5 @@ void runTestMode(std::string videoFilename, double aux_DD_MIN_POTENTIAL, int aux
         // TODO BEN: FIX
     }
 
-	capture.release();
+    capture.release();
 }

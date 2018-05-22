@@ -1,47 +1,42 @@
 #include "VideoFrameBuffer.h"
-#include "WaggleDanceOrientator.h"
 #include "Config.h"
+#include "WaggleDanceOrientator.h"
 
-namespace wdd
+namespace wdd {
+char vfb_root_path[] = "\\fullframes";
+char vfb_root_fullpath[FILENAME_MAX];
+
+VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC)
+    : _BUFFER_POS(0)
+    , _CURRENT_FRAME_NR(current_frame_nr)
+    , _cachedFrameSize(cachedFrameSize)
+    , _extractFrameSize(extractFrameSize)
+    , _CC(_CC)
+    , _last_hour(-1)
 {
-	char vfb_root_path[] = "\\fullframes";
-    char vfb_root_fullpath[FILENAME_MAX];
+    if ((extractFrameSize.width > cachedFrameSize.width) || (extractFrameSize.height > cachedFrameSize.height)) {
+        std::cerr << "Error! VideoFrameBuffer():: extractFrameSize can not be bigger then cachedFrameSize in any dimension!" << std::endl;
+    }
+    _sequenceFramePointOffset = cv::Point2i(extractFrameSize.width / 2, extractFrameSize.height / 2);
 
-	VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC):
-		_BUFFER_POS(0),
-		_CURRENT_FRAME_NR(current_frame_nr),
-		_cachedFrameSize(cachedFrameSize),
-		_extractFrameSize(extractFrameSize),
-		_CC(_CC),
-		_last_hour(-1)
-	{		
-		if( (extractFrameSize.width > cachedFrameSize.width) || (extractFrameSize.height > cachedFrameSize.height))
-		{
-			std::cerr<< "Error! VideoFrameBuffer():: extractFrameSize can not be bigger then cachedFrameSize in any dimension!"<<std::endl;
-		}
-		_sequenceFramePointOffset = 
-			cv::Point2i(extractFrameSize.width/2,extractFrameSize.height/2);
+    //init memory
+    for (std::size_t i = 0; i < VFB_MAX_FRAME_HISTORY; i++) {
+        _FRAME[i] = cv::Mat(cachedFrameSize, CV_8UC1);
+    }
+}
 
-		//init memory
-		for(std::size_t i=0; i<VFB_MAX_FRAME_HISTORY; i++)
-		{
-			_FRAME[i] = cv::Mat(cachedFrameSize, CV_8UC1);
-		}
-	}
+VideoFrameBuffer::~VideoFrameBuffer(void)
+{
+}
 
-	VideoFrameBuffer::~VideoFrameBuffer(void)
-	{
-	}	
+void VideoFrameBuffer::addFrame(cv::Mat* frame_ptr)
+{
+    //std::cout<<"VideoFrameBuffer::addFrame::_BUFFER_POS: "<<_BUFFER_POS<<std::endl;
+    _FRAME[_BUFFER_POS] = frame_ptr->clone();
 
-	void VideoFrameBuffer::addFrame(cv:: Mat * frame_ptr)
-	{		
-		//std::cout<<"VideoFrameBuffer::addFrame::_BUFFER_POS: "<<_BUFFER_POS<<std::endl;
-		_FRAME[_BUFFER_POS]= frame_ptr->clone();
-
-		if(_CURRENT_FRAME_NR > 1000)
-		{
-            // TODO BEN: FIX
-            /*
+    if (_CURRENT_FRAME_NR > 1000) {
+        // TODO BEN: FIX
+        /*
 			GetLocalTime(&st);
 
 			int curent_hour = st.wHour;
@@ -53,19 +48,17 @@ namespace wdd
 				saveFullFrame();
 			}
             */
-		}
-		_BUFFER_POS = (++_BUFFER_POS) < VFB_MAX_FRAME_HISTORY ? _BUFFER_POS : 0;
+    }
+    _BUFFER_POS = (++_BUFFER_POS) < VFB_MAX_FRAME_HISTORY ? _BUFFER_POS : 0;
 
-		_CURRENT_FRAME_NR++;
+    _CURRENT_FRAME_NR++;
 
-		// check for hourly save image
-
-
-	}
-	void VideoFrameBuffer::saveFullFrame()
-	{
-        // TODO BEN: FIX
-        /*
+    // check for hourly save image
+}
+void VideoFrameBuffer::saveFullFrame()
+{
+    // TODO BEN: FIX
+    /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
@@ -123,100 +116,88 @@ namespace wdd
 
 		WaggleDanceOrientator::saveImage(&_tmp, BUFF_PATH);
         */
-	}
-	void VideoFrameBuffer::drawArena(cv::Mat &frame)
-	{
-		float fac_red = 1.0/2.0;
-		for (std::size_t i = 0; i < _CC.arena.size(); i++)
-		{
-			cv::line(frame, 
-				cv::Point2f(_CC.arena[i].x *fac_red, _CC.arena[i].y *fac_red), 
-				cv::Point2f(_CC.arena[(i+1) % _CC.arena.size()].x * fac_red, _CC.arena[(i+1) % _CC.arena.size()].y * fac_red), CV_RGB(0, 255, 0));
-		}
-	}
-	cv::Mat * VideoFrameBuffer::getFrameByNumber(unsigned long long req_frame_nr)
-	{
-		int frameJump = static_cast<int>(_CURRENT_FRAME_NR - req_frame_nr);
+}
+void VideoFrameBuffer::drawArena(cv::Mat& frame)
+{
+    float fac_red = 1.0 / 2.0;
+    for (std::size_t i = 0; i < _CC.arena.size(); i++) {
+        cv::line(frame,
+            cv::Point2f(_CC.arena[i].x * fac_red, _CC.arena[i].y * fac_red),
+            cv::Point2f(_CC.arena[(i + 1) % _CC.arena.size()].x * fac_red, _CC.arena[(i + 1) % _CC.arena.size()].y * fac_red), CV_RGB(0, 255, 0));
+    }
+}
+cv::Mat* VideoFrameBuffer::getFrameByNumber(unsigned long long req_frame_nr)
+{
+    int frameJump = static_cast<int>(_CURRENT_FRAME_NR - req_frame_nr);
 
-		//std::cout<<"VideoFrameBuffer::getFrameByNumber::_CURRENT_FRAME_NR, req_frame_nr, frameJump: "<<_CURRENT_FRAME_NR<<", "<<req_frame_nr<<", "<<frameJump<<std::endl;
+    //std::cout<<"VideoFrameBuffer::getFrameByNumber::_CURRENT_FRAME_NR, req_frame_nr, frameJump: "<<_CURRENT_FRAME_NR<<", "<<req_frame_nr<<", "<<frameJump<<std::endl;
 
-		// if req_frame_nr > CURRENT_FRAME_NR --> framesJump < 0
-		if(frameJump <= 0)
-		{
-			std::cerr<< "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame from future "<<req_frame_nr<<" (CURRENT_FRAME_NR < req_frame_nr)!"<<std::endl;
-			return NULL;
-		}
+    // if req_frame_nr > CURRENT_FRAME_NR --> framesJump < 0
+    if (frameJump <= 0) {
+        std::cerr << "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame from future " << req_frame_nr << " (CURRENT_FRAME_NR < req_frame_nr)!" << std::endl;
+        return NULL;
+    }
 
-		// assert: CURRENT_FRAME_NR >= req_frame_nr --> framesJump >= 0
-		if( frameJump <= VFB_MAX_FRAME_HISTORY)
-		{
-			int framePosition = _BUFFER_POS - frameJump;
+    // assert: CURRENT_FRAME_NR >= req_frame_nr --> framesJump >= 0
+    if (frameJump <= VFB_MAX_FRAME_HISTORY) {
+        int framePosition = _BUFFER_POS - frameJump;
 
-			framePosition = framePosition >= 0 ? framePosition : VFB_MAX_FRAME_HISTORY + framePosition;
+        framePosition = framePosition >= 0 ? framePosition : VFB_MAX_FRAME_HISTORY + framePosition;
 
-			//std::cout<<"VideoFrameBuffer::getFrameByNumber::_BUFFER_POS: "<<framePosition<<std::endl;
+        //std::cout<<"VideoFrameBuffer::getFrameByNumber::_BUFFER_POS: "<<framePosition<<std::endl;
 
-			return &_FRAME[framePosition];
-		}
-		else
-		{
-			std::cerr<< "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame "<<req_frame_nr<<" - history too small!"<<std::endl;
-			return NULL;
-		}
+        return &_FRAME[framePosition];
+    } else {
+        std::cerr << "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame " << req_frame_nr << " - history too small!" << std::endl;
+        return NULL;
+    }
+}
 
+std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
+{
+    // fatal: if this is true, return empty vector
+    if (startFrame >= endFrame)
+        return std::vector<cv::Mat>();
 
-	}
+    //std::cout<<"VideoFrameBuffer::loadFrameSequenc::startFrame, endFrame: "<<startFrame<<", "<<endFrame<<std::endl;
+    //std::cout<<"VideoFrameBuffer::_cachedFrameSize.width, _cachedFrameSize.height: "<<_cachedFrameSize.width<<", "<<_cachedFrameSize.height<<std::endl;
+    //std::cout<<"VideoFrameBuffer::_extractFrameSize.width, _extractFrameSize.height: "<<_extractFrameSize.width<<", "<<_extractFrameSize.height<<std::endl;
 
-	std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
-	{
-		// fatal: if this is true, return empty vector
-		if( startFrame >= endFrame)
-			return std::vector<cv::Mat>();
+    const unsigned short _center_x = static_cast<int>(center.x * pow(2, FRAME_REDFAC));
+    const unsigned short _center_y = static_cast<int>(center.y * pow(2, FRAME_REDFAC));
 
-		//std::cout<<"VideoFrameBuffer::loadFrameSequenc::startFrame, endFrame: "<<startFrame<<", "<<endFrame<<std::endl;
-		//std::cout<<"VideoFrameBuffer::_cachedFrameSize.width, _cachedFrameSize.height: "<<_cachedFrameSize.width<<", "<<_cachedFrameSize.height<<std::endl;
-		//std::cout<<"VideoFrameBuffer::_extractFrameSize.width, _extractFrameSize.height: "<<_extractFrameSize.width<<", "<<_extractFrameSize.height<<std::endl;
+    int roi_rec_x = static_cast<int>(_center_x - _sequenceFramePointOffset.x);
+    int roi_rec_y = static_cast<int>(_center_y - _sequenceFramePointOffset.y);
 
-		const unsigned short _center_x = static_cast<int>(center.x*pow(2, FRAME_REDFAC));
-		const unsigned short _center_y = static_cast<int>(center.y*pow(2, FRAME_REDFAC));
+    // safe roi edge - lower bounds check
+    roi_rec_x = roi_rec_x < 0 ? 0 : roi_rec_x;
+    roi_rec_y = roi_rec_y < 0 ? 0 : roi_rec_y;
 
-		int roi_rec_x = static_cast<int>(_center_x - _sequenceFramePointOffset.x);
-		int roi_rec_y = static_cast<int>(_center_y - _sequenceFramePointOffset.y);
+    // safe roi edge - upper bounds check
+    roi_rec_x = (roi_rec_x + _extractFrameSize.width) <= _cachedFrameSize.width ? roi_rec_x : _cachedFrameSize.width - _extractFrameSize.width;
+    roi_rec_y = (roi_rec_y + _extractFrameSize.height) <= _cachedFrameSize.height ? roi_rec_y : _cachedFrameSize.height - _extractFrameSize.height;
 
-		// safe roi edge - lower bounds check
-		roi_rec_x = roi_rec_x < 0 ? 0 : roi_rec_x;
-		roi_rec_y = roi_rec_y < 0 ? 0 : roi_rec_y;
+    // set roi
+    cv::Rect roi_rec(cv::Point2i(roi_rec_x, roi_rec_y), _extractFrameSize);
 
-		// safe roi edge - upper bounds check
-		roi_rec_x = (roi_rec_x + _extractFrameSize.width) <= _cachedFrameSize.width ? roi_rec_x : _cachedFrameSize.width - _extractFrameSize.width;
-		roi_rec_y = (roi_rec_y + _extractFrameSize.height) <= _cachedFrameSize.height ? roi_rec_y : _cachedFrameSize.height - _extractFrameSize.height;
+    std::vector<cv::Mat> out;
 
+    cv::Mat* frame_ptr;
 
-		// set roi
-		cv::Rect roi_rec(cv::Point2i(roi_rec_x,roi_rec_y), _extractFrameSize);
+    while (startFrame <= endFrame) {
+        frame_ptr = getFrameByNumber(startFrame);
 
-		std::vector<cv::Mat> out;
+        // check the pointer is not null and cv::Mat not empty
+        if (frame_ptr && !frame_ptr->empty()) {
+            cv::Mat subframe_monochrome(*frame_ptr, roi_rec);
+            out.push_back(subframe_monochrome.clone());
+        } else {
+            std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc frame " << startFrame << " empty!" << std::endl;
+            return std::vector<cv::Mat>();
+        }
+        startFrame++;
+    }
 
-		cv::Mat * frame_ptr;
-
-		while(startFrame <=  endFrame)
-		{
-			frame_ptr = getFrameByNumber(startFrame);
-
-			// check the pointer is not null and cv::Mat not empty
-			if(frame_ptr && !frame_ptr->empty())
-			{
-				cv::Mat subframe_monochrome(*frame_ptr, roi_rec);
-				out.push_back(subframe_monochrome.clone());
-			}
-			else
-			{
-				std::cerr << "Error! VideoFrameBuffer::loadFrameSequenc frame "<< startFrame<< " empty!"<<std::endl;
-				return std::vector<cv::Mat>();
-			}
-			startFrame++;
-		}
-
-		return out;
-	}
+    return out;
+}
 }

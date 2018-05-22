@@ -26,7 +26,6 @@ cv::Mat* Camera::getFramePointer()
     return &_frame;
 }
 
-
 /*
 
 VideoCapture cap(0); // open the default camera
@@ -96,4 +95,3 @@ if(!cap.isOpened())  // check if we succeeded
     return 0;
 
     */
-

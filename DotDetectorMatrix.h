@@ -1,52 +1,51 @@
-
 #pragma once
 #include <armadillo>
+#include <opencv2/opencv.hpp>
 
 namespace wdd {
 
-	class DotDetectorM {
+class DotDetectorM {
 
-	public:
-		//DotDetectorM(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
+public:
+    //DotDetectorM(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
 
-		/*
+    /*
 		The method adds a new frame by copying the image to the ring buffer at a
 		specific position. The position will be updated and the memory will not
 		be moved by this operation.
 
 		@param: the new frame to be added
 		*/
-		static void addNewFrame(cv::Mat *_newFrame);
-		static void detectDots();
-		static void init(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
+    static void addNewFrame(cv::Mat* _newFrame);
+    static void detectDots();
+    static void init(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
 
-	private:
-		static void executeDetection(cv::Mat &_projectedSin, cv::Mat& _projectedCos, uint16_t _id);
-		//void createCosSinMatrices(arma::mat &sinMatrix, arma::mat &cosMatrix);
-		//void projectPotentials(arma::mat const &sinMatrix, arma::mat const &cosMatrix);
+private:
+    static void executeDetection(cv::Mat& _projectedSin, cv::Mat& _projectedCos, uint16_t _id);
+    //void createCosSinMatrices(arma::mat &sinMatrix, arma::mat &cosMatrix);
+    //void projectPotentials(arma::mat const &sinMatrix, arma::mat const &cosMatrix);
 
-		/*
+    /*
 		Holds the video to be analysed as ring buffer. Any operations
 		can then be efficiently done on the armadillo cube.
 		*/
-		//static arma::mat videoBuffer;
-		static cv::Mat videoBuffer;
+    //static arma::mat videoBuffer;
+    static cv::Mat videoBuffer;
 
-		/*
+    /*
 		The frame, whose turn is next in the buffer
 		*/
-		static unsigned int positionInBuffer;
-		
-		/*
+    static unsigned int positionInBuffer;
+
+    /*
 		Are we still initializing the video buffer?
 		No dot detection is performed then.
 		*/
-		static bool initializing;
+    static bool initializing;
 
-		/*
+    /*
 		Resolution of our video buffer
 		*/
-		static unsigned int resolutionX, resolutionY, framesInBuffer;
-	};
-
+    static unsigned int resolutionX, resolutionY, framesInBuffer;
+};
 }

@@ -8,19 +8,19 @@
 #define WDD_FREQ_NUMBER 7
 
 #if defined(TEST_MODE_ON)
-	#define WDD_FRAME_RATE 102
+#define WDD_FRAME_RATE 102
 #else
-	#define WDD_FRAME_RATE 102
+#define WDD_FRAME_RATE 102
 #endif
 
 #define VFB_MAX_FRAME_HISTORY 600
 
 #if !defined(ARMA_NO_DEBUG)
-  #define ARMA_NO_DEBUG
+#define ARMA_NO_DEBUG
 #endif
 
 #if !defined(WDD_EXTRACT_ORIENT)
-	#define WDD_EXTRACT_ORIENT
+#define WDD_EXTRACT_ORIENT
 #endif
 
 /*
@@ -35,23 +35,22 @@
 #include <array>
 #include <opencv2/opencv.hpp>
 
-enum RUN_MODE {TEST, LIVE};
+enum RUN_MODE { TEST,
+    LIVE };
 
 struct CamConf {
-	std::size_t camId;
-	char guid_str[64];
-	std::array<cv::Point2i,4> arena;
-	std::array<cv::Point2i,4> arena_lowRes;
-	bool configured;
+    std::size_t camId;
+    char guid_str[64];
+    std::array<cv::Point2i, 4> arena;
+    std::array<cv::Point2i, 4> arena_lowRes;
+    bool configured;
 };
 
-struct _MouseInteraction
-{
-	// id der Ecke, die mit der Maus angehovert wurde
-	int cornerHovered;
-	// id der Ecke, die mit der Maus angeklickt wurde
-	int cornerSelected;
+struct _MouseInteraction {
+    // id der Ecke, die mit der Maus angehovert wurde
+    int cornerHovered;
+    // id der Ecke, die mit der Maus angeklickt wurde
+    int cornerSelected;
 
-	cv::Point lastPosition;
-}; 
-
+    cv::Point lastPosition;
+};

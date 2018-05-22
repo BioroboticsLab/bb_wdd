@@ -1,40 +1,38 @@
 #include "WaggleDanceOrientator.h"
-#include "cvblob.h"
 #include "Config.h"
+#include "cvblob.h"
 #include "opencv2/opencv.hpp"
 
-namespace wdd
-{
+namespace wdd {
 
-	int WaggleDanceOrientator::picID = 0;
-	int WaggleDanceOrientator::blobID = 0;
-	double WaggleDanceOrientator::WDO_IMAGE_RED_FAC = 1;
-	// WDO_IMAGE_RED_SCALE = 1/WDO_IMAGE_RED_FAC
-	double WaggleDanceOrientator::WDO_IMAGE_RED_SCALE = 1/WDO_IMAGE_RED_FAC;
+int WaggleDanceOrientator::picID = 0;
+int WaggleDanceOrientator::blobID = 0;
+double WaggleDanceOrientator::WDO_IMAGE_RED_FAC = 1;
+// WDO_IMAGE_RED_SCALE = 1/WDO_IMAGE_RED_FAC
+double WaggleDanceOrientator::WDO_IMAGE_RED_SCALE = 1 / WDO_IMAGE_RED_FAC;
 
-	bool WaggleDanceOrientator::WDO_VERBOSE = false;
+bool WaggleDanceOrientator::WDO_VERBOSE = false;
 
-	// create a 5x5 double-precision kernel matrix adopted from MATLAB
-	cv::Mat WaggleDanceOrientator::gaussKernel = 
-		(cv::Mat_<double>(5,5) <<	0.0002, 0.0033, 0.0081, 0.0033, 0.0002,
-		0.0033, 0.0479, 0.1164, 0.0479, 0.0033,
-		0.0081, 0.1164, 0.2831, 0.1164, 0.0081,
-		0.0033, 0.0479, 0.1164, 0.0479, 0.0033,
-		0.0002, 0.0033, 0.0081, 0.0033, 0.0002);
+// create a 5x5 double-precision kernel matrix adopted from MATLAB
+cv::Mat WaggleDanceOrientator::gaussKernel = (cv::Mat_<double>(5, 5) << 0.0002, 0.0033, 0.0081, 0.0033, 0.0002,
+    0.0033, 0.0479, 0.1164, 0.0479, 0.0033,
+    0.0081, 0.1164, 0.2831, 0.1164, 0.0081,
+    0.0033, 0.0479, 0.1164, 0.0479, 0.0033,
+    0.0002, 0.0033, 0.0081, 0.0033, 0.0002);
 
-	char * WaggleDanceOrientator::path_out = "\\verbose";
-	char * WaggleDanceOrientator::path_out_root = "\\verbose\\wdo";
-	char * WaggleDanceOrientator::blobDirName = "\\blobs";
-	char * WaggleDanceOrientator::file_blobs_detail = "\\blobs_detail.txt";
-    char WaggleDanceOrientator::path_out_root_img[FILENAME_MAX];
-    char WaggleDanceOrientator::path_out_root_img_blob[FILENAME_MAX];
+char* WaggleDanceOrientator::path_out = "\\verbose";
+char* WaggleDanceOrientator::path_out_root = "\\verbose\\wdo";
+char* WaggleDanceOrientator::blobDirName = "\\blobs";
+char* WaggleDanceOrientator::file_blobs_detail = "\\blobs_detail.txt";
+char WaggleDanceOrientator::path_out_root_img[FILENAME_MAX];
+char WaggleDanceOrientator::path_out_root_img_blob[FILENAME_MAX];
 
-	/*
+/*
 	* static functions
 	*/
-	cv::Point2d WaggleDanceOrientator::extractOrientationFromImageSequence(std::vector<cv::Mat> seq_in, std::size_t unique_id)
-	{
-        /*
+cv::Point2d WaggleDanceOrientator::extractOrientationFromImageSequence(std::vector<cv::Mat> seq_in, std::size_t unique_id)
+{
+    /*
 		WaggleDanceOrientator::picID = 0;
 		WaggleDanceOrientator::blobID = 0;
 
@@ -178,224 +176,210 @@ namespace wdd
 			WaggleDanceOrientator::saveDetectedOrientationImages(&seq_in, &orient);
 
         */
-        cv::Point2d orient;
-        // TODO BEN: FIX
+    cv::Point2d orient;
+    // TODO BEN: FIX
 
-		return orient;
-	}
-	cv::Point2d WaggleDanceOrientator::extractOrientationFromPositions(std::vector<cv::Point2d> positions, cv::Point2d position_last)
-	{
-		printf("extracting orientation\n");
-		printf("size of positions: %d\n", (int)positions.size());
-		cv::Vec4f direction;
-		std::vector<cv::Point2f> positionsF;
-		cv::Mat(positions).copyTo(positionsF);
-		//cv::Mat X(positions);
+    return orient;
+}
+cv::Point2d WaggleDanceOrientator::extractOrientationFromPositions(std::vector<cv::Point2d> positions, cv::Point2d position_last)
+{
+    printf("extracting orientation\n");
+    printf("size of positions: %d\n", (int)positions.size());
+    cv::Vec4f direction;
+    std::vector<cv::Point2f> positionsF;
+    cv::Mat(positions).copyTo(positionsF);
+    //cv::Mat X(positions);
 
-		//cv::Mat X(positions.size(), 2, CV_32F);
-		//cv::Mat X2 = cv::Mat(positions, true).reshape(1);
-		//X2.convertTo(X, CV_32F);
-		//cv::Mat X (positions.size(), 2, CV_32FC1);
-		//int i = 0;
+    //cv::Mat X(positions.size(), 2, CV_32F);
+    //cv::Mat X2 = cv::Mat(positions, true).reshape(1);
+    //X2.convertTo(X, CV_32F);
+    //cv::Mat X (positions.size(), 2, CV_32FC1);
+    //int i = 0;
 
-		//for (auto &p : positions) {
-		//	X.row(i) = cv::Mat();
-		//	++i;
-		//}
-		cv::fitLine(positionsF, direction, CV_DIST_L2, 0, 0.01, 0.01);
-		//std::cout << X << std::endl;
-		cv::Point2d orient_raw = cv::Point2d(direction[0], direction[1]);
-		printf("orientation by fitline: %f\n", atan2(orient_raw.y, orient_raw.x) * 180. / 3.14259);
+    //for (auto &p : positions) {
+    //	X.row(i) = cv::Mat();
+    //	++i;
+    //}
+    cv::fitLine(positionsF, direction, CV_DIST_L2, 0, 0.01, 0.01);
+    //std::cout << X << std::endl;
+    cv::Point2d orient_raw = cv::Point2d(direction[0], direction[1]);
+    printf("orientation by fitline: %f\n", atan2(orient_raw.y, orient_raw.x) * 180. / 3.14259);
 
-		cv::Point2d orient_raw_naive = position_last - positions[0];
+    cv::Point2d orient_raw_naive = position_last - positions[0];
 
-		printf("orientation by naive: %f\n", atan2(orient_raw_naive.y, orient_raw_naive.x) * 180. / 3.14259);
-		if(cv::norm(orient_raw) > 0)
-			return (orient_raw * (1.0 / cv::norm(orient_raw)));
-		else
-			return cv::Point2d(1,1);
-	}
+    printf("orientation by naive: %f\n", atan2(orient_raw_naive.y, orient_raw_naive.x) * 180. / 3.14259);
+    if (cv::norm(orient_raw) > 0)
+        return (orient_raw * (1.0 / cv::norm(orient_raw)));
+    else
+        return cv::Point2d(1, 1);
+}
 
+cv::Point2d WaggleDanceOrientator::extractNaiveness(std::vector<cv::Point2d> positions, cv::Point2d position_last)
+{
 
-	cv::Point2d WaggleDanceOrientator::extractNaiveness(std::vector<cv::Point2d> positions, cv::Point2d position_last)
-	{
+    cv::Point2d orient_raw = position_last - positions[0];
+    if (cv::norm(orient_raw) > 0)
+        return (orient_raw * (1.0 / cv::norm(orient_raw)));
+    else
+        return cv::Point2d(1, 1);
+}
 
-		cv::Point2d orient_raw = position_last - positions[0];
-		if (cv::norm(orient_raw) > 0)
-			return (orient_raw * (1.0 / cv::norm(orient_raw)));
-		else
-			return cv::Point2d(1, 1);
-	}
-
-
-	/*
+/*
 	handles the problem that orientations are unaware of head/tail 
 	*/
-	cv::Vec2d WaggleDanceOrientator::getMeanOrientationFromUnityOrientations(std::vector<cv::Vec2d> * unityOrientations_ptr)
-	{
-		std::vector<cv::Vec2d *> class_head_ptr_list;
-		cv::Vec2d class_head_mean;
-		double dist_head;
-		std::vector<cv::Vec2d *> class_tail_ptr_list;
-		cv::Vec2d class_tail_mean;
-		double dist_tail;
+cv::Vec2d WaggleDanceOrientator::getMeanOrientationFromUnityOrientations(std::vector<cv::Vec2d>* unityOrientations_ptr)
+{
+    std::vector<cv::Vec2d*> class_head_ptr_list;
+    cv::Vec2d class_head_mean;
+    double dist_head;
+    std::vector<cv::Vec2d*> class_tail_ptr_list;
+    cv::Vec2d class_tail_mean;
+    double dist_tail;
 
-		// assing each orientation one of two classes
-		for(auto it=(*unityOrientations_ptr).begin(); it!=(*unityOrientations_ptr).end(); ++it)
-		{
-			//if it is the first orientation, init classes
-			if(class_head_ptr_list.empty())
-			{
-				// init head class to its orientation
-				class_head_mean = *it;
-				// and tail class to its counter orientation
-				class_tail_mean = - *it;
-				// add orientation to head class pointer list
-				class_head_ptr_list.push_back(&(*it));
-				continue;
-			}
-			// check nearest distance, assign to appropriate class
-			dist_head = cv::norm(class_head_mean, *it);
-			dist_tail = cv::norm(class_tail_mean, *it);
+    // assing each orientation one of two classes
+    for (auto it = (*unityOrientations_ptr).begin(); it != (*unityOrientations_ptr).end(); ++it) {
+        //if it is the first orientation, init classes
+        if (class_head_ptr_list.empty()) {
+            // init head class to its orientation
+            class_head_mean = *it;
+            // and tail class to its counter orientation
+            class_tail_mean = -*it;
+            // add orientation to head class pointer list
+            class_head_ptr_list.push_back(&(*it));
+            continue;
+        }
+        // check nearest distance, assign to appropriate class
+        dist_head = cv::norm(class_head_mean, *it);
+        dist_tail = cv::norm(class_tail_mean, *it);
 
-			// assign to head class
-			if(dist_head <= dist_tail)
-			{
-				// add orientation to head class pointer list
-				class_head_ptr_list.push_back(&(*it));
-				// recalculate head class mean
-				WaggleDanceOrientator::getMeanUnityOrientation(&class_head_mean, &class_head_ptr_list);
-			}
-			// assign to tail class
-			else
-			{
-				// add orientation to tail class pointer list
-				class_tail_ptr_list.push_back(&(*it));
-				// recalculate tail class mean
-				WaggleDanceOrientator::getMeanUnityOrientation(&class_tail_mean, &class_tail_ptr_list);
-			}
-		}
+        // assign to head class
+        if (dist_head <= dist_tail) {
+            // add orientation to head class pointer list
+            class_head_ptr_list.push_back(&(*it));
+            // recalculate head class mean
+            WaggleDanceOrientator::getMeanUnityOrientation(&class_head_mean, &class_head_ptr_list);
+        }
+        // assign to tail class
+        else {
+            // add orientation to tail class pointer list
+            class_tail_ptr_list.push_back(&(*it));
+            // recalculate tail class mean
+            WaggleDanceOrientator::getMeanUnityOrientation(&class_tail_mean, &class_tail_ptr_list);
+        }
+    }
 
-		// flip all tail orientations to head
-		for(auto it=class_tail_ptr_list.begin(); it!=class_tail_ptr_list.end(); ++it)
-		{
-			**it *= -1;
-		}
+    // flip all tail orientations to head
+    for (auto it = class_tail_ptr_list.begin(); it != class_tail_ptr_list.end(); ++it) {
+        **it *= -1;
+    }
 
-		// merge flipped tail ptr list into head ptr list
-		class_head_ptr_list.insert( class_head_ptr_list.end(), class_tail_ptr_list.begin(), class_tail_ptr_list.end());
+    // merge flipped tail ptr list into head ptr list
+    class_head_ptr_list.insert(class_head_ptr_list.end(), class_tail_ptr_list.begin(), class_tail_ptr_list.end());
 
-		// finally, recalculate head class
-		WaggleDanceOrientator::getMeanUnityOrientation(&class_head_mean, &class_head_ptr_list);
+    // finally, recalculate head class
+    WaggleDanceOrientator::getMeanUnityOrientation(&class_head_mean, &class_head_ptr_list);
 
-		return class_head_mean;
-	}
-	void WaggleDanceOrientator::getMeanUnityOrientation(cv::Vec2d *class_mean_ptr, std::vector<cv::Vec2d *> *class_ptr_list_ptr)
-	{
-		// reset mean to (0,0);
-		(*class_mean_ptr)[0] = 0; (*class_mean_ptr)[1] = 0;
+    return class_head_mean;
+}
+void WaggleDanceOrientator::getMeanUnityOrientation(cv::Vec2d* class_mean_ptr, std::vector<cv::Vec2d*>* class_ptr_list_ptr)
+{
+    // reset mean to (0,0);
+    (*class_mean_ptr)[0] = 0;
+    (*class_mean_ptr)[1] = 0;
 
-		// recalculate class mean
-		for(auto it=(*class_ptr_list_ptr).begin(); it!=(*class_ptr_list_ptr).end(); ++it)
-		{
-			(*class_mean_ptr) += **it;
-		}
+    // recalculate class mean
+    for (auto it = (*class_ptr_list_ptr).begin(); it != (*class_ptr_list_ptr).end(); ++it) {
+        (*class_mean_ptr) += **it;
+    }
 
-		// it is guaranteed:(*class_ptr_list_ptr).size() > 0
-		(*class_mean_ptr) *= 1.0 / (*class_ptr_list_ptr).size();
+    // it is guaranteed:(*class_ptr_list_ptr).size() > 0
+    (*class_mean_ptr) *= 1.0 / (*class_ptr_list_ptr).size();
 
-		// remap to unity circle
-		(*class_mean_ptr) *= 1.0 / cv::norm((*class_mean_ptr));
-	}
-	void WaggleDanceOrientator::extractBinaryImageFromTD(cv::Mat *td_ptr, cv::Mat *td_bin_ptr)
-	{
-		double _stddevFactor = 2;
+    // remap to unity circle
+    (*class_mean_ptr) *= 1.0 / cv::norm((*class_mean_ptr));
+}
+void WaggleDanceOrientator::extractBinaryImageFromTD(cv::Mat* td_ptr, cv::Mat* td_bin_ptr)
+{
+    double _stddevFactor = 2;
 
-		cv::Mat td_norm;
-		WaggleDanceOrientator::stretch(td_ptr, &td_norm);
+    cv::Mat td_norm;
+    WaggleDanceOrientator::stretch(td_ptr, &td_norm);
 
-		cv::Scalar mean,stddev;
+    cv::Scalar mean, stddev;
 
-		cv::meanStdDev (td_norm, mean, stddev);
-		double limit = _stddevFactor * stddev[0];
-		//std::cout<<mean<<std::endl;
-		//std::cout<<stddev<<std::endl;
-		//std::cout<<td_norm<<std::endl;
+    cv::meanStdDev(td_norm, mean, stddev);
+    double limit = _stddevFactor * stddev[0];
+    //std::cout<<mean<<std::endl;
+    //std::cout<<stddev<<std::endl;
+    //std::cout<<td_norm<<std::endl;
 
-		cv::Size td_size((*td_ptr).size());
+    cv::Size td_size((*td_ptr).size());
 
-		for(int i=0; i<td_size.height; i++)
-		{
-			for(int j=0; j<td_size.width; j++)
-			{
-				if(abs(td_norm.at<float>(i,j) - mean[0]) > limit)
-				{
-					(*td_bin_ptr).at<unsigned char>(i,j) = 255;
-				}
-			}
-		}
+    for (int i = 0; i < td_size.height; i++) {
+        for (int j = 0; j < td_size.width; j++) {
+            if (abs(td_norm.at<float>(i, j) - mean[0]) > limit) {
+                (*td_bin_ptr).at<unsigned char>(i, j) = 255;
+            }
+        }
+    }
 
-		// finally, apply SSA filter
-		WaggleDanceOrientator::statisticalSmoothingFilter(td_bin_ptr);
-	}
-	void WaggleDanceOrientator::extractUnityOrientationsFromBinaryImage(cv::Mat * td_bw_mat_ptr, std::vector<cv::Vec2d> * unityOrientations_ptr)
-	{
-		// get TD image area size
-		double _TD_AREA_LIMIT = (*td_bw_mat_ptr).rows * (*td_bw_mat_ptr).cols * 0.02;
+    // finally, apply SSA filter
+    WaggleDanceOrientator::statisticalSmoothingFilter(td_bin_ptr);
+}
+void WaggleDanceOrientator::extractUnityOrientationsFromBinaryImage(cv::Mat* td_bw_mat_ptr, std::vector<cv::Vec2d>* unityOrientations_ptr)
+{
+    // get TD image area size
+    double _TD_AREA_LIMIT = (*td_bw_mat_ptr).rows * (*td_bw_mat_ptr).cols * 0.02;
 
-		//convert Mat* to Iplimage* 
-        IplImage td_bw_ipl = *td_bw_mat_ptr;
-        IplImage *labelImg_ptr = cvCreateImage(cvGetSize(&td_bw_ipl), IPL_DEPTH_LABEL, 1);
+    //convert Mat* to Iplimage*
+    IplImage td_bw_ipl = *td_bw_mat_ptr;
+    IplImage* labelImg_ptr = cvCreateImage(cvGetSize(&td_bw_ipl), IPL_DEPTH_LABEL, 1);
 
-		cvb::CvBlobs blobs;
+    cvb::CvBlobs blobs;
 
-		// run blob extraction
-        cvb::cvLabel(&td_bw_ipl, labelImg_ptr, blobs);
+    // run blob extraction
+    cvb::cvLabel(&td_bw_ipl, labelImg_ptr, blobs);
 
-        cv::Mat labels = cv::cvarrToMat(labelImg_ptr);
+    cv::Mat labels = cv::cvarrToMat(labelImg_ptr);
 
-		// outer loop allocation
-		double angle;
-		std::vector<double> majMinAxisLenghts(2);
-		cv::Mat majMinAxisMoments;
+    // outer loop allocation
+    double angle;
+    std::vector<double> majMinAxisLenghts(2);
+    cv::Mat majMinAxisMoments;
 
-		// for each blob..
-		blobID=0;
-		for (cvb::CvBlobs::const_iterator it=blobs.begin(); it!=blobs.end(); ++it)
-		{
-			// check that blob area is bigger then 2% of the image
-			if((*it).second->area <= _TD_AREA_LIMIT)
-				continue;
+    // for each blob..
+    blobID = 0;
+    for (cvb::CvBlobs::const_iterator it = blobs.begin(); it != blobs.end(); ++it) {
+        // check that blob area is bigger then 2% of the image
+        if ((*it).second->area <= _TD_AREA_LIMIT)
+            continue;
 
-			/* http://en.wikipedia.org/wiki/Image_moment#Examples_2 
+        /* http://en.wikipedia.org/wiki/Image_moment#Examples_2
 			M =	[ u20, u11; u11, u02 ]	
 			*/
-			majMinAxisMoments = (cv::Mat_<double>(2,2) << 
-				(*it).second->u20, (*it).second->u11,
-				(*it).second->u11, (*it).second->u02);
+        majMinAxisMoments = (cv::Mat_<double>(2, 2) << (*it).second->u20, (*it).second->u11,
+            (*it).second->u11, (*it).second->u02);
 
-			// get length of Major and Minor Axis as eigen values of majMinAxisMoments
-			cv::eigen(majMinAxisMoments, majMinAxisLenghts);
+        // get length of Major and Minor Axis as eigen values of majMinAxisMoments
+        cv::eigen(majMinAxisMoments, majMinAxisLenghts);
 
-			// check that blob has: height > 3x width
-			if( (majMinAxisLenghts[1] > 0) & ((majMinAxisLenghts[0]/majMinAxisLenghts[1]) >= 10))
-			{
-				// add angle of that blob (SI in radian)
-				angle = cvAngle((*it).second);
+        // check that blob has: height > 3x width
+        if ((majMinAxisLenghts[1] > 0) & ((majMinAxisLenghts[0] / majMinAxisLenghts[1]) >= 10)) {
+            // add angle of that blob (SI in radian)
+            angle = cvAngle((*it).second);
 
-				(*unityOrientations_ptr).push_back(cv::Vec2d(cos(angle),sin(angle)));
+            (*unityOrientations_ptr).push_back(cv::Vec2d(cos(angle), sin(angle)));
 
-				if(WDO_VERBOSE)
-				{
-					WaggleDanceOrientator::saveDetectedBlobImage(&(*it->second), &labels, &majMinAxisLenghts);
-					blobID++;
-				}
-			}
-		}
-	}
-	void WaggleDanceOrientator::saveDetectedOrientationImages(const std::vector<cv::Mat> *seq_in_ptr, const cv::Point2d *orient_ptr)
-	{
-        /*
+            if (WDO_VERBOSE) {
+                WaggleDanceOrientator::saveDetectedBlobImage(&(*it->second), &labels, &majMinAxisLenghts);
+                blobID++;
+            }
+        }
+    }
+}
+void WaggleDanceOrientator::saveDetectedOrientationImages(const std::vector<cv::Mat>* seq_in_ptr, const cv::Point2d* orient_ptr)
+{
+    /*
 		// get image dimensions
 		cv::Size size = (*seq_in_ptr)[0].size();
 
@@ -457,11 +441,11 @@ namespace wdd
 
 		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
         */
-        // TODO BEN: FIX
-	}
-	void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob * blob_ptr, cv::Mat * labels_ptr, std::vector<double> * majMinAxisLenghts_ptr)
-	{	
-        /*
+    // TODO BEN: FIX
+}
+void WaggleDanceOrientator::saveDetectedBlobImage(cvb::CvBlob* blob_ptr, cv::Mat* labels_ptr, std::vector<double>* majMinAxisLenghts_ptr)
+{
+    /*
 		double _zoomFactor = 4;
 		std::stringstream ss;
 
@@ -527,11 +511,11 @@ namespace wdd
 		WaggleDanceOrientator::saveImage(&blob_visual, BUFF_PATH);
 		WaggleDanceOrientator::writeBlobsDetailLine(angle, majMinAxisLenghts_ptr);
         */
-        // TODO BEN: FIX
-	}
-	void WaggleDanceOrientator::writeBlobsDetailLine(double angle, std::vector<double> * majMinAxisLenghts_ptr)
-	{
-        /*
+    // TODO BEN: FIX
+}
+void WaggleDanceOrientator::writeBlobsDetailLine(double angle, std::vector<double>* majMinAxisLenghts_ptr)
+{
+    /*
 		FILE * file_blobs_detail_ptr;
 
         char BUFF_PATH[FILENAME_MAX];
@@ -554,196 +538,180 @@ namespace wdd
 			std::cerr <<"Warning! Could not write blob detail file!"<<std::endl;
 		}
         */
-        // TODO BEN: FIX
-	}
+    // TODO BEN: FIX
+}
 
-	/* stretches the values of a td image to be inbetween [0;1] 
+/* stretches the values of a td image to be inbetween [0;1]
 	TODO: check if conversion really is neccessary for algorithm, too?
 	*/
-	void WaggleDanceOrientator::stretch(cv::Mat * in_ptr, cv::Mat * out_ptr)
-	{
-		(*in_ptr).convertTo(*out_ptr, CV_32F);
+void WaggleDanceOrientator::stretch(cv::Mat* in_ptr, cv::Mat* out_ptr)
+{
+    (*in_ptr).convertTo(*out_ptr, CV_32F);
 
-		double minVal, maxVal;
-		cv::minMaxIdx(*out_ptr, &minVal, &maxVal);
+    double minVal, maxVal;
+    cv::minMaxIdx(*out_ptr, &minVal, &maxVal);
 
-		if(minVal < 0)
-		{
-			minVal = abs(minVal);
-			*out_ptr += minVal;
-			maxVal += minVal;
-		}
-		else
-		{
-			*out_ptr -= minVal;
-			maxVal -= minVal;
-			std::cerr <<"Warning! Unexpected minVal >= 0 in WaggleDanceOrientator::stretch encountered!"<<std::endl;
-		}
+    if (minVal < 0) {
+        minVal = abs(minVal);
+        *out_ptr += minVal;
+        maxVal += minVal;
+    } else {
+        *out_ptr -= minVal;
+        maxVal -= minVal;
+        std::cerr << "Warning! Unexpected minVal >= 0 in WaggleDanceOrientator::stretch encountered!" << std::endl;
+    }
 
-		*out_ptr *= 1/maxVal;
-	}
-	/*The Statistical Smoothing Filter (SSF) algorithm reduces the noise present in a binary
+    *out_ptr *= 1 / maxVal;
+}
+/*The Statistical Smoothing Filter (SSF) algorithm reduces the noise present in a binary
 	image by eliminating small areas and filling small holes. This simple but efficient
 	method uses a 3x3 operator or window, and is based on statistical decision criteria.*/
-	//TODO: use instruction list rather then full comparison
-	void WaggleDanceOrientator::statisticalSmoothingFilter(cv::Mat *img_ptr)
-	{
-		cv::Mat img_filtered = (*img_ptr).clone();
+//TODO: use instruction list rather then full comparison
+void WaggleDanceOrientator::statisticalSmoothingFilter(cv::Mat* img_ptr)
+{
+    cv::Mat img_filtered = (*img_ptr).clone();
 
-		std::vector<cv::Point2i> _1_list;
-		std::vector<cv::Point2i> _0_list;
-		while(true)
-		{
-			// define initial location of 3x3 sub matrices in image, operate on input image
-			// currently discard edges where kernel does not fit completly
+    std::vector<cv::Point2i> _1_list;
+    std::vector<cv::Point2i> _0_list;
+    while (true) {
+        // define initial location of 3x3 sub matrices in image, operate on input image
+        // currently discard edges where kernel does not fit completly
 
+        // attention! +/-1 row,col boundary
+        for (int row = 1; row < (*img_ptr).rows - 1; row++) {
+            // init position on left border
+            cv::Rect ROI_Rect(0, row - 1, 3, 3);
+            cv::Mat ROI_SubMat((*img_ptr), ROI_Rect);
 
-			// attention! +/-1 row,col boundary
-			for(int row=1; row < (*img_ptr).rows -1; row++)
-			{
-				// init position on left border
-				cv::Rect ROI_Rect(0, row-1, 3, 3);
-				cv::Mat ROI_SubMat( (*img_ptr), ROI_Rect);
+            for (int col = 1; col < (*img_ptr).cols - 1; col++) {
+                // count how many pixel are set (==255)
+                int positive = cv::countNonZero(ROI_SubMat);
 
-				for(int col=1; col < (*img_ptr).cols -1; col++)
-				{				
-					// count how many pixel are set (==255)
-					int positive = cv::countNonZero(ROI_SubMat);
+                // different decision whether pixel is set
+                if (ROI_SubMat.at<unsigned char>(1, 1) > 0) {
+                    if (positive <= 2)
+                        _0_list.push_back(cv::Point2i(row, col));
+                    //img_filtered.at<unsigned char>(row,col) = 255;
+                    //else
 
-					// different decision whether pixel is set
-					if(ROI_SubMat.at<unsigned char>(1,1) > 0)
-					{
-						if (positive <= 2)
-							_0_list.push_back(cv::Point2i(row,col));
-						//img_filtered.at<unsigned char>(row,col) = 255;
-						//else
+                    //img_filtered.at<unsigned char>(row,col) = 0;
+                } else {
+                    if (positive > 5)
+                        _1_list.push_back(cv::Point2i(row, col));
+                    //img_filtered.at<unsigned char>(row,col) = 255;
+                    //else
+                    //img_filtered.at<unsigned char>(row,col) = 0;
+                }
 
-						//img_filtered.at<unsigned char>(row,col) = 0;
-					}   
-					else
-					{
-						if (positive > 5)
-							_1_list.push_back(cv::Point2i(row,col));
-						//img_filtered.at<unsigned char>(row,col) = 255;
-						//else
-						//img_filtered.at<unsigned char>(row,col) = 0;
-					}
+                // move one position to the right
+                ROI_SubMat.adjustROI(0, 0, -1, 1);
+            }
+        }
+        // check for exit condition: both lists have zero elements
+        if (_0_list.empty() & _1_list.empty())
+            break;
 
-					// move one position to the right
-					ROI_SubMat.adjustROI(0,0,-1,1);
-				}
-			}
-			// check for exit condition: both lists have zero elements
-			if(_0_list.empty() & _1_list.empty())
-				break;
+        cv::Point2i position;
+        while (!_0_list.empty()) {
+            position = _0_list.back();
+            _0_list.pop_back();
 
-			cv::Point2i position;
-			while(!_0_list.empty())
-			{
-				position = _0_list.back();
-				_0_list.pop_back();
+            (*img_ptr).at<unsigned char>(position.x, position.y) = 0;
+        }
+        while (!_1_list.empty()) {
+            position = _1_list.back();
+            _1_list.pop_back();
 
-				(*img_ptr).at<unsigned char>(position.x, position.y) = 0;
-			}
-			while(!_1_list.empty())
-			{
-				position = _1_list.back();
-				_1_list.pop_back();
+            (*img_ptr).at<unsigned char>(position.x, position.y) = 255;
+        }
+        // Guarantee: if no new filter instructions exit condition is true
+    }
+}
 
-				(*img_ptr).at<unsigned char>(position.x, position.y) = 255;
-			}
-			// Guarantee: if no new filter instructions exit condition is true
-		}
-	}
+std::vector<cv::Mat> WaggleDanceOrientator::loadImagesFromFolder(const std::string dirInNameFormat)
+{
+    std::vector<cv::Mat> out;
 
-	std::vector<cv::Mat> WaggleDanceOrientator::loadImagesFromFolder(const std::string dirInNameFormat)
-	{
-		std::vector<cv::Mat> out;
+    cv::VideoCapture sequence(dirInNameFormat);
+    if (!sequence.isOpened()) {
+        std::cerr << "Error! Failed to open Image Sequence!\n"
+                  << std::endl;
+        return std::vector<cv::Mat>();
+    }
 
-		cv::VideoCapture sequence(dirInNameFormat);
-		if (!sequence.isOpened())
-		{
-			std::cerr << "Error! Failed to open Image Sequence!\n" << std::endl;
-			return std::vector<cv::Mat>();
-		}
+    cv::Mat image;
+    //cv::namedWindow("Image | q or esc to quit", CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
 
-		cv::Mat image;
-		//cv::namedWindow("Image | q or esc to quit", CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
+    for (;;) {
+        sequence >> image;
 
-		for(;;)
-		{
-			sequence >> image;
+        if (image.empty())
+            break;
+        else
+            out.push_back(cv::Mat(image.clone()));
+    }
 
-			if(image.empty())
-				break;
-			else
-				out.push_back(cv::Mat(image.clone()));
-		}
+    return out;
+}
 
-		return out;
-	}
+void WaggleDanceOrientator::showImagesFromFolder(const std::string dirInNameFormat)
+{
+    cv::VideoCapture sequence(dirInNameFormat);
+    if (!sequence.isOpened()) {
+        std::cerr << "Error! Failed to open Image Sequence!\n"
+                  << std::endl;
+        return;
+    }
 
-	void WaggleDanceOrientator::showImagesFromFolder(const std::string dirInNameFormat)
-	{
-		cv::VideoCapture sequence(dirInNameFormat);
-		if (!sequence.isOpened())
-		{
-			std::cerr << "Error! Failed to open Image Sequence!\n" << std::endl;
-			return;
-		}
+    cv::Mat image;
+    cv::namedWindow("Image | q or esc to quit", CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
 
-		cv::Mat image;
-		cv::namedWindow("Image | q or esc to quit", CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
+    for (;;) {
+        sequence >> image;
+        if (image.empty())
+            break;
 
-		for(;;)
-		{
-			sequence >> image;
-			if(image.empty())
-				break;
+        imshow("Image | q or esc to quit", image);
 
-			imshow("Image | q or esc to quit", image);
+        char key = (char)cv::waitKey(500);
+        if (key == 'q' || key == 'Q' || key == 27)
+            break;
+    }
+}
 
-			char key = (char)cv::waitKey(500);
-			if(key == 'q' || key == 'Q' || key == 27)
-				break;
-		}
+void WaggleDanceOrientator::showImage(const cv::Mat* img_ptr)
+{
+    if ((*img_ptr).empty()) {
+        std::cerr << "Error! WaggleDanceOrientator::showImage - image empty!\n"
+                  << std::endl;
+        return;
+    }
+    std::string winName = "Image | press any key to quit";
+    cv::namedWindow(winName, CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
+    imshow(winName, *img_ptr);
+    cv::waitKey();
+}
 
-	}
+void WaggleDanceOrientator::saveImage(const cv::Mat* img_ptr, const char* path_ptr)
+{
+    bool result;
 
-	void WaggleDanceOrientator::showImage(const cv::Mat *img_ptr)
-	{
-		if((*img_ptr).empty())
-		{
-			std::cerr << "Error! WaggleDanceOrientator::showImage - image empty!\n" << std::endl;
-			return;
-		}
-		std::string winName = "Image | press any key to quit";
-		cv::namedWindow(winName, CV_WINDOW_AUTOSIZE | CV_WINDOW_KEEPRATIO | CV_GUI_NORMAL);
-		imshow(winName, *img_ptr);
-		cv::waitKey();
-	}
+    try {
 
-	void WaggleDanceOrientator::saveImage(const cv::Mat *img_ptr, const char * path_ptr)
-	{
-		bool result;
-
-		try {
-
-			result = cv::imwrite(path_ptr, *img_ptr);
-		}
-		catch (std::runtime_error& ex) {
-			std::cerr << "Exception saving image '"<<path_ptr
-				<<"': "<<ex.what() << std::endl;
-		}
-		if(!result)
-			std::cerr << "Error saving image '"<<path_ptr<<"'!"<< std::endl;
-	}
-	/*
+        result = cv::imwrite(path_ptr, *img_ptr);
+    } catch (std::runtime_error& ex) {
+        std::cerr << "Exception saving image '" << path_ptr
+                  << "': " << ex.what() << std::endl;
+    }
+    if (!result)
+        std::cerr << "Error saving image '" << path_ptr << "'!" << std::endl;
+}
+/*
 	Export function to interface with MATLAB " M = dlmread(filename) "
 	*/
-	void WaggleDanceOrientator::exportImage(const cv::Mat *img_ptr, const std::string path_ptr)
-	{
-        /*
+void WaggleDanceOrientator::exportImage(const cv::Mat* img_ptr, const std::string path_ptr)
+{
+    /*
 		FILE * fid;
 		fopen_s(&fid, path_ptr.c_str(), "w");
 
@@ -767,6 +735,6 @@ namespace wdd
 
 		fclose(fid);
         */
-        // TODO BEN: FIX
-	}
+    // TODO BEN: FIX
+}
 } /* namespace WaggleDanceDetector */

@@ -1,31 +1,30 @@
-#include "Config.h"
-#include "opencv2/opencv.hpp"
 #include "WaggleDanceExport.h"
+#include "Config.h"
 #include "WaggleDanceOrientator.h"
+#include "opencv2/opencv.hpp"
 
-namespace wdd
+namespace wdd {
+char root_path[] = "\\output";
+char root_fullpath[FILENAME_MAX];
+
+// save the incrementing IDs of detection per directory
+std::size_t ID = 0;
+
+bool root_exist_chk = false;
+
+// save the current day
+char buf_YYYYMMDD[FILENAME_MAX];
+// save the current hour:minute and CamID 0-9
+char buf_YYYYMMDD_HHMM_camID[FILENAME_MAX];
+char relpath_YYYYMMDD_HHMM_camID[FILENAME_MAX];
+char buf_camID[32];
+char buf_dirID[32];
+
+std::array<cv::Point2i, 4> auxArena;
+
+void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE* d_ptr, std::size_t camID)
 {
-	char root_path[] = "\\output";
-    char root_fullpath[FILENAME_MAX];
-
-	// save the incrementing IDs of detection per directory
-	std::size_t ID = 0;
-
-	bool root_exist_chk = false;
-
-	// save the current day
-    char buf_YYYYMMDD[FILENAME_MAX];
-	// save the current hour:minute and CamID 0-9
-    char buf_YYYYMMDD_HHMM_camID[FILENAME_MAX];
-    char relpath_YYYYMMDD_HHMM_camID[FILENAME_MAX];
-	char buf_camID[32];
-	char buf_dirID[32];
-
-	std::array<cv::Point2i,4> auxArena;
-
-	void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE * d_ptr, std::size_t camID)
-	{
-        /*
+    /*
         char _buf[FILENAME_MAX];
 
 		//
@@ -203,28 +202,29 @@ namespace wdd
 
 		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
         */
-        // TODO BEN: FIX
-	}
+    // TODO BEN: FIX
+}
 
-	double WaggleDanceExport::uvecToRad(cv::Point2d in)
-	{
-        if(std::isnan(in.x) | std::isnan(in.y))
-			return std::numeric_limits<double>::quiet_NaN();
+double WaggleDanceExport::uvecToRad(cv::Point2d in)
+{
+    if (std::isnan(in.x) | std::isnan(in.y))
+        return std::numeric_limits<double>::quiet_NaN();
 
-		return atan2(in.y,in.x);
-	}
-	void WaggleDanceExport::setArena(std::array<cv::Point2i,4> _auxArena){
-		auxArena = _auxArena;
-	}
-	void WaggleDanceExport::execRootExistChk()
-	{
+    return atan2(in.y, in.x);
+}
+void WaggleDanceExport::setArena(std::array<cv::Point2i, 4> _auxArena)
+{
+    auxArena = _auxArena;
+}
+void WaggleDanceExport::execRootExistChk()
+{
 
-		WaggleDanceExport::createGenericFolder("");
-	}
+    WaggleDanceExport::createGenericFolder("");
+}
 
-	void WaggleDanceExport::createGenericFolder(char dir_rel[])
-	{
-        /*
+void WaggleDanceExport::createGenericFolder(char dir_rel[])
+{
+    /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
@@ -248,12 +248,12 @@ namespace wdd
 			}
 		}
         */
-        // TODO BEN: FIX
-	}
+    // TODO BEN: FIX
+}
 
-	int WaggleDanceExport::countDirectories(char dir_rel[])
-	{
-        /*
+int WaggleDanceExport::countDirectories(char dir_rel[])
+{
+    /*
 		// link to help functionin main.cpp
 		extern bool dirExists(const char * dirPath);
 		// link full path from main.cpp
@@ -298,6 +298,6 @@ namespace wdd
 		// .. and . count as "2"		
 		return count -2 ;
         */
-        // TODO BEN: FIX
-	}
+    // TODO BEN: FIX
+}
 }

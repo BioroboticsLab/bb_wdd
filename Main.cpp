@@ -10,11 +10,22 @@
 #include "opencv2/opencv.hpp"
 #include <Guid.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
+#include <boost/filesystem.hpp>
 #include <tclap/CmdLine.h>
 
 using namespace wdd;
 
-void getNameOfExe(char* out, std::size_t size, char* argv0)
+// save executable name
+static char _NAME_OF_EXE[FILENAME_MAX];
+
+// save full path to executable
+static char _FULL_PATH_EXE[FILENAME_MAX];
+
+static std::string GLOB_WDD_DANCE_OUTPUT_PATH;
+
+void runTestMode(std::string videoFilename, double aux_dd_min_potential, int aux_wdd_signal_min_cluster_size, bool noGui);
+
+void getNameOfExe(char* out, char* argv0)
 {
     std::string argv0_str(argv0);
     std::string exeName;
@@ -34,199 +45,147 @@ void getNameOfExe(char* out, std::size_t size, char* argv0)
 
     strcpy(out, exeName.c_str());
 }
-void getExeFullPath(char* out, std::size_t size)
+void getExeFullPath(char* out)
 {
-    strcpy(out, boost::dll::program_location().c_str());
+    strcpy(out, boost::dll::program_location().parent_path().c_str());
 }
 
 bool fileExists(const std::string& file_name)
 {
-    /*
-	struct stat buffer;
-	return (stat (file_name.c_str(), &buffer) == 0);
-    */
-    // TODO BEN: FIX
-    return false;
+    return boost::filesystem::is_regular_file(boost::filesystem::path(file_name));
 }
 
 bool dirExists(const char* dirPath)
 {
-    /*
-	int result = PathIsDirectory((LPCTSTR)dirPath);
-
-	if (result & FILE_ATTRIBUTE_DIRECTORY)
-		return true;
-
-	return false;
-    */
-    // TODO BEN: FIX
-    return false;
+    return boost::filesystem::is_directory(boost::filesystem::path(dirPath));
 }
 
 // saves loaded, modified camera configs
-std::vector<CamConf> camConfs;
+static std::vector<CamConf> camConfs;
 
 // saves the next unique camId
-std::size_t nextUniqueCamID = 0;
+static std::size_t nextUniqueCamID = 0;
 
 // format of config file:
 // <camId> <GUID> <Arena.p1> <Arena.p2> <Arena.p3> <Arena.p4>
 void loadCamConfigFileReadLine(std::string line)
 {
-    /*
-    char * delimauto g = xg::newGuid();iter = " ";
-	std::size_t pos = 0;
+    const char* delimiter = " ";
+    std::size_t pos = 0;
 
-	std::size_t tokenNumber = 0;
+    std::size_t tokenNumber = 0;
 
-	std::size_t camId = NULL;
-	char guid_str[64];
-	std::array<cv::Point2i,4> arena;
+    std::size_t camId = NULL;
+    char guid_str[64];
+    std::array<cv::Point2i, 4> arena;
 
-	//copy & convert to char *
-	char * string1 = _strdup(line.c_str());
+    //copy & convert to char *
+    char* string1 = strdup(line.c_str());
 
-	// parse the line
-	char *token = NULL;
-	char *next_token = NULL;
-	token = strtok_s(string1, delimiter, &next_token);
+    // parse the line
+    char* token = nullptr;
+    token = strtok(string1, delimiter);
 
-	int arenaPointNumber = 0;
-	while (token != NULL)
-	{
-		int px, py;
+    int arenaPointNumber = 0;
+    while (token != nullptr) {
+        int px, py;
 
-		// camId
-		if(tokenNumber == 0)
-		{
-			camId = atoi(token);
-		}
-		// guid
-		else if( tokenNumber == 1)
-		{
-			strcpy_s(guid_str, token);			
-		}
-		else
-		{
-			switch (tokenNumber % 2)
-			{
-				// arena.pi.x
-			case 0:
-				px = atoi(token);
-				break;
-				// arena.pi.y
-			case 1:
-				py = atoi(token);
-				arena[arenaPointNumber++] = cv::Point2i(px,py);
-				break;
-			}
+        // camId
+        if (tokenNumber == 0) {
+            camId = atoi(token);
+        }
+        // guid
+        else if (tokenNumber == 1) {
+            strcpy(guid_str, token);
+        } else {
+            switch (tokenNumber % 2) {
+                // arena.pi.x
+            case 0:
+                px = atoi(token);
+                break;
+                // arena.pi.y
+            case 1:
+                py = atoi(token);
+                arena[arenaPointNumber++] = cv::Point2i(px, py);
+                break;
+            }
+        }
 
-		}
+        tokenNumber++;
+        token = strtok(NULL, delimiter);
+    }
+    free(string1);
+    free(token);
 
-		tokenNumber++;
-		token = strtok_s( NULL, delimiter, &next_token);
-	}
-	free(string1);
-	free(token);
+    if (tokenNumber != 10)
+        std::cerr << "Warning! cams.config file contains corrupted line with total tokenNumber: " << tokenNumber << std::endl;
 
-	if(tokenNumber != 10)
-		std::cerr<<"Warning! cams.config file contains corrupted line with total tokenNumber: "<<tokenNumber<<std::endl;
+    struct CamConf c;
+    c.camId = camId;
+    strcpy(c.guid_str, guid_str);
+    c.arena = arena;
+    c.configured = true;
 
-	struct CamConf c;
-	c.camId = camId;
-	strcpy_s(c.guid_str, guid_str);	
-	c.arena = arena;
-	c.configured = true;
+    // save loaded CamConf  to global vector
+    camConfs.push_back(c);
 
-	// save loaded CamConf  to global vector
-	camConfs.push_back(c);
-
-	// keep track of loaded camIds and alter nextUniqueCamID accordingly
-	if(camId >= nextUniqueCamID)
-		nextUniqueCamID = camId + 1;
-    */
-    // TODO BEN: FIX
+    // keep track of loaded camIds and alter nextUniqueCamID accordingly
+    if (camId >= nextUniqueCamID)
+        nextUniqueCamID = camId + 1;
 }
-char camConfPath[] = "\\cams.config";
+static const std::string camConfPath = "cams.config";
 void loadCamConfigFile()
 {
-    /*
-    extern char _FULL_PATH_EXE[FILENAME_MAX];
-    char BUFF[FILENAME_MAX];
-    strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
-    strcat_s(BUFF, FILENAME_MAX, camConfPath);
+    boost::filesystem::path path(_FULL_PATH_EXE);
+    path /= camConfPath;
 
-	if(!fileExists(BUFF))
-	{
-		// create empty file
-		std::fstream f;
-		f.open(BUFF, std::ios::out );
-		f << std::flush;
-		f.close();
-	}
+    if (!fileExists(path.c_str())) {
+        // create empty file
+        std::fstream f;
+        f.open(path.c_str(), std::ios::out);
+        f << std::flush;
+        f.close();
+    }
 
-	std::string line;
-	std::ifstream camconfigfile;
-	camconfigfile.open(BUFF);
+    std::string line;
+    std::ifstream camconfigfile;
+    camconfigfile.open(path.c_str());
 
-	if(camconfigfile.is_open())
-	{
-		while (getline(camconfigfile,line))
-		{
-			loadCamConfigFileReadLine(line);
-		}
-		camconfigfile.close();
-	}
-	else
-	{
-		std::cerr<<"Error! Can not open cams.config file!"<<std::endl;
-		exit(111);
-	}
-    */
-    // TODO BEN: FIX
+    if (camconfigfile.is_open()) {
+        while (getline(camconfigfile, line)) {
+            loadCamConfigFileReadLine(line);
+        }
+        camconfigfile.close();
+    } else {
+        std::cerr << "Error! Can not open cams.config file!" << std::endl;
+        exit(111);
+    }
 }
 void saveCamConfigFile()
 {
-    /*
-    extern char _FULL_PATH_EXE[FILENAME_MAX];
-    char BUFF[FILENAME_MAX];
-    strcpy_s(BUFF ,FILENAME_MAX, _FULL_PATH_EXE);
-    strcat_s(BUFF, FILENAME_MAX, camConfPath);
-	FILE * camConfFile_ptr;
-	fopen_s (&camConfFile_ptr, BUFF, "w+");
+    boost::filesystem::path path(_FULL_PATH_EXE);
+    path /= camConfPath;
 
-	for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-	{
-		if(it->configured)
-		{
-			fprintf_s(camConfFile_ptr,"%d %s ",it->camId,it->guid_str);
-			for(unsigned i=0;i<4;i++)
-				fprintf_s(camConfFile_ptr,"%d %d ", it->arena[i].x, it->arena[i].y);
-			fprintf_s(camConfFile_ptr,"\n");
-		}
-	}
-	fclose(camConfFile_ptr);
-    */
-    // TODO BEN: FIX
+    FILE* camConfFile_ptr = fopen(path.c_str(), "w+");
+
+    for (auto it = camConfs.begin(); it != camConfs.end(); ++it) {
+        if (it->configured) {
+            fprintf(camConfFile_ptr, "%d %s ", it->camId, it->guid_str);
+            for (unsigned i = 0; i < 4; i++)
+                fprintf(camConfFile_ptr, "%d %d ", it->arena[i].x, it->arena[i].y);
+            fprintf(camConfFile_ptr, "\n");
+        }
+    }
+    fclose(camConfFile_ptr);
 }
-
-// save executable name
-char _NAME_OF_EXE[FILENAME_MAX];
-
-// save full path to executable
-char _FULL_PATH_EXE[FILENAME_MAX];
-
-void runTestMode(std::string videoFilename, double aux_dd_min_potential, int aux_wdd_signal_min_cluster_size, bool noGui);
-
-std::string GLOB_WDD_DANCE_OUTPUT_PATH;
 
 int main(int nargs, char** argv)
 {
     // get full name of executable
-    getNameOfExe(_NAME_OF_EXE, sizeof(_NAME_OF_EXE), argv[0]);
+    getNameOfExe(_NAME_OF_EXE, argv[0]);
 
     // get the full path to executable
-    getExeFullPath(_FULL_PATH_EXE, sizeof(_FULL_PATH_EXE));
+    getExeFullPath(_FULL_PATH_EXE);
 
     char* version = "1.2.5";
     char* compiletime = __TIMESTAMP__;
@@ -304,10 +263,6 @@ int main(int nargs, char** argv)
     // WaggleDanceExport initialization
     WaggleDanceExport::execRootExistChk();
 
-    /*
-    auto GUID = xg::newGuid();
-    */
-
     // Query for number of connected cameras
     size_t numCams = Camera::getNumCameras();
 
@@ -317,17 +272,11 @@ int main(int nargs, char** argv)
     }
     std::cout << numCams << " Cameras detected." << std::endl;
 
-    // TODO BEN: FIX
-    /*
-    else {
-        _guids = new GUID[numCams];
-    }
-
+    std::vector<std::string> cameraIdentifiers;
     // Query & temporaly save unique camera uuid
     for (int i = 0; i < numCams; i++) {
-        _guids[i] = CLEyeGetCameraUUID(i);
+        cameraIdentifiers.push_back(Camera::getIdentifier(i));
     }
-    */
 
     // Load & store cams.config file
     loadCamConfigFile();
@@ -342,29 +291,15 @@ int main(int nargs, char** argv)
     for (int i = 0; i < numCams; i++) {
         bool foundMatch = false;
 
-        std::stringstream ss;
-        ss << "udevadm info -a -p $(udevadm info -q path -p /class/video4linux/video";
-        ss << std::to_string(i);
-        ss << ") | grep KERNELS | head -n 1";
-        std::string cmd = ss.str();
-        std::string ret = exec(cmd.data());
+        const std::string identifier = Camera::getIdentifier(i);
 
-        std::string guid_str_connectedCam(ret);
-        /*
-        char guid_str_connectedCam[64];
-        guidToString(_guids[i], guid_str_connectedCam);
-
-		for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-		{
-			if(strcmp(guid_str_connectedCam, it->guid_str) == 0)
-			{
-				foundMatch = true;
-				camIdsLaunch.push_back(it->camId);
-				break;
-			}
-		}
-        */
-        // TODO BEN: FIX
+        for (auto it = camConfs.begin(); it != camConfs.end(); ++it) {
+            if (strcmp(identifier.c_str(), it->guid_str) == 0) {
+                foundMatch = true;
+                camIdsLaunch.push_back(it->camId);
+                break;
+            }
+        }
 
         // no match found -> new config
         // find next camId
@@ -372,7 +307,7 @@ int main(int nargs, char** argv)
             struct CamConf c;
             c.camId = nextUniqueCamID++;
             camIdsLaunch.push_back(c.camId);
-            strcpy(c.guid_str, guid_str_connectedCam.data());
+            strcpy(c.guid_str, identifier.c_str());
             c.arena[0] = cv::Point2i(0, 0);
             c.arena[1] = cv::Point2i(639, 0);
             c.arena[2] = cv::Point2i(639, 479);
@@ -388,7 +323,7 @@ int main(int nargs, char** argv)
     if (autoStartUp) {
         for (std::size_t i = 0; i < camIdsLaunch.size(); i++) {
             std::size_t _camId = camIdsLaunch[i];
-            CamConf* cc_ptr = NULL;
+            CamConf* cc_ptr = nullptr;
             for (auto it = camConfs.begin(); it != camConfs.end(); ++it)
                 if (it->camId == _camId)
                     if (it->configured) {
@@ -441,74 +376,49 @@ int main(int nargs, char** argv)
     }
 
     // retrieve guid from camConfs according to camId
-    // TODO BEN: FIX
-    CLEyeCameraCapture* pCam = NULL;
-    char windowName[64];
+    std::unique_ptr<CLEyeCameraCapture> pCam;
+    const std::string windowName = cameraIdentifiers[camIdUserSelect];
     for (auto it = camConfs.begin(); it != camConfs.end(); ++it) {
         if (it->camId == camIdUserSelect) {
-            printf(windowName, "WaggleDanceDetector - CamID: %d", camIdUserSelect);
+            printf(windowName.c_str(), "WaggleDanceDetector - CamID: %d", camIdUserSelect);
 
-            char guid_str_connectedCam[64];
             bool foundMatch = false;
             for (int i = 0; i < numCams; i++) {
-                //guidToString(_guids[i], guid_str_connectedCam);
-                // TODO BEN: FIX
-
-                if (strcmp(guid_str_connectedCam, it->guid_str) == 0) {
+                if (strcmp(cameraIdentifiers[i].c_str(), it->guid_str) == 0) {
                     foundMatch = true;
-                    /*
-                    pCam = new CLEyeCameraCapture(windowName, _guids[i], CLEYE_MONO_PROCESSED, CLEYE_QVGA, WDD_FRAME_RATE, *it,
-                        dd_min_potential, wdd_signal_min_cluster_size);
-                        */
-                    // TODO BEN: FIX
-                    pCam = new CLEyeCameraCapture(windowName, std::to_string(camIdUserSelect), camIdUserSelect, 320, 240, WDD_FRAME_RATE, *it,
+                    pCam = std::make_unique<CLEyeCameraCapture>(
+                        windowName, cameraIdentifiers[i], camIdUserSelect, 320, 240, WDD_FRAME_RATE, *it,
                         dd_min_potential, wdd_signal_min_cluster_size);
                     break;
                 }
             }
+            std::cout << foundMatch << std::endl;
         }
     }
 
     printf("Starting WaggleDanceDetector - CamID: %d\n", camIdUserSelect);
 
-    /*
-	const CamConf * cc_ptr = pCam->getCamConfPtr();
+    const CamConf* cc_ptr = pCam->getCamConfPtr();
 
-	if(!cc_ptr->configured){
-		// run Setup mode first
-		pCam->StartCapture();
-		int param = -1, key;
+    if (!cc_ptr->configured) {
+        // run Setup mode first
+        pCam->setSetupModeOn(true);
+        pCam->StartCapture();
 
-		while((key = cvWaitKey(0)) != 0x1b)
-		{}
+        pCam->setSetupModeOn(false);
 
-		pCam->StopCapture();
-		pCam->setSetupModeOn(false);
+        // update camConfs
+        for (auto it = camConfs.begin(); it != camConfs.end(); ++it) {
+            if (it->camId == cc_ptr->camId) {
+                camConfs.erase(it);
+                break;
+            }
+        }
+        camConfs.push_back(*cc_ptr);
+        saveCamConfigFile();
+    }
 
-		// update camConfs
-		for(auto it=camConfs.begin(); it!=camConfs.end(); ++it)
-		{
-			if(it->camId == cc_ptr->camId)
-			{
-				camConfs.erase(it);
-				break;
-			}
-		}
-		camConfs.push_back(*cc_ptr);
-		saveCamConfigFile();
-	}
-
-	//write back camConfs file
-
-    */
-    // TODO BEN: FIX
-    CamConf conf;
-    pCam = new CLEyeCameraCapture(std::string("0"), std::to_string(0), 0, 320, 240, WDD_FRAME_RATE, conf,
-        dd_min_potential, wdd_signal_min_cluster_size);
     pCam->StartCapture();
-
-    // TODO BEN: all work is happening in CaptureThread
-    std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::hours(std::numeric_limits<int>::max()));
     return 0;
 }
 

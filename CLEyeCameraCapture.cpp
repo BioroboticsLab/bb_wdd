@@ -21,7 +21,7 @@ void CLEyeCameraCapture::findCornerPointNear(cv::Point2i p) const
     // check if there is already a corner marked as hovered
     if (_Mouse.cornerHovered > -1) {
         // revalidate distance
-        if (cv::norm(_CC.arena[_Mouse.cornerHovered] - cv::Point2i(p)) < 5) {
+        if (cv::norm(_CC.arena[_Mouse.cornerHovered] - cv::Point2i(p)) < 25) {
             // nothing to do, no GUI update needed
             return;
         } else {
@@ -35,13 +35,13 @@ void CLEyeCameraCapture::findCornerPointNear(cv::Point2i p) const
     //find the corner the mouse points at
     // assertion Mouse.cornerHover = -1;
     for (std::size_t i = 0; i < _CC.arena.size(); i++) {
-        if (cv::norm(_CC.arena[i] - cv::Point2i(p)) < 5) {
+        if (cv::norm(_CC.arena[i] - cv::Point2i(p)) < 25) {
             _Mouse.cornerHovered = i;
             break;
         }
     }
 }
-void CLEyeCameraCapture::onMouseInput(int evnt, int x, int y, int flags, void* param)
+void CLEyeCameraCapture::onMouseInput(int evnt, int x, int y, int flags)
 {
     cv::Point2i p(x, y);
     _Mouse.lastPosition = p;
@@ -67,10 +67,16 @@ void CLEyeCameraCapture::onMouseInput(int evnt, int x, int y, int flags, void* p
         break;
     }
 }
+void CLEyeCameraCapture::onMouseInput(int evnt, int x, int y, int flags, void* userData)
+{
+    CLEyeCameraCapture* self = reinterpret_cast<CLEyeCameraCapture*>(userData);
+    self->onMouseInput(evnt, x, y, flags);
+}
 CLEyeCameraCapture::CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size)
     : _windowName(windowName)
     , _cameraGUID(cameraGUID)
-    , _camera(cameraIdx, fps, width, height)
+    , _cameraIdx(cameraIdx)
+    , _camera(std::make_unique<Camera>(cameraIdx, fps, width, height))
     , _fps(fps)
     , _running(false)
     , _visual(true)
@@ -80,15 +86,8 @@ CLEyeCameraCapture::CLEyeCameraCapture(std::string windowName, std::string camer
     , aux_WDD_SIGNAL_MIN_CLUSTER_SIZE(wdd_signal_min_cluster_size)
     , _CC(CC)
 {
-    _CC.arena = {
-        cv::Point2i(600, 50),
-        cv::Point2i(600, 430),
-        cv::Point2i(50, 430),
-        cv::Point2i(50, 50)
-    };
     //_setupModeOn = !_CC.configured;
     _setupModeOn = false;
-    // TODO BEN: FIX
 }
 bool CLEyeCameraCapture::StartCapture()
 {
@@ -96,7 +95,9 @@ bool CLEyeCameraCapture::StartCapture()
 
     cv::namedWindow(_windowName);
 
-    _thread = std::thread(&CLEyeCameraCapture::CaptureThread, this);
+    CaptureThread();
+
+    //_thread = std::thread(&CLEyeCameraCapture::CaptureThread, this);
 
     // TODO BEN: FIX check
     return true;
@@ -126,9 +127,9 @@ const CamConf* CLEyeCameraCapture::getCamConfPtr()
 void CLEyeCameraCapture::Setup()
 {
     std::cout << "Setup" << std::endl;
-    /*
+
     // listen for mouse interaction
-    cv::setMouseCallback(_windowName, onMouseInput);
+    cv::setMouseCallback(_windowName, onMouseInput, this);
     // id der Ecke, die mit der Maus angehovert wurde
     _Mouse.cornerHovered = -1;
     // id der Ecke, die mit der Maus angeklickt wurde
@@ -136,13 +137,14 @@ void CLEyeCameraCapture::Setup()
 
     int w, h;
     IplImage* pCapImage;
-    PBYTE pCapBuffer = NULL;
+
     // Create camera instance
-    _cam = CLEyeCreateCamera(_cameraGUID, CLEYE_MONO_PROCESSED, CLEYE_VGA, 30);
-    if (_cam == NULL) {
+    _camera->setCaptureProps(30, 640, 480);
+    if (!_camera->isOpened()) {
         std::cerr << "ERROR! Could not create camera instance!" << std::endl;
         return;
     }
+    /*
     if (CLEyeSetCameraParameter(_cam, CLEYE_AUTO_GAIN, true) == false)
         std::cerr << "WARNING! Could not set CLEYE_AUTO_GAIN = true!" << std::endl;
 
@@ -151,41 +153,24 @@ void CLEyeCameraCapture::Setup()
 
     if (CLEyeSetCameraParameter(_cam, CLEYE_AUTO_WHITEBALANCE, true) == false)
         std::cerr << "WARNING! Could not set CLEYE_AUTO_WHITEBALANCE = true!" << std::endl;
+    */
+    // TODO BEN: FIXME
 
-    // Get camera frame dimensions
-    CLEyeCameraGetFrameDimensions(_cam, w, h);
-    // Depending on color mode chosen, create the appropriate OpenCV image
-    if (_mode == CLEYE_COLOR_PROCESSED || _mode == CLEYE_COLOR_RAW)
-        pCapImage = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 4);
-    else
-        pCapImage = cvCreateImage(cvSize(w, h), IPL_DEPTH_8U, 1);
-
-    // Start capturing
-    CLEyeCameraStart(_cam);
-
-    IplImage* image = cvCreateImage(cvSize(pCapImage->width, pCapImage->height), IPL_DEPTH_8U, 3);
     // image capturing loop
-    while (_running) {
-        cvGetImageRawData(pCapImage, &pCapBuffer);
-        CLEyeCameraGetFrame(_cam, pCapBuffer);
-        cvConvertImage(pCapImage, image);
-        drawArena(cv::Mat(image));
-        cvShowImage(_windowName, image);
-    }
-    cvReleaseImage(&image);
+    cv::Mat* framePtr = _camera->getFramePointer();
+    // run until user presses Esc
+    while (cv::waitKey(25) != 27) {
+        _camera->nextFrame();
 
-    // Stop camera capture
-    CLEyeCameraStop(_cam);
-    // Destroy camera object
-    CLEyeDestroyCamera(_cam);
-    // Destroy the allocated OpenCV image
-    cvReleaseImage(&pCapImage);
-    _cam = NULL;
+        cv::Mat frame_input_monochrome(*framePtr);
+        cv::cvtColor(frame_input_monochrome, frame_input_monochrome, CV_GRAY2BGR);
+        drawArena(frame_input_monochrome);
+        cv::imshow(_windowName, frame_input_monochrome);
+        cv::waitKey(1);
+    }
+
     // set CamConf to configured
     _CC.configured = true;
-    */
-
-    // TODO BEN: FIX
 }
 void CLEyeCameraCapture::drawArena(cv::Mat& frame)
 {
@@ -196,21 +181,17 @@ void CLEyeCameraCapture::drawArena(cv::Mat& frame)
     // setupModeOn -> expect 640x480
     if (_setupModeOn) {
         for (std::size_t i = 0; i < _CC.arena.size(); i++) {
-            cv::line(frame, _CC.arena[i], _CC.arena[(i + 1) % _CC.arena.size()], CV_RGB(0, 255, 0));
-
-            if (_Mouse.cornerHovered > -1)
-                cv::circle(frame, _CC.arena[_Mouse.cornerHovered], 5, CV_RGB(0, 255, 0));
+            cv::line(frame, _CC.arena[i], _CC.arena[(i + 1) % _CC.arena.size()], CV_RGB(0, 255, 0), 2, CV_AA);
+            cv::circle(frame, _CC.arena[i], 5, CV_RGB(0, 255, 0), 2, CV_AA);
 
             if (_Mouse.cornerSelected > -1)
-                cv::circle(frame, _CC.arena[_Mouse.cornerSelected], 5, CV_RGB(255, 255, 255));
+                cv::circle(frame, _CC.arena[_Mouse.cornerSelected], 5, CV_RGB(255, 255, 255), 2, CV_AA);
         }
     }
     // else from 640x480 -> 180x120
     else {
-        for (std::size_t i = 0; i < _CC.arena_lowRes.size(); i++) {
-            cv::line(frame,
-                _CC.arena_lowRes[i], _CC.arena_lowRes[(i + 1) % _CC.arena_lowRes.size()],
-                CV_RGB(0, 0, 0));
+        for (std::size_t i = 0; i < _CC.arena.size(); i++) {
+            cv::line(frame, _CC.arena[i], _CC.arena[(i + 1) % _CC.arena.size()], CV_RGB(0, 255, 0), 2, CV_AA);
         }
     }
 }
@@ -276,6 +257,9 @@ double CLEyeCameraCapture::computeProduct(const cv::Point p, const cv::Point2i a
 void CLEyeCameraCapture::Run()
 {
     std::cout << "Run" << std::endl;
+
+    _camera->setCaptureProps(_fps, _FRAME_WIDTH, _FRAME_HEIGHT);
+
     //
     //	Global: video configuration
     //
@@ -430,12 +414,11 @@ void CLEyeCameraCapture::Run()
     printf("Start camera warmup..\n");
     bool WARMUP_DONE = false;
     unsigned int WARMUP_FPS_HIT = 0;
-    _camera.nextFrame();
-    cv::Mat* framePtr = _camera.getFramePointer();
+    cv::Mat* framePtr = _camera->getFramePointer();
     cv::Mat frame_target_bc = frame_target;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     while (_running) {
-        _camera.nextFrame();
+        _camera->nextFrame();
 
         // save to global Frame Buffer
         videoFrameBuffer.addFrame(framePtr);
@@ -487,7 +470,7 @@ void CLEyeCameraCapture::Run()
     //
     std::vector<double> bench_res;
     while (_running) {
-        _camera.nextFrame();
+        _camera->nextFrame();
 
         // save to global Frame Buffer
         videoFrameBuffer.addFrame(framePtr);
@@ -502,10 +485,10 @@ void CLEyeCameraCapture::Run()
 
         if (_visual && (frame_counter_global % 25 == 0)) {
             cv::cvtColor(frame_target, frame_visual, CV_GRAY2BGR);
-            drawArena(frame_visual);
             drawPosDDs(frame_visual);
             cv::resize(frame_visual, frame_visual, cv::Size2i(640, 480),
                 0, 0, cv::INTER_LINEAR);
+            drawArena(frame_visual);
 
             cv::imshow(_windowName, frame_visual);
             cv::waitKey(1);

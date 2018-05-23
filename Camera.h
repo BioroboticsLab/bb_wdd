@@ -9,6 +9,8 @@ public:
     void nextFrame();
     cv::Mat* getFramePointer();
 
+    static size_t getNumCameras();
+
 private:
     cv::VideoCapture _cap;
     cv::Mat _frame;

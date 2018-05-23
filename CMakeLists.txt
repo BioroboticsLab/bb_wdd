@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
 project(bb_waggledancedetector)
 
 include(FindOpenMP)
@@ -15,6 +17,10 @@ find_package(Armadillo REQUIRED)
 include_directories(${ARMADILLO_INCLUDE_DIRS})
 
 find_package(OpenCV REQUIRED)
+
+set(Boost_USE_MULTITHREADED ON)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}
     "Main.cpp"
@@ -34,6 +40,8 @@ add_executable(${PROJECT_NAME}
     "DotDetectorMatrix.h"
     "InputVideoParameters.cpp"
     "InputVideoParameters.h"
+    "CLEyeCameraCapture.cpp"
+    "CLEyeCameraCapture.h"
     "TypeToString.h"
     "TypeToString.cpp"
     "cvblob.cpp"
@@ -45,4 +53,6 @@ add_executable(${PROJECT_NAME}
     "Util.h"
     "Config.h"
 )
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${ARMADILLO_LIBRARIES})
+
+message(${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS} ${Boost_LIBRARIES} ${OpenCV_LIBS} ${ARMADILLO_LIBRARIES})

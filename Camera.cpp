@@ -26,6 +26,25 @@ cv::Mat* Camera::getFramePointer()
     return &_frame;
 }
 
+size_t Camera::getNumCameras()
+{
+    static const size_t MAX_NUM_CAMERAS = 4;
+
+    // temporary redirect stderr to /dev/null to silence VFL2 errors while enumerating
+    // potentially unconnected camera devices
+    freopen("/dev/null", "w", stderr);
+    size_t cnt = 0;
+    for (int idx = 0; idx <= MAX_NUM_CAMERAS; ++idx) {
+        auto cap = cv::VideoCapture(idx);
+        if (cap.isOpened()) {
+            cnt += 1;
+        }
+    }
+    freopen("/dev/stdout", "w", stderr);
+
+    return cnt;
+}
+
 /*
 
 VideoCapture cap(0); // open the default camera

@@ -90,10 +90,9 @@ void DotDetectorM::detectDots()
     //std::cout << "resultCos: " << resultCos.rows << ", " << resultCos.cols << std::endl;
 
     for (int i(0); i < videoBuffer.cols; ++i) {
-        /*
-		executeDetection(resultSin.row(i), resultCos.row(i), i);
-        */
-        // TODO BEN: FIX
+        const auto sin = resultSin.row(i);
+        const auto cos = resultCos.row(i);
+        executeDetection(sin, cos, i);
     }
     //cv::Mat_<float> potentials(resolutionX, resolutionY);
     //for (unsigned int i(0); i < resolutionX; ++i) {
@@ -112,7 +111,7 @@ void DotDetectorM::detectDots()
     //}
 }
 
-inline void DotDetectorM::executeDetection(cv::Mat& _projectedSin, cv::Mat& _projectedCos, uint16_t _id)
+inline void DotDetectorM::executeDetection(cv::Mat const& _projectedSin, cv::Mat const& _projectedCos, uint16_t _id)
 {
     float fac = 200;
     // score_i = sinSum_i^2 + cosSum_i^2
@@ -140,7 +139,7 @@ inline void DotDetectorM::executeDetection(cv::Mat& _projectedSin, cv::Mat& _pro
         }
         buff += -scores[i - 3] + scores[i];
     }
-    //std::cout << "buff: " << buff << " comp: " << 0.3*WDD_FBUFFER_SIZE*WDD_FBUFFER_SIZE << std::endl;
+    //std::cout << "buff: " << buff << " comp: " << 0.3 * WDD_FBUFFER_SIZE * WDD_FBUFFER_SIZE << std::endl;
     if (buff > fac * WDD_FBUFFER_SIZE * WDD_FBUFFER_SIZE) {
         DotDetectorLayer::DD_SIGNALS_NUMBER++;
         DotDetectorLayer::DD_SIGNALS_IDs.push_back(_id);

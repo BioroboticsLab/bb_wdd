@@ -3,7 +3,7 @@
 
 #define TEST_MODE_ON
 
-#define WDD_LAYER2_MAX_POS_DDS 100
+#define WDD_LAYER2_MAX_POS_DDS 200
 #define WDD_FBUFFER_SIZE 32
 #define WDD_FREQ_NUMBER 7
 

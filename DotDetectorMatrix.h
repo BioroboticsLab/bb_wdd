@@ -21,7 +21,7 @@ public:
     static void init(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
 
 private:
-    static void executeDetection(cv::Mat& _projectedSin, cv::Mat& _projectedCos, uint16_t _id);
+    static void executeDetection(cv::Mat const& _projectedSin, cv::Mat const& _projectedCos, uint16_t _id);
     //void createCosSinMatrices(arma::mat &sinMatrix, arma::mat &cosMatrix);
     //void projectPotentials(arma::mat const &sinMatrix, arma::mat const &cosMatrix);
 

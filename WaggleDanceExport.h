@@ -8,7 +8,7 @@ public:
     static void execRootExistChk();
     static void setArena(std::array<cv::Point2i, 4> auxArena);
     static void createYYYYMMDDFolder();
-    static void createGenericFolder(char dir[]);
-    static int countDirectories(char dir[]);
+    static void createGenericFolder(const std::string &dir);
+    static long countDirectories(const std::string &dir);
 };
 }

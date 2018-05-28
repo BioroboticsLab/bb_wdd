@@ -1,9 +1,11 @@
 #include "CLEyeCameraCapture.h"
 #include "Config.h"
 #include "DotDetectorLayer.h"
+#include "Util.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 
+#include <boost/filesystem.hpp>
 #include <cstdio>
 
 namespace wdd {
@@ -72,7 +74,7 @@ void CLEyeCameraCapture::onMouseInput(int evnt, int x, int y, int flags, void* u
     CLEyeCameraCapture* self = reinterpret_cast<CLEyeCameraCapture*>(userData);
     self->onMouseInput(evnt, x, y, flags);
 }
-CLEyeCameraCapture::CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size)
+CLEyeCameraCapture::CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size, const std::string& dancePath)
     : _windowName(windowName)
     , _cameraGUID(cameraGUID)
     , _cameraIdx(cameraIdx)
@@ -85,6 +87,7 @@ CLEyeCameraCapture::CLEyeCameraCapture(std::string windowName, std::string camer
     , aux_DD_MIN_POTENTIAL(dd_min_potential)
     , aux_WDD_SIGNAL_MIN_CLUSTER_SIZE(wdd_signal_min_cluster_size)
     , _CC(CC)
+    , _dancePath(dancePath)
 {
     //_setupModeOn = !_CC.configured;
     _setupModeOn = false;
@@ -97,20 +100,7 @@ bool CLEyeCameraCapture::StartCapture()
 
     CaptureThread();
 
-    //_thread = std::thread(&CLEyeCameraCapture::CaptureThread, this);
-
-    // TODO BEN: FIX check
     return true;
-}
-void CLEyeCameraCapture::StopCapture()
-{
-    if (!_running)
-        return;
-    _running = false;
-
-    // TODO BEN: FIX
-    _thread.join();
-    cv::destroyWindow(_windowName);
 }
 void CLEyeCameraCapture::setVisual(bool visual)
 {
@@ -205,25 +195,17 @@ void CLEyeCameraCapture::drawPosDDs(cv::Mat& frame)
 char* hbf_extension = ".wtchdg";
 void CLEyeCameraCapture::makeHeartBeatFile()
 {
-    /*
-    char path[FILENAME_MAX];
-    extern char _NAME_OF_EXE[FILENAME_MAX];
-    extern char _FULL_PATH_EXE[FILENAME_MAX];
+    boost::filesystem::path path(getExeFullPath());
+    path /= getNameOfExe();
+    std::string pathStr(path.string());
+    pathStr += hbf_extension;
 
-    strcpy(path, _FULL_PATH_EXE);
-    strcat(path, "\\");
-    strcat(path, _NAME_OF_EXE);
-    strcat(path, hbf_extension);
-
-    FILE* pFile = fopen(path, "w");
+    FILE* pFile = fopen(pathStr.c_str(), "w");
 
     if (pFile != nullptr)
         fclose(pFile);
     else
         std::cerr << "ERROR! Could not create heartbeat file: " << path << std::endl;
-    */
-
-    // TODO BEN: FIX
 }
 
 //Adoption from stackoverflow
@@ -284,7 +266,6 @@ void CLEyeCameraCapture::Run()
     //
     double WDD_DANCE_MAX_POSITION_DISTANCEE = sqrt(2);
     int WDD_DANCE_MAX_FRAME_GAP = 3;
-    //TODO ORIGINAL 20
     int WDD_DANCE_MIN_CONSFRAMES = 20;
 
     //
@@ -377,18 +358,13 @@ void CLEyeCameraCapture::Run()
         _CC,
         wdd_write_signal_file,
         wdd_write_dance_file,
-        wdd_verbose);
+        wdd_verbose,
+        _dancePath);
 
     WDD_p = &wdd;
 
     /*
     // Create camera instance
-    std::cerr << ((_resolution == CLEYE_QVGA) ? "QVGA" : "Not Qvga") << std::endl;
-    _cam = CLEyeCreateCamera(_cameraGUID, _mode, _resolution, _fps);
-    if (_cam == NULL) {
-        std::cerr << "ERROR! Could not create camera instance!" << std::endl;
-        return;
-    }
     if (CLEyeSetCameraParameter(_cam, CLEYE_AUTO_GAIN, true) == false)
         std::cerr << "WARNING! Could not set CLEYE_AUTO_GAIN = true!" << std::endl;
 
@@ -398,19 +374,9 @@ void CLEyeCameraCapture::Run()
     if (CLEyeSetCameraParameter(_cam, CLEYE_AUTO_WHITEBALANCE, true) == false)
         std::cerr << "WARNING! Could not set CLEYE_AUTO_WHITEBALANCE = true!" << std::endl;
 
-    PBYTE pCapBuffer = NULL;
-    // create the appropriate OpenCV image
-    IplImage* pCapImage = cvCreateImage(cvSize(_FRAME_WIDTH, _FRAME_HEIGHT), IPL_DEPTH_8U, 1);
-    IplImage frame_target_bc = frame_target;
-
-    // Start capturing
-    CLEyeCameraStart(_cam);
     */
     // TODO BEN: FIX
 
-    //
-    // WARMUP LOOP
-    //
     printf("Start camera warmup..\n");
     bool WARMUP_DONE = false;
     unsigned int WARMUP_FPS_HIT = 0;
@@ -465,9 +431,6 @@ void CLEyeCameraCapture::Run()
     printf("Camera warmup done!\n\n\n");
     fflush(stdout);
 
-    //
-    // MAIN LOOP
-    //
     std::vector<double> bench_res;
     while (_running) {
         _camera->nextFrame();
@@ -516,13 +479,11 @@ void CLEyeCameraCapture::Run()
 
         if ((frame_counter_global % 500) == 0) {
             time_t now = time(0);
-            struct tm tstruct;
+            struct tm* tstruct = localtime(&now);
             char buf[80];
-            //localtime_s(&tstruct, &now);
-            // TODO BEN: FIX
             // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
             // for more information about date/time format
-            strftime(buf, sizeof(buf), "%Y%m%d %X", &tstruct);
+            strftime(buf, sizeof(buf), "%Y%m%d %X", tstruct);
             std::cout << "[" << buf << "] collected fps: ";
             double avg = 0;
             for (auto it = bench_res.begin(); it != bench_res.end(); ++it) {
@@ -536,28 +497,10 @@ void CLEyeCameraCapture::Run()
             fflush(stdout);
         }
     }
-    //
-    // release objects
-    //
-
-    /*
-    cvReleaseImage(&pCapImage);
-    // Stop camera capture
-    CLEyeCameraStop(_cam);
-    // Destroy camera object
-    CLEyeDestroyCamera(_cam);
-    // Destroy the allocated OpenCV image
-    cvReleaseImage(&pCapImage);
-    _cam = NULL;
-    */
 }
 size_t CLEyeCameraCapture::CaptureThread()
 {
-    // seed the rng with current tick count and thread id
-    //srand(GetTickCount() + GetCurrentThreadId());
-    // TODO BEN: FIX
-    // forward thread to Capture function
-    //CLEyeCameraCapture* pThis = (CLEyeCameraCapture*)instance;
+    srand(time(nullptr));
 
     if (this->_setupModeOn)
         this->Setup();

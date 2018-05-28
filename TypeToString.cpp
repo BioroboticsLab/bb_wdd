@@ -3,15 +3,6 @@
 
 namespace wdd {
 
-TypeToString::TypeToString()
-{
-    // TODO Auto-generated constructor stub
-}
-
-TypeToString::~TypeToString()
-{
-    // TODO Auto-generated destructor stub
-}
 /* kudos "http://stackoverflow.com/questions/10167534/
 	how-to-find-out-what-type-of-a-mat-object-is-with-mattype-in-opencv */
 std::string TypeToString::typeToString(int type)

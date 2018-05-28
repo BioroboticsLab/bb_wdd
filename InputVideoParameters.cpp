@@ -14,11 +14,6 @@ InputVideoParameters::InputVideoParameters(cv::VideoCapture* vc)
     frame_format = getFrameFormatOf(vc);
 }
 
-InputVideoParameters::~InputVideoParameters()
-{
-    // TODO Auto-generated destructor stub
-}
-
 /*
 	* member functions
 	*/

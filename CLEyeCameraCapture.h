@@ -27,12 +27,16 @@ class CLEyeCameraCapture {
 
     std::thread _thread;
 
+    const std::string _dancePath;
+
     void findCornerPointNear(cv::Point2i p) const;
     void onMouseInput(int evnt, int x, int y, int flags);
     static void onMouseInput(int evnt, int x, int y, int flags, void* userData);
 
 public:
-    CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height, float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size);
+    CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height,
+        float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size,
+        std::string const& dancePath);
 
     bool StartCapture();
     void StopCapture();

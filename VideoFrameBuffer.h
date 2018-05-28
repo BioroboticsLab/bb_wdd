@@ -14,13 +14,12 @@ class VideoFrameBuffer {
     cv::Point _sequenceFramePointOffset;
 
     cv::Mat _FRAME[VFB_MAX_FRAME_HISTORY];
-    //SYSTEMTIME st;
+    time_t _rawTime;
     int _last_hour;
     CamConf _CC;
 
 public:
     VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC);
-    ~VideoFrameBuffer(void);
 
     void setSequecenFrameSize(cv::Size size);
     void addFrame(cv::Mat* frame_ptr);

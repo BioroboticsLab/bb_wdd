@@ -1,10 +1,12 @@
 #include "VideoFrameBuffer.h"
 #include "Config.h"
+#include "Util.h"
 #include "WaggleDanceOrientator.h"
 
+#include <boost/filesystem.hpp>
+
 namespace wdd {
-char vfb_root_path[] = "\\fullframes";
-char vfb_root_fullpath[FILENAME_MAX];
+static const std::string vfb_root_path = "fullframes";
 
 VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC)
     : _BUFFER_POS(0)
@@ -25,29 +27,22 @@ VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size
     }
 }
 
-VideoFrameBuffer::~VideoFrameBuffer(void)
-{
-}
-
 void VideoFrameBuffer::addFrame(cv::Mat* frame_ptr)
 {
-    //std::cout<<"VideoFrameBuffer::addFrame::_BUFFER_POS: "<<_BUFFER_POS<<std::endl;
     _FRAME[_BUFFER_POS] = frame_ptr->clone();
 
     if (_CURRENT_FRAME_NR > 1000) {
-        // TODO BEN: FIX
-        /*
-			GetLocalTime(&st);
+        struct tm* timeinfo;
+        time(&_rawTime);
+        timeinfo = localtime(&_rawTime);
 
-			int curent_hour = st.wHour;
-			if((curent_hour > _last_hour) ||
-				((curent_hour == 0) && (_last_hour == 23)))
+        int curent_hour = timeinfo->tm_hour;
+        if ((curent_hour > _last_hour) || ((curent_hour == 0) && (_last_hour == 23)))
 
-			{
-				_last_hour = curent_hour;
-				saveFullFrame();
-			}
-            */
+        {
+            _last_hour = curent_hour;
+            saveFullFrame();
+        }
     }
     _BUFFER_POS = (++_BUFFER_POS) < VFB_MAX_FRAME_HISTORY ? _BUFFER_POS : 0;
 
@@ -57,65 +52,47 @@ void VideoFrameBuffer::addFrame(cv::Mat* frame_ptr)
 }
 void VideoFrameBuffer::saveFullFrame()
 {
-    // TODO BEN: FIX
-    /*
-		// link to help functionin main.cpp
-		extern bool dirExists(const char * dirPath);
-		// link full path from main.cpp
-        extern char _FULL_PATH_EXE[FILENAME_MAX];
+    boost::filesystem::path path(getExeFullPath());
+    path /= vfb_root_path;
 
-        char BUFF_PATH[FILENAME_MAX];
+    // check for path_out folder
+    if (!dirExists(path.c_str())) {
+        if (!boost::filesystem::create_directory(path)) {
+            printf("ERROR! Couldn't create %s directory.\n", path.c_str());
+            exit(-19);
+        }
+    }
 
-		// create path to .
-		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
-		strcat_s(BUFF_PATH, vfb_root_path);
+    path /= std::to_string(_CC.camId);
 
-		// check for path_out folder
-		if(!dirExists(BUFF_PATH))
-		{
-			if(!CreateDirectory(BUFF_PATH, NULL))
-			{
-				printf("ERROR! Couldn't create %s directory.\n", BUFF_PATH);
-				exit(-19);
-			}	
-		}
-		// save static full path
-		strcpy_s(vfb_root_fullpath,BUFF_PATH);
+    // check for path_out//id folder
+    if (!dirExists(path.c_str())) {
+        if (!boost::filesystem::create_directory(path)) {
+            printf("ERROR! Couldn't create %s directory.\n", path.c_str());
+            exit(-19);
+        }
+    }
 
-		// create dynamic path_out with cam_id
-		// convert camID to string
-		char buf_camID[10];
-		_itoa_s(_CC.camId, buf_camID, sizeof(buf_camID), 10);
+    // create dynamic path_out string
+    struct tm* timeinfo;
+    timeinfo = localtime(&_rawTime);
+    char TIMESTMP[64];
+    sprintf(TIMESTMP, "%04d%02d%02d_%02d%02d_",
+        timeinfo->tm_year + 1900, timeinfo->tm_mon, timeinfo->tm_mday, timeinfo->tm_hour, timeinfo->tm_min);
+    std::string timestamp(TIMESTMP);
 
-        strcat_s(BUFF_PATH, FILENAME_MAX, "\\");
-        strcat_s(BUFF_PATH, FILENAME_MAX, buf_camID);
+    path /= timestamp;
 
-		// check for path_out//id folder
-		if(!dirExists(BUFF_PATH))
-		{
-			if(!CreateDirectory(BUFF_PATH, NULL))
-			{
-				printf("ERROR! Couldn't create %s directory.\n", BUFF_PATH);
-				exit(-19);
-			}	
-		}
+    std::string finalPath(path.string());
+    finalPath += std::to_string(_CC.camId);
+    finalPath += ".png";
 
-		// create dynamic path_out string
-		char TIMESTMP[64];		
-		sprintf_s(TIMESTMP, 64, "\\%04d%02d%02d_%02d%02d_", 
-			st.wYear, st.wMonth, st.wDay,st.wHour, st.wMinute);
+    cv::Mat _tmp = _FRAME[_BUFFER_POS].clone();
 
-        strcat_s(BUFF_PATH, FILENAME_MAX, TIMESTMP);
-        strcat_s(BUFF_PATH, FILENAME_MAX, buf_camID);
-        strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
+    cv::cvtColor(_tmp, _tmp, CV_GRAY2BGR);
+    drawArena(_tmp);
 
-		cv::Mat _tmp = _FRAME[_BUFFER_POS].clone();
-
-		cv::cvtColor(_tmp, _tmp, CV_GRAY2BGR);
-		drawArena(_tmp);
-
-		WaggleDanceOrientator::saveImage(&_tmp, BUFF_PATH);
-        */
+    WaggleDanceOrientator::saveImage(&_tmp, finalPath.c_str());
 }
 void VideoFrameBuffer::drawArena(cv::Mat& frame)
 {

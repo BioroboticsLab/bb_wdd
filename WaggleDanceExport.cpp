@@ -1,208 +1,166 @@
 #include "WaggleDanceExport.h"
 #include "Config.h"
+#include "Util.h"
 #include "WaggleDanceOrientator.h"
 #include "opencv2/opencv.hpp"
 
+#include <boost/filesystem.hpp>
+
 namespace wdd {
-char root_path[] = "\\output";
-char root_fullpath[FILENAME_MAX];
+static const std::string rootPath = "output";
 
 // save the incrementing IDs of detection per directory
-std::size_t ID = 0;
+static std::size_t ID = 0;
 
-bool root_exist_chk = false;
+static bool root_exist_chk = false;
 
 // save the current day
-char buf_YYYYMMDD[FILENAME_MAX];
+static std::string buf_YYYYMMDD;
 // save the current hour:minute and CamID 0-9
-char buf_YYYYMMDD_HHMM_camID[FILENAME_MAX];
-char relpath_YYYYMMDD_HHMM_camID[FILENAME_MAX];
-char buf_camID[32];
-char buf_dirID[32];
+static std::string buf_YYYYMMDD_HHMM_camID;
+static std::string relpath_YYYYMMDD_HHMM_camID;
+static std::string buf_camID;
+static std::string buf_dirID;
 
-std::array<cv::Point2i, 4> auxArena;
+static std::array<cv::Point2i, 4> auxArena;
 
 void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE* d_ptr, std::size_t camID)
 {
-    /*
-        char _buf[FILENAME_MAX];
+    struct tm* timeinfo;
+    timeinfo = localtime(&d_ptr->_rawTime.tv_sec);
+    const long milliSeconds = d_ptr->_rawTime.tv_usec / 1000;
 
-		//
-		// check <YYYYYMMDD> folder
-		//
-		// write YYYYYMMDD string & compare to last saved		
-        sprintf_s(_buf, FILENAME_MAX, "%04d%02d%02d", d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay);
+    // check <YYYYYMMDD> folder
+    // write YYYYYMMDD string & compare to last saved
+    std::string date = string_format("%04d%02d%02d", timeinfo->tm_year + 1900, timeinfo->tm_mon, timeinfo->tm_mday);
 
-		if(strcmp(_buf,buf_YYYYMMDD) != 0)
-		{
-			// if different, save it and ensure directory exists
-			strcpy_s(buf_YYYYMMDD, sizeof(buf_YYYYMMDD), _buf);
-			WaggleDanceExport::createGenericFolder(buf_YYYYMMDD);
-		}
+    if (buf_YYYYMMDD != date) {
+        // if different, save it and ensure directory exists
+        buf_YYYYMMDD = date;
+        WaggleDanceExport::createGenericFolder(buf_YYYYMMDD);
+    }
 
-		//
-		// check <YYYYYMMDD_HHMM_CamID> folder
-		//
-		// write YYYYYMMDD_HHMM_ string
-        sprintf_s(_buf, FILENAME_MAX, "%04d%02d%02d_%02d%02d_",
-			d_ptr->rawtime.wYear, d_ptr->rawtime.wMonth, d_ptr->rawtime.wDay,
-			d_ptr->rawtime.wHour, d_ptr->rawtime.wMinute
-			);
+    // check <YYYYYMMDD_HHMM_CamID> folder
+    // write YYYYYMMDD_HHMM_ string
+    std::string timestamp = string_format("%04d%02d%02d_%02d%02d_",
+        timeinfo->tm_year + 1900, timeinfo->tm_mon, timeinfo->tm_mday,
+        timeinfo->tm_hour, timeinfo->tm_min);
 
-		// convert camID to string
-		_itoa_s(camID, buf_camID, sizeof(buf_camID), 10);
-		// append and finalize YYYYYMMDD_HHMM_camID string
-		strcat_s(_buf,buf_camID);
+    // convert camID to string
+    buf_camID = std::to_string(camID);
+    // append and finalize YYYYYMMDD_HHMM_camID string
+    std::string timestampWithCamId = timestamp + buf_camID;
 
-		if(strcmp(_buf,buf_YYYYMMDD_HHMM_camID) != 0)
-		{
-			// if different, save it and ensure directory exists
-			strcpy_s(buf_YYYYMMDD_HHMM_camID, sizeof(buf_YYYYMMDD_HHMM_camID), _buf);
+    if (timestampWithCamId != buf_YYYYMMDD_HHMM_camID) {
+        // if different, save it and ensure directory exists
+        buf_YYYYMMDD_HHMM_camID = timestampWithCamId;
 
-			// build path
-			strcpy_s(_buf, buf_YYYYMMDD);
-			strcat_s(_buf, "\\");
-			strcat_s(_buf, buf_YYYYMMDD_HHMM_camID);
-			WaggleDanceExport::createGenericFolder(_buf);
+        boost::filesystem::path relPath(buf_YYYYMMDD);
+        relPath /= buf_YYYYMMDD_HHMM_camID;
+        WaggleDanceExport::createGenericFolder(relPath.string());
 
-			//save relative path
-			strcpy_s(relpath_YYYYMMDD_HHMM_camID, _buf);
-		}
+        relpath_YYYYMMDD_HHMM_camID = relPath.string();
+    }
 
-		//
-		// check <ID> folder
-		//
-		// get dir <ID>
-		std::size_t dirID = countDirectories(relpath_YYYYMMDD_HHMM_camID);
+    // check <ID> folder
+    // get dir <ID>
+    std::size_t dirID = countDirectories(relpath_YYYYMMDD_HHMM_camID);
 
-		// convert camID to string
-		_itoa_s(dirID, buf_dirID, sizeof(buf_dirID), 10);
+    // convert dirID to string
+    buf_dirID = std::to_string(dirID);
 
-		strcpy_s(_buf, relpath_YYYYMMDD_HHMM_camID);
-		strcat_s(_buf, "\\");
-		strcat_s(_buf, buf_dirID);
+    boost::filesystem::path relPath(relpath_YYYYMMDD_HHMM_camID);
+    relPath /= buf_dirID;
 
-		WaggleDanceExport::createGenericFolder(_buf);
+    WaggleDanceExport::createGenericFolder(relPath.string());
 
+    // write CSV file
+    // link full path from main.cpp
+    boost::filesystem::path csvFile(getExeFullPath());
+    csvFile /= rootPath;
+    csvFile /= relPath;
 
+    std::string csvPath(csvFile.string());
+    csvPath += buf_YYYYMMDD_HHMM_camID;
+    csvPath += "_";
+    csvPath += buf_dirID;
+    csvPath += ".csv";
 
-		//
-		// write CSV file
-		//
-		// link full path from main.cpp
-        extern char _FULL_PATH_EXE[FILENAME_MAX];
+    std::cout << csvPath << std::endl;
 
-        char CSV_FILE[FILENAME_MAX];
+    FILE* CSV_ptr = fopen(csvPath.c_str(), "w");
 
-        strcpy_s(CSV_FILE, FILENAME_MAX, _FULL_PATH_EXE);
-		strcat_s(CSV_FILE, root_path);
-		strcat_s(CSV_FILE, "\\");
+    char TIMESTMP[32];
+    sprintf(TIMESTMP, "%02d:%02d:%02d:%03d",
+        timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, milliSeconds);
 
-        strcat_s(CSV_FILE, FILENAME_MAX, _buf);
-        strcat_s(CSV_FILE, FILENAME_MAX, "\\");
-		strcat_s(CSV_FILE, buf_YYYYMMDD_HHMM_camID);
-		strcat_s(CSV_FILE, "_");
-		strcat_s(CSV_FILE, buf_dirID);
-		strcat_s(CSV_FILE, ".csv");
+    fprintf(CSV_ptr, "%.1f %.1f %.1f\n", d_ptr->positions[0].x, d_ptr->positions[0].y, uvecToRad(d_ptr->orient_uvec));
+    fprintf(CSV_ptr, "%s %d\n", TIMESTMP, static_cast<int>(d_ptr->DANCE_FRAME_END - d_ptr->DANCE_FRAME_START + 1));
 
+    for (unsigned i = 0; i < 4; i++) {
+        fprintf(CSV_ptr, "%d %d ", auxArena[i].x, auxArena[i].y);
+    }
+    fprintf(CSV_ptr, "\n");
 
-		puts(CSV_FILE);
+    for (auto it = d_ptr->positions.begin(); it != d_ptr->positions.end(); ++it) {
+        fprintf(CSV_ptr, "%.1f %.1f ", it->x, it->y);
+    }
+    fprintf(CSV_ptr, "\n");
+    fclose(CSV_ptr);
 
-		FILE * CSV_ptr;
-		fopen_s(&CSV_ptr, CSV_FILE,  "w");
+    // write images
+    // get image dimensions
+    cv::Size size = seq[0].size();
 
-		char TIMESTMP[32];		
-		sprintf_s(TIMESTMP, 32, "%02d:%02d:%02d:%03d", 
-			d_ptr->rawtime.wHour, d_ptr->rawtime.wMinute, d_ptr->rawtime.wSecond, d_ptr->rawtime.wMilliseconds 
-			);
+    // get direction length
+    double length = MIN(size.width / 2, size.height / 2) * 0.8;
 
-		fprintf_s(CSV_ptr,"%.1f %.1f %.1f\n", d_ptr->positions[0].x, d_ptr->positions[0].y, uvecToRad(d_ptr->orient_uvec));
-		fprintf_s(CSV_ptr,"%s %d\n", TIMESTMP, static_cast<int>(d_ptr->DANCE_FRAME_END-d_ptr->DANCE_FRAME_START+1));
+    // get image center point
+    cv::Point2d CENTER(size.width / 2., (size.height / 2.));
 
-		for(unsigned i=0; i< 4; i++)
-		{
-			fprintf_s(CSV_ptr,"%d %d ", auxArena[i].x, auxArena[i].y);
-		}
-		fprintf_s(CSV_ptr,"\n");
+    // get image orientation point
+    cv::Point2d HEADIN(CENTER);
+    HEADIN += d_ptr->orient_uvec * length;
 
-		for(auto it = d_ptr->positions.begin(); it!=d_ptr->positions.end(); ++it)
-		{
-			fprintf_s(CSV_ptr,"%.1f %.1f ", it->x, it->y);
-		}
-		fprintf_s(CSV_ptr,"\n");
-		fclose(CSV_ptr);
+    // preallocate 3 channel image output buffer
+    cv::Mat image_out(size, CV_8UC3);
 
-		//
-		// write images
-		//
-		// get image dimensions
-		cv::Size size = seq[0].size();
+    std::size_t i = 0;
+    for (auto it = seq.begin(); it != seq.end(); ++it) {
+        // convert & copy input image into BGR
+        cv::cvtColor(*it, image_out, CV_GRAY2BGR);
 
-		// get direction length
-		double length = MIN(size.width/2, size.height/2) * 0.8;
+        // create dynamic path_out string
+        boost::filesystem::path path(getExeFullPath());
+        path /= rootPath;
+        path /= relpath_YYYYMMDD_HHMM_camID;
+        path /= buf_dirID;
 
-		// get image center point
-		cv::Point2d CENTER(size.width/2., (size.height/2.));
+        std::string uid = string_format("%03d", i);
 
-		// get image orientation point
-		cv::Point2d HEADIN(CENTER);
-		HEADIN += d_ptr->orient_uvec*length;
+        std::string filename = "image_" + uid + ".png";
+        path /= filename;
 
-		// preallocate 3 channel image output buffer
-		cv::Mat image_out(size, CV_8UC3);
+        // write image to disk
+        WaggleDanceOrientator::saveImage(&image_out, path.c_str());
+        i++;
+    }
 
-		// set image file name buffer
-        char BUFF_PATH[FILENAME_MAX];
-        char BUFF_UID[FILENAME_MAX];
+    //finally draw detected orientation
+    //black background
+    image_out.setTo(0);
 
-		std::size_t i=0;
-		for (auto it=seq.begin(); it!=seq.end(); ++it)
-		{
-			// convert & copy input image into BGR
-			cv::cvtColor(*it, image_out, CV_GRAY2BGR);
+    // draw the orientation line
+    cv::line(image_out, CENTER, HEADIN, CV_RGB(0., 255., 0.), 2, CV_AA);
 
-			// create dynamic path_out string
-            strcpy_s(BUFF_PATH, FILENAME_MAX, _FULL_PATH_EXE);
-			strcat_s(BUFF_PATH, root_path);
-			strcat_s(BUFF_PATH, "\\");
-            strcat_s(BUFF_PATH, FILENAME_MAX, _buf);
-            strcat_s(BUFF_PATH, FILENAME_MAX, "\\image_");
+    // create dynamic path_out string
+    boost::filesystem::path path(getExeFullPath());
+    path /= rootPath;
+    path /= relpath_YYYYMMDD_HHMM_camID;
+    path /= buf_dirID;
+    path /= "orient.png";
 
-			// convert picID=[0;seq_in_ptr->size()-1]
-            sprintf_s(BUFF_UID, FILENAME_MAX, "%03d", i);
-
-			// append 
-            strcat_s(BUFF_PATH, FILENAME_MAX, BUFF_UID);
-            strcat_s(BUFF_PATH, FILENAME_MAX, ".png");
-
-			//cv::resize(image_out,image_out,cv::Size(), 10.0,10.0, cv::INTER_AREA);
-
-			// write image to disk
-			WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
-			i++;
-
-			//clear buffers
-            memset(BUFF_PATH,0,FILENAME_MAX*sizeof(char));
-            memset(BUFF_UID,0,FILENAME_MAX*sizeof(char));
-		}
-
-		//finally draw detected orientation
-		//black background
-		image_out.setTo(0);
-
-		// draw the orientation line
-		cv::line(image_out, CENTER, HEADIN, CV_RGB(0.,255.,0.), 2, CV_AA);
-
-		// create dynamic path_out string
-        strcpy_s(BUFF_PATH, FILENAME_MAX, _FULL_PATH_EXE);
-		strcat_s(BUFF_PATH, root_path);
-		strcat_s(BUFF_PATH, "\\");
-        strcat_s(BUFF_PATH, FILENAME_MAX, _buf);
-        strcat_s(BUFF_PATH, FILENAME_MAX, "\\orient.png");
-
-		WaggleDanceOrientator::saveImage(&image_out, BUFF_PATH);
-        */
-    // TODO BEN: FIX
+    WaggleDanceOrientator::saveImage(&image_out, path.c_str());
 }
 
 double WaggleDanceExport::uvecToRad(cv::Point2d in)
@@ -222,82 +180,31 @@ void WaggleDanceExport::execRootExistChk()
     WaggleDanceExport::createGenericFolder("");
 }
 
-void WaggleDanceExport::createGenericFolder(char dir_rel[])
+void WaggleDanceExport::createGenericFolder(std::string const& dir_rel)
 {
-    /*
-		// link to help functionin main.cpp
-		extern bool dirExists(const char * dirPath);
-		// link full path from main.cpp
-        extern char _FULL_PATH_EXE[FILENAME_MAX];
+    boost::filesystem::path path(getExeFullPath());
+    path /= rootPath;
+    path /= dir_rel;
 
-        char BUFF_PATH[FILENAME_MAX];
-
-		// create path to .
-		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
-		strcat_s(BUFF_PATH, root_path);
-		strcat_s(BUFF_PATH, "\\");
-		strcat_s(BUFF_PATH, dir_rel);
-
-		// check for path_out folder
-		if(!dirExists(BUFF_PATH))
-		{
-			if(!CreateDirectory(BUFF_PATH, NULL))
-			{
-				printf("ERROR! Couldn't create %s directory.\n", BUFF_PATH);
-				exit(-19);
-			}
-		}
-        */
-    // TODO BEN: FIX
+    if (!boost::filesystem::is_directory(path)) {
+        if (!boost::filesystem::create_directory(path)) {
+            printf("ERROR! Couldn't create %s directory.\n", path.c_str());
+            exit(-19);
+        }
+    }
 }
 
-int WaggleDanceExport::countDirectories(char dir_rel[])
+long WaggleDanceExport::countDirectories(std::string const& dir_rel)
 {
-    /*
-		// link to help functionin main.cpp
-		extern bool dirExists(const char * dirPath);
-		// link full path from main.cpp
-        extern char _FULL_PATH_EXE[FILENAME_MAX];
+    boost::filesystem::path path(getExeFullPath());
+    path /= rootPath;
+    path /= dir_rel;
 
-        char BUFF_PATH[FILENAME_MAX];
+    const long cnt = std::count_if(
+        boost::filesystem::directory_iterator(path),
+        boost::filesystem::directory_iterator(),
+        static_cast<bool (*)(const boost::filesystem::path&)>(boost::filesystem::is_directory));
 
-		// create path to .
-		strcpy_s(BUFF_PATH, _FULL_PATH_EXE);
-		strcat_s(BUFF_PATH, root_path);
-		strcat_s(BUFF_PATH, "\\");
-		strcat_s(BUFF_PATH, dir_rel);
-
-		WIN32_FIND_DATA ffd;
-		HANDLE hFind = INVALID_HANDLE_VALUE;
-
-        if (strlen(BUFF_PATH) > (FILENAME_MAX - 3))
-		{
-			printf("WARNING! Directory path is too long: %s\n", BUFF_PATH);
-			return -1;
-		}	
-
-		strcat_s(BUFF_PATH, "\\*");
-		hFind = FindFirstFile(BUFF_PATH, &ffd);
-
-		if (INVALID_HANDLE_VALUE == hFind) 
-		{
-			printf("WARNING! INVALID_HANDLE_VALUE: %s\n", BUFF_PATH);
-			return -1;
-		}
-
-		int count = 0;
-		do {
-			if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			{
-				count++;
-			}
-		}   while (FindNextFile(hFind, &ffd) != 0);
-
-		FindClose(hFind);
-
-		// .. and . count as "2"		
-		return count -2 ;
-        */
-    // TODO BEN: FIX
+    return cnt;
 }
 }

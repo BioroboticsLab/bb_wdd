@@ -111,7 +111,6 @@ void DotDetector::copyPixelAndDetect()
     }
 
     // if amplitude is zero, no further detection needed
-    //TODO ORIG 13
     if (_AMPLITUDE < 13) {
         DotDetectorLayer::DD_POTENTIALS[id] = 0;
         _NEWMINMAX = true;

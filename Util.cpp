@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <array>
+#include <boost/dll/runtime_symbol_info.hpp>
+#include <boost/filesystem.hpp>
 #include <cctype>
 #include <cstdio>
 #include <iostream>
@@ -55,4 +57,24 @@ void trim(std::string& s)
 {
     ltrim(s);
     rtrim(s);
+}
+
+std::string getNameOfExe()
+{
+    return boost::dll::program_location().stem().string();
+}
+
+std::string getExeFullPath()
+{
+    return boost::dll::program_location().parent_path().string();
+}
+
+bool fileExists(const std::string& file_name)
+{
+    return boost::filesystem::is_regular_file(boost::filesystem::path(file_name));
+}
+
+bool dirExists(const char* dirPath)
+{
+    return boost::filesystem::is_directory(boost::filesystem::path(dirPath));
 }

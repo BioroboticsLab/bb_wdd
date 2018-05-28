@@ -18,7 +18,6 @@ private:
 
 public:
     InputVideoParameters(cv::VideoCapture* vc);
-    ~InputVideoParameters();
 
     int getFrameWidth();
     int getFrameHeight();

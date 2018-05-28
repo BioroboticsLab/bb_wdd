@@ -16,8 +16,7 @@ struct DANCE {
     cv::Point2d orient_uvec;
     cv::Point2d naive_orientation;
 
-    // TODO BEN: FIX
-    // SYSTEMTIME rawtime;
+    timeval _rawTime;
 };
 
 class WaggleDanceDetector {
@@ -92,6 +91,11 @@ class WaggleDanceDetector {
 
     CamConf auxCC;
 
+    const std::string _dancePath;
+
+    FILE* _danceFilePtr = nullptr;
+    FILE* _signalFilePtr = nullptr;
+
 public:
     WaggleDanceDetector(
         std::vector<cv::Point2i> dd_positions,
@@ -102,7 +106,8 @@ public:
         CamConf auxCC,
         bool wdd_write_signal_file,
         bool wdd_write_dance_file,
-        int wdd_verbose);
+        int wdd_verbose,
+        std::string const& dancePath);
     ~WaggleDanceDetector();
 
     void copyInitialFrame(unsigned long long fid, bool doDetection);
@@ -134,7 +139,7 @@ private:
     void _execDetectionGetWDDSignals();
     void _execDetectionConcatWDDSignals();
     void _execDetectionHousekeepWDDSignals();
-    void _execDetectionFinalizeDance(DANCE* d_ptr);
+    void _execDetectionFinalizeDance(DANCE* dance);
     void _execDetectionWriteDanceFileLine(DANCE* d_ptr);
     void _execDetectionWriteSignalFileLine();
 

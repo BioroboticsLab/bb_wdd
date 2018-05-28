@@ -38,12 +38,8 @@ add_executable(${PROJECT_NAME}
     "VideoFrameBuffer.cpp"
     "DotDetectorMatrix.cpp"
     "DotDetectorMatrix.h"
-    "InputVideoParameters.cpp"
-    "InputVideoParameters.h"
-    "CLEyeCameraCapture.cpp"
-    "CLEyeCameraCapture.h"
-    "TypeToString.h"
-    "TypeToString.cpp"
+    "ProcessingThread.cpp"
+    "ProcessingThread.h"
     "cvblob.cpp"
     "cvlabel.cpp"
     "cvblob.h"
@@ -66,7 +62,7 @@ if(MSVC)
   endif()
 elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   # Update if necessary
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-reorder -Wno-format")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=return-type")
 endif()
 

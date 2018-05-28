@@ -2,46 +2,49 @@
 
 #include "Camera.h"
 #include "Config.h"
+#include "WaggleDanceDetector.h"
 #include <string>
 #include <thread>
 
 namespace wdd {
-class CLEyeCameraCapture {
+class ProcessingThread {
+private:
+    size_t _cameraIdx;
     std::unique_ptr<Camera> _camera;
+    MouseInteraction _mouse;
+    std::unique_ptr<WaggleDanceDetector> _wdd;
+
     std::string _windowName;
     std::string _cameraGUID;
     float _fps;
     bool _running;
 
-    int _FRAME_WIDTH;
-    int _FRAME_HEIGHT;
     bool _visual;
+    int _frameWidth;
+    int _frameHeight;
     bool _setupModeOn;
 
-    size_t _cameraIdx;
-
-    CamConf _CC;
-
-    double aux_DD_MIN_POTENTIAL;
     int aux_WDD_SIGNAL_MIN_CLUSTER_SIZE;
 
-    std::thread _thread;
+    CamConf _camConfig;
+
+    double aux_DD_MIN_POTENTIAL;
 
     const std::string _dancePath;
 
-    void findCornerPointNear(cv::Point2i p) const;
-    void onMouseInput(int evnt, int x, int y, int flags);
+    void findCornerPointNear(cv::Point2i p);
+    void onMouseInput(int evnt, int x, int y);
     static void onMouseInput(int evnt, int x, int y, int flags, void* userData);
 
 public:
-    CLEyeCameraCapture(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height,
+    ProcessingThread(std::string windowName, std::string cameraGUID, size_t cameraIdx, size_t width, size_t height,
         float fps, CamConf CC, double dd_min_potential, int wdd_signal_min_cluster_size,
         std::string const& dancePath);
 
     bool StartCapture();
     void StopCapture();
 
-    void setVisual(bool visual);
+    void setVisual(bool VISUAL);
     void setSetupModeOn(bool setupMode);
     const CamConf* getCamConfPtr();
 

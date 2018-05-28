@@ -17,6 +17,9 @@
 // along with cvBlob.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
 #include "cvblob.h"
 #include "Config.h"
 
@@ -320,3 +323,5 @@ ostream& operator<<(ostream& output, const cvb::CvBlob& b)
 
     return output;
 }
+
+#pragma GCC diagnostic pop

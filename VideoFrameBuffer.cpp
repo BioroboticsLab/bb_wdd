@@ -6,15 +6,14 @@
 #include <boost/filesystem.hpp>
 
 namespace wdd {
-static const std::string vfb_root_path = "fullframes";
 
 VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC)
-    : _BUFFER_POS(0)
-    , _CURRENT_FRAME_NR(current_frame_nr)
+    : _bufferPos(0)
+    , _currentFrameNumber(current_frame_nr)
     , _cachedFrameSize(cachedFrameSize)
     , _extractFrameSize(extractFrameSize)
-    , _CC(_CC)
-    , _last_hour(-1)
+    , _camConf(_CC)
+    , _lastHour(-1)
 {
     if ((extractFrameSize.width > cachedFrameSize.width) || (extractFrameSize.height > cachedFrameSize.height)) {
         std::cerr << "Error! VideoFrameBuffer():: extractFrameSize can not be bigger then cachedFrameSize in any dimension!" << std::endl;
@@ -23,37 +22,37 @@ VideoFrameBuffer::VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size
 
     //init memory
     for (std::size_t i = 0; i < VFB_MAX_FRAME_HISTORY; i++) {
-        _FRAME[i] = cv::Mat(cachedFrameSize, CV_8UC1);
+        _frames[i] = cv::Mat(cachedFrameSize, CV_8UC1);
     }
 }
 
 void VideoFrameBuffer::addFrame(cv::Mat* frame_ptr)
 {
-    _FRAME[_BUFFER_POS] = frame_ptr->clone();
+    _frames[_bufferPos] = frame_ptr->clone();
 
-    if (_CURRENT_FRAME_NR > 1000) {
+    if (_currentFrameNumber > 1000) {
         struct tm* timeinfo;
         time(&_rawTime);
         timeinfo = localtime(&_rawTime);
 
         int curent_hour = timeinfo->tm_hour;
-        if ((curent_hour > _last_hour) || ((curent_hour == 0) && (_last_hour == 23)))
+        if ((curent_hour > _lastHour) || ((curent_hour == 0) && (_lastHour == 23)))
 
         {
-            _last_hour = curent_hour;
+            _lastHour = curent_hour;
             saveFullFrame();
         }
     }
-    _BUFFER_POS = (++_BUFFER_POS) < VFB_MAX_FRAME_HISTORY ? _BUFFER_POS : 0;
+    _bufferPos = (++_bufferPos) < VFB_MAX_FRAME_HISTORY ? _bufferPos : 0;
 
-    _CURRENT_FRAME_NR++;
+    _currentFrameNumber++;
 
     // check for hourly save image
 }
 void VideoFrameBuffer::saveFullFrame()
 {
     boost::filesystem::path path(getExeFullPath());
-    path /= vfb_root_path;
+    path /= VFB_ROOT_PATH;
 
     // check for path_out folder
     if (!dirExists(path.c_str())) {
@@ -63,7 +62,7 @@ void VideoFrameBuffer::saveFullFrame()
         }
     }
 
-    path /= std::to_string(_CC.camId);
+    path /= std::to_string(_camConf.camId);
 
     // check for path_out//id folder
     if (!dirExists(path.c_str())) {
@@ -84,10 +83,10 @@ void VideoFrameBuffer::saveFullFrame()
     path /= timestamp;
 
     std::string finalPath(path.string());
-    finalPath += std::to_string(_CC.camId);
+    finalPath += std::to_string(_camConf.camId);
     finalPath += ".png";
 
-    cv::Mat _tmp = _FRAME[_BUFFER_POS].clone();
+    cv::Mat _tmp = _frames[_bufferPos].clone();
 
     cv::cvtColor(_tmp, _tmp, CV_GRAY2BGR);
     drawArena(_tmp);
@@ -97,17 +96,15 @@ void VideoFrameBuffer::saveFullFrame()
 void VideoFrameBuffer::drawArena(cv::Mat& frame)
 {
     float fac_red = 1.0 / 2.0;
-    for (std::size_t i = 0; i < _CC.arena.size(); i++) {
+    for (std::size_t i = 0; i < _camConf.arena.size(); i++) {
         cv::line(frame,
-            cv::Point2f(_CC.arena[i].x * fac_red, _CC.arena[i].y * fac_red),
-            cv::Point2f(_CC.arena[(i + 1) % _CC.arena.size()].x * fac_red, _CC.arena[(i + 1) % _CC.arena.size()].y * fac_red), CV_RGB(0, 255, 0));
+            cv::Point2f(_camConf.arena[i].x * fac_red, _camConf.arena[i].y * fac_red),
+            cv::Point2f(_camConf.arena[(i + 1) % _camConf.arena.size()].x * fac_red, _camConf.arena[(i + 1) % _camConf.arena.size()].y * fac_red), CV_RGB(0, 255, 0));
     }
 }
 cv::Mat* VideoFrameBuffer::getFrameByNumber(unsigned long long req_frame_nr)
 {
-    int frameJump = static_cast<int>(_CURRENT_FRAME_NR - req_frame_nr);
-
-    //std::cout<<"VideoFrameBuffer::getFrameByNumber::_CURRENT_FRAME_NR, req_frame_nr, frameJump: "<<_CURRENT_FRAME_NR<<", "<<req_frame_nr<<", "<<frameJump<<std::endl;
+    int frameJump = static_cast<int>(_currentFrameNumber - req_frame_nr);
 
     // if req_frame_nr > CURRENT_FRAME_NR --> framesJump < 0
     if (frameJump <= 0) {
@@ -117,28 +114,24 @@ cv::Mat* VideoFrameBuffer::getFrameByNumber(unsigned long long req_frame_nr)
 
     // assert: CURRENT_FRAME_NR >= req_frame_nr --> framesJump >= 0
     if (frameJump <= VFB_MAX_FRAME_HISTORY) {
-        int framePosition = _BUFFER_POS - frameJump;
+        int framePosition = _bufferPos - frameJump;
 
         framePosition = framePosition >= 0 ? framePosition : VFB_MAX_FRAME_HISTORY + framePosition;
 
         //std::cout<<"VideoFrameBuffer::getFrameByNumber::_BUFFER_POS: "<<framePosition<<std::endl;
 
-        return &_FRAME[framePosition];
+        return &_frames[framePosition];
     } else {
         std::cerr << "Error! VideoFrameBuffer::getFrameByNumber can not retrieve frame " << req_frame_nr << " - history too small!" << std::endl;
         return NULL;
     }
 }
 
-std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
+std::vector<cv::Mat> VideoFrameBuffer::loadCroppedFrameSequence(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC)
 {
     // fatal: if this is true, return empty vector
     if (startFrame >= endFrame)
         return std::vector<cv::Mat>();
-
-    //std::cout<<"VideoFrameBuffer::loadFrameSequenc::startFrame, endFrame: "<<startFrame<<", "<<endFrame<<std::endl;
-    //std::cout<<"VideoFrameBuffer::_cachedFrameSize.width, _cachedFrameSize.height: "<<_cachedFrameSize.width<<", "<<_cachedFrameSize.height<<std::endl;
-    //std::cout<<"VideoFrameBuffer::_extractFrameSize.width, _extractFrameSize.height: "<<_extractFrameSize.width<<", "<<_extractFrameSize.height<<std::endl;
 
     const unsigned short _center_x = static_cast<int>(center.x * pow(2, FRAME_REDFAC));
     const unsigned short _center_y = static_cast<int>(center.y * pow(2, FRAME_REDFAC));

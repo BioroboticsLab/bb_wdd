@@ -1,14 +1,12 @@
-#include "CLEyeCameraCapture.h"
 #include "Camera.h"
 #include "Config.h"
 #include "DotDetectorLayer.h"
-#include "InputVideoParameters.h"
+#include "ProcessingThread.h"
 #include "Util.h"
 #include "VideoFrameBuffer.h"
 #include "WaggleDanceDetector.h"
 #include "WaggleDanceExport.h"
 #include "opencv2/opencv.hpp"
-#include <Guid.hpp>
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/filesystem.hpp>
 #include <tclap/CmdLine.h>
@@ -26,11 +24,10 @@ static std::size_t nextUniqueCamID = 0;
 void loadCamConfigFileReadLine(std::string line)
 {
     const char* delimiter = " ";
-    std::size_t pos = 0;
 
     std::size_t tokenNumber = 0;
 
-    std::size_t camId = NULL;
+    std::size_t camId = 0;
     char guid_str[64];
     std::array<cv::Point2i, 4> arena;
 
@@ -67,7 +64,7 @@ void loadCamConfigFileReadLine(std::string line)
         }
 
         tokenNumber++;
-        token = strtok(NULL, delimiter);
+        token = strtok(nullptr, delimiter);
     }
     free(string1);
     free(token);
@@ -88,11 +85,10 @@ void loadCamConfigFileReadLine(std::string line)
     if (camId >= nextUniqueCamID)
         nextUniqueCamID = camId + 1;
 }
-static const std::string camConfPath = "cams.config";
 void loadCamConfigFile()
 {
     boost::filesystem::path path(getExeFullPath());
-    path /= camConfPath;
+    path /= CAM_CONF_PATH;
 
     if (!fileExists(path.c_str())) {
         // create empty file
@@ -119,7 +115,7 @@ void loadCamConfigFile()
 void saveCamConfigFile()
 {
     boost::filesystem::path path(getExeFullPath());
-    path /= camConfPath;
+    path /= CAM_CONF_PATH;
 
     FILE* camConfFile_ptr = fopen(path.c_str(), "w+");
 
@@ -136,17 +132,16 @@ void saveCamConfigFile()
 
 int main(int nargs, char** argv)
 {
-    char* version = "1.2.5";
-    char* compiletime = __TIMESTAMP__;
+    const std::string version = "1.3.0";
+    const std::string compiletime = __TIMESTAMP__;
     printf("WaggleDanceDetection Version %s - compiled at %s\n\n",
-        version, compiletime);
+        version.c_str(), compiletime.c_str());
 
     // define values potentially set by command line
     double dd_min_potential;
     int wdd_signal_min_cluster_size;
     bool autoStartUp;
     std::string videofile;
-    bool noGui;
     std::string dancePath;
     try {
         // Define the command line object.
@@ -172,10 +167,6 @@ int main(int nargs, char** argv)
         // path to output of dance detection file
         TCLAP::ValueArg<std::string> outputArg("o", "output", "path to result file", false, "", "string");
         cmd.add(outputArg);
-
-        // switch to turn off GUI/Video output
-        TCLAP::SwitchArg noGUISwitch("n", "no-gui", "disable gui (video output)", false);
-        cmd.add(noGUISwitch);
 #endif
         // Parse the args.
         cmd.parse(nargs, argv);
@@ -185,7 +176,6 @@ int main(int nargs, char** argv)
         wdd_signal_min_cluster_size = cluArg.getValue();
         autoStartUp = autoSwitch.getValue();
         videofile = testVidArg.getValue();
-        noGui = noGUISwitch.getValue();
         dancePath = outputArg.getValue();
 
         if (dancePath.empty()) {
@@ -194,9 +184,9 @@ int main(int nargs, char** argv)
         }
     } catch (TCLAP::ArgException& e) {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+        exit(1);
     }
 
-    char videoFilename[FILENAME_MAX];
     // WaggleDanceExport initialization
     WaggleDanceExport::execRootExistChk();
 
@@ -260,7 +250,6 @@ int main(int nargs, char** argv)
     if (autoStartUp) {
         for (std::size_t i = 0; i < camIdsLaunch.size(); i++) {
             std::size_t _camId = camIdsLaunch[i];
-            CamConf* cc_ptr = nullptr;
             for (auto it = camConfs.begin(); it != camConfs.end(); ++it)
                 if (it->camId == _camId)
                     if (it->configured) {
@@ -316,7 +305,7 @@ int main(int nargs, char** argv)
     }
 
     // retrieve guid from camConfs according to camId
-    std::unique_ptr<CLEyeCameraCapture> pCam;
+    std::unique_ptr<ProcessingThread> pCam;
     const std::string windowName = cameraIdentifiers[camIdUserSelect];
     for (auto it = camConfs.begin(); it != camConfs.end(); ++it) {
         if (it->camId == camIdUserSelect) {
@@ -326,7 +315,7 @@ int main(int nargs, char** argv)
             for (int i = 0; i < numCams; i++) {
                 if (strcmp(cameraIdentifiers[i].c_str(), it->guid_str) == 0) {
                     foundMatch = true;
-                    pCam = std::make_unique<CLEyeCameraCapture>(
+                    pCam = std::make_unique<ProcessingThread>(
                         windowName, cameraIdentifiers[i], camIdUserSelect, 320, 240, WDD_FRAME_RATE, *it,
                         dd_min_potential, wdd_signal_min_cluster_size, dancePath);
                     break;

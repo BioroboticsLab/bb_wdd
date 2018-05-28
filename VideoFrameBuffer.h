@@ -3,29 +3,30 @@
 #include <opencv2/opencv.hpp>
 
 #include "Config.h"
+#include "Util.h"
 
 namespace wdd {
 class VideoFrameBuffer {
-    unsigned int _BUFFER_POS;
-    unsigned long long _CURRENT_FRAME_NR;
+    unsigned int _bufferPos;
+    unsigned long long _currentFrameNumber;
 
     cv::Size _cachedFrameSize;
     cv::Size _extractFrameSize;
     cv::Point _sequenceFramePointOffset;
 
-    cv::Mat _FRAME[VFB_MAX_FRAME_HISTORY];
+    cv::Mat _frames[VFB_MAX_FRAME_HISTORY];
     time_t _rawTime;
-    int _last_hour;
-    CamConf _CC;
+    CamConf _camConf;
+    int _lastHour;
 
 public:
-    VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _CC);
+    VideoFrameBuffer(unsigned long long current_frame_nr, cv::Size cachedFrameSize, cv::Size extractFrameSize, CamConf _camConf);
 
     void setSequecenFrameSize(cv::Size size);
     void addFrame(cv::Mat* frame_ptr);
     void saveFullFrame();
     void drawArena(cv::Mat& frame);
     cv::Mat* getFrameByNumber(unsigned long long frame_nr);
-    std::vector<cv::Mat> loadCroppedFrameSequenc(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
+    std::vector<cv::Mat> loadCroppedFrameSequence(unsigned long long startFrame, unsigned long long endFrame, cv::Point2i center, double FRAME_REDFAC);
 };
 } /* namespace WaggleDanceDetector */

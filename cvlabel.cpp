@@ -17,6 +17,12 @@
 // along with cvBlob.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#pragma GCC diagnostic ignored "-Wparentheses"
+
 #include "Config.h"
 #include "cvblob.h"
 
@@ -400,3 +406,5 @@ CvLabel cvGetLabel(IplImage const* img, unsigned int x, unsigned int y)
     __CV_END__;
 }
 }
+
+#pragma GCC diagnostic pop

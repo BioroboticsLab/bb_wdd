@@ -7,8 +7,6 @@ namespace wdd {
 class DotDetectorM {
 
 public:
-    //DotDetectorM(unsigned int _resX, unsigned int _resY, unsigned int _framesInBuffer);
-
     /*
 		The method adds a new frame by copying the image to the ring buffer at a
 		specific position. The position will be updated and the memory will not
@@ -22,14 +20,11 @@ public:
 
 private:
     static void executeDetection(cv::Mat const& _projectedSin, cv::Mat const& _projectedCos, uint16_t _id);
-    //void createCosSinMatrices(arma::mat &sinMatrix, arma::mat &cosMatrix);
-    //void projectPotentials(arma::mat const &sinMatrix, arma::mat const &cosMatrix);
 
     /*
 		Holds the video to be analysed as ring buffer. Any operations
 		can then be efficiently done on the armadillo cube.
 		*/
-    //static arma::mat videoBuffer;
     static cv::Mat videoBuffer;
 
     /*

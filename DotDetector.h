@@ -1,11 +1,12 @@
 #pragma once
 
 #include <memory>
+#include <opencv2/opencv.hpp>
 
 #include "Config.h"
 
 namespace wdd {
-struct SAMP {
+struct Sample {
     float cosines[WDD_FREQ_NUMBER];
     float sines[WDD_FREQ_NUMBER];
     float n;
@@ -41,10 +42,10 @@ private:
     // save min, max, amplitude values
     // 3 byte
     /*
-		IMPORTANT NOTE BY ROMAN:
-		Min and max refer to the histogram and specify the lowest
-		(and highest respectively) brightness we have in our ring buffer.
-		*/
+    IMPORTANT NOTE BY ROMAN:
+    Min and max refer to the histogram and specify the lowest
+    (and highest respectively) brightness we have in our ring buffer.
+    */
     uchar _MIN, _MAX, _AMPLITUDE;
     //
     // save new min or max flag, old min/max gone flag
@@ -57,7 +58,7 @@ private:
     // START BLOCK2 (64 % 16 == 0)
     // container to save accumulated COS/SIN per freq values
     // 64 byte
-    SAMP _ACC_VAL;
+    Sample _ACC_VAL;
     // END BLOCK2 (127)
 
     // START BLOCK3 (128 % 16 == 0)
@@ -77,7 +78,7 @@ private:
     // START BLOCK4 (384 % 16 == 0)
     // container to save COS/SIN/NOR values of corresponding _DD_PX_VALS_NOR
     // 2048 byte
-    SAMP projectedOnCosSin[WDD_FBUFFER_SIZE];
+    Sample projectedOnCosSin[WDD_FBUFFER_SIZE];
     // END BLOCK4 (2367)
 
     // START BLOCK5 (2432 % 16 == 0)
@@ -101,7 +102,6 @@ private:
 
 public:
     DotDetector(std::size_t UNIQUE_ID, uchar* pixel_src_ptr);
-    ~DotDetector(void);
 
     void copyInitialPixel(bool doDetection);
     void copyPixelAndDetect();

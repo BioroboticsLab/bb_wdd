@@ -9,11 +9,6 @@
 namespace wdd {
 static const std::string rootPath = "output";
 
-// save the incrementing IDs of detection per directory
-static std::size_t ID = 0;
-
-static bool root_exist_chk = false;
-
 // save the current day
 static std::string buf_YYYYMMDD;
 // save the current hour:minute and CamID 0-9
@@ -24,11 +19,11 @@ static std::string buf_dirID;
 
 static std::array<cv::Point2i, 4> auxArena;
 
-void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE* d_ptr, std::size_t camID)
+void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const Dance* d_ptr, std::size_t camID)
 {
     struct tm* timeinfo;
-    timeinfo = localtime(&d_ptr->_rawTime.tv_sec);
-    const long milliSeconds = d_ptr->_rawTime.tv_usec / 1000;
+    timeinfo = localtime(&d_ptr->rawTime.tv_sec);
+    const long milliSeconds = d_ptr->rawTime.tv_usec / 1000;
 
     // check <YYYYYMMDD> folder
     // write YYYYYMMDD string & compare to last saved
@@ -94,8 +89,8 @@ void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE* d_ptr
     sprintf(TIMESTMP, "%02d:%02d:%02d:%03d",
         timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, milliSeconds);
 
-    fprintf(CSV_ptr, "%.1f %.1f %.1f\n", d_ptr->positions[0].x, d_ptr->positions[0].y, uvecToRad(d_ptr->orient_uvec));
-    fprintf(CSV_ptr, "%s %d\n", TIMESTMP, static_cast<int>(d_ptr->DANCE_FRAME_END - d_ptr->DANCE_FRAME_START + 1));
+    fprintf(CSV_ptr, "%.1f %.1f %.1f\n", d_ptr->positions[0].x, d_ptr->positions[0].y, uvecToRad(d_ptr->orientUVec));
+    fprintf(CSV_ptr, "%s %d\n", TIMESTMP, static_cast<int>(d_ptr->danceFrameEnd - d_ptr->danceFrameStart + 1));
 
     for (unsigned i = 0; i < 4; i++) {
         fprintf(CSV_ptr, "%d %d ", auxArena[i].x, auxArena[i].y);
@@ -120,7 +115,7 @@ void WaggleDanceExport::write(const std::vector<cv::Mat> seq, const DANCE* d_ptr
 
     // get image orientation point
     cv::Point2d HEADIN(CENTER);
-    HEADIN += d_ptr->orient_uvec * length;
+    HEADIN += d_ptr->orientUVec * length;
 
     // preallocate 3 channel image output buffer
     cv::Mat image_out(size, CV_8UC3);

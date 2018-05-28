@@ -8,7 +8,7 @@
 namespace wdd {
 
 std::size_t DotDetector::_BUFF_POS = 0;
-static std::mutex vector_acces;
+static std::mutex vector_access;
 
 DotDetector::DotDetector(std::size_t _id, uchar* pixel_src_ptr)
     : id(_id)
@@ -26,10 +26,6 @@ DotDetector::DotDetector(std::size_t _id, uchar* pixel_src_ptr)
     rawPixels.fill(0);
     pixelHistogram.fill(0);
     scoresForFreq.fill(0);
-}
-
-DotDetector::~DotDetector(void)
-{
 }
 
 // add pixel values until buffer is full (initial filling phase)
@@ -230,19 +226,19 @@ inline void DotDetector::_execDetection()
     buff = scoresForFreq[0] + scoresForFreq[1] + scoresForFreq[2];
     for (int i = 3; i < WDD_FREQ_NUMBER; i++) {
         if (buff > 0.3 * WDD_FBUFFER_SIZE * WDD_FBUFFER_SIZE) {
-            vector_acces.lock();
+            vector_access.lock();
             DotDetectorLayer::DD_SIGNALS_NUMBER++;
             DotDetectorLayer::DD_SIGNALS_IDs.push_back(id);
-            vector_acces.unlock();
+            vector_access.unlock();
             return;
         }
         buff += -scoresForFreq[i - 3] + scoresForFreq[i];
     }
     if (buff > 0.3 * WDD_FBUFFER_SIZE * WDD_FBUFFER_SIZE) {
-        vector_acces.lock();
+        vector_access.lock();
         DotDetectorLayer::DD_SIGNALS_NUMBER++;
         DotDetectorLayer::DD_SIGNALS_IDs.push_back(id);
-        vector_acces.unlock();
+        vector_access.unlock();
         return;
     }
 }

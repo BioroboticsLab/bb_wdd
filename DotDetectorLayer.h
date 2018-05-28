@@ -6,11 +6,8 @@ namespace wdd {
 
 class DotDetectorLayer {
 public:
-    /*
-		members
-		*/
     // save sampled target sinus and cosinus signals as array of SAMP
-    static SAMP SAMPLES[WDD_FRAME_RATE];
+    static Sample SAMPLES[WDD_FRAME_RATE];
 
     // saves positions of used DotDetectors
     static std::vector<cv::Point2i> positions;
@@ -46,9 +43,7 @@ public:
     static double FRAME_REDFAC;
 
     static cv::Mat* frame_ptr;
-    /*
-		functions
-		*/
+
     static void init(std::vector<cv::Point2i> positions, cv::Mat* aux_frame_ptr,
         std::vector<double> ddl_config);
 
@@ -61,14 +56,8 @@ public:
     static void printFreqSamples();
 
 private:
-    /*
-		members
-		*/
-    //static DotDetector ** _DotDetectors;
     static DotDetectorM _dotDetector;
-    /*
-		functions
-		*/
+
     static void _setDDLConfig(std::vector<double> ddl_config);
     static void _createFreqSamples();
 };

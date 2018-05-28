@@ -18,9 +18,8 @@ std::size_t DotDetectorLayer::FRAME_RATEi;
 double DotDetectorLayer::FRAME_REDFAC;
 std::vector<double> DotDetectorLayer::DD_FREQS;
 std::size_t DotDetectorLayer::DD_FREQS_NUMBER;
-SAMP DotDetectorLayer::SAMPLES[WDD_FRAME_RATE];
+Sample DotDetectorLayer::SAMPLES[WDD_FRAME_RATE];
 cv::Mat* DotDetectorLayer::frame_ptr;
-//DotDetector **				DotDetectorLayer::_DotDetectors;
 
 void DotDetectorLayer::init(std::vector<cv::Point2i> positions, cv::Mat* _frame_ptr,
     std::vector<double> ddl_config)
@@ -36,9 +35,6 @@ void DotDetectorLayer::init(std::vector<cv::Point2i> positions, cv::Mat* _frame_
     // allocate space for DotDetector potentials
     DotDetectorLayer::DD_POTENTIALS = new double[DotDetectorLayer::DD_NUMBER];
 
-    // allocate DotDetector pointer array
-    //DotDetectorLayer::_DotDetectors = new DotDetector * [DD_NUMBER];
-
     DotDetectorLayer::DD_SIGNALS_IDs.reserve(WDD_LAYER2_MAX_POS_DDS);
 
     unsigned int resX = static_cast<unsigned int>(_frame_ptr->rows);
@@ -46,21 +42,10 @@ void DotDetectorLayer::init(std::vector<cv::Point2i> positions, cv::Mat* _frame_
 
     frame_ptr = _frame_ptr;
     _dotDetector.init(resX, resY, WDD_FBUFFER_SIZE);
-    /*
-		// create DotDetectors, pass unique id and location of pixel
-		for(std::size_t i=0; i<DD_NUMBER; i++)
-		{
-			DotDetectorLayer::_DotDetectors[i] = new DotDetector(i, &((*frame_ptr).at<uchar>(positions[i])));
-		}
-		*/
 }
 
-void DotDetectorLayer::release(void)
+void DotDetectorLayer::release()
 {
-    //for(std::size_t i=0; i<DotDetectorLayer::DD_NUMBER; i++)
-    //	delete DotDetectorLayer::_DotDetectors[i];
-
-    //delete DotDetectorLayer::_DotDetectors;
     delete DotDetectorLayer::DD_POTENTIALS;
 }
 
@@ -70,31 +55,17 @@ void DotDetectorLayer::copyFrame(bool doDetection)
 {
     DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
     DotDetectorLayer::DD_SIGNALS_IDs.clear();
-    //concurrency::parallel_for(std::size_t(0), DotDetectorLayer::DD_NUMBER, [&](size_t i)
-    //{
-    //	DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
-    //});// end for-loop
-    //for (unsigned int i(0); i < DotDetectorLayer::DD_NUMBER; ++i) {
-    //	DotDetectorLayer::_DotDetectors[i]->copyInitialPixel(doDetection);
-    //}
+
     _dotDetector.addNewFrame(frame_ptr);
     if (doDetection)
         _dotDetector.detectDots();
-    //DotDetector::nextBuffPos();
 }
 
 void DotDetectorLayer::copyFrameAndDetect()
 {
     DotDetectorLayer::DD_SIGNALS_NUMBER = 0;
     DotDetectorLayer::DD_SIGNALS_IDs.clear();
-    //unsigned __int64 t1 = GetRDTSC();
 
-    //concurrency::parallel_for(std::size_t(0), DotDetectorLayer::DD_NUMBER, [&](size_t i)
-    //{
-    //	DotDetectorLayer::_DotDetectors[i]->copyPixelAndDetect();
-    //});// end for-loop
-
-    //DotDetector::nextBuffPos();
     _dotDetector.addNewFrame(frame_ptr);
     _dotDetector.detectDots();
 }
@@ -181,7 +152,6 @@ void DotDetectorLayer::_createFreqSamples()
 
     /* assign frequencies */
     DotDetectorLayer::DD_FREQS_NUMBER = dd_freqs.size();
-    //DotDetector::DD_FREQS_NUMBER = dd_freqs.size();
     DotDetectorLayer::DD_FREQS = dd_freqs;
 
     double step = 1.0 / WDD_FRAME_RATE;
